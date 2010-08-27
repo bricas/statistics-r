@@ -16,8 +16,8 @@ use warnings qw'all' ;
   my $R = Statistics::R->new() ;
   ok($R) ;
   
-  #use Data::Dumper ; print Dumper( $R ) ; exit ;
-
+  # use Data::Dumper ; print Dumper( $R ) ; exit ;
+  
   ok( $R->startR ) ;
   
   ok( $R->Rbin ) ;
@@ -31,6 +31,7 @@ use warnings qw'all' ;
   ok( $R->send(qq`x = 123 \n print(x)`) ) ;
   
   my $ret = $R->read ;
+  
   ok( $ret =~ /^\[\d+\]\s+123\s*$/ ) ;  
   
   ok( $R->send(qq`x = 456 \n print(x)`) ) ;

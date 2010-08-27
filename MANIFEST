@@ -10,3 +10,4 @@ lib/Statistics/R/Bridge/pipe.pm
 script/statistics-r.pl
 script/test-shared.pl
 test.pl
+META.yml                                 Module meta-data (added by MakeMaker)

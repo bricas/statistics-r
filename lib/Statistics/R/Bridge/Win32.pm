@@ -111,7 +111,9 @@
     $this->{START_CMD} = "$exec --slave --vanilla" ;
     
     if ( !$args{log_dir} ) {
-      $args{log_dir} = "$this->{R_DIR}/Statistics-R" ;
+      # $args{log_dir} = "$this->{R_DIR}/Statistics-R" ;
+    # Bug Fix by CTB:  Reponse to RT Bug #17956: Win32: log_dir is not in tmp_dir by default as advertised    
+      $args{log_dir} = "$this->{TMP_DIR}/Statistics-R" ;
       $args{log_dir} =~ s/\\+/\//gs ;
     }
     
