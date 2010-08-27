@@ -1,7 +1,3 @@
-#########################
-
-###use Data::Dumper ; print Dumper(  ) ;
-
 use Test;
 BEGIN { plan tests => 1 }
 
@@ -10,7 +6,6 @@ use Statistics::R;
 use strict;
 use warnings qw'all';
 
-#########################
 {
 
     my $R = Statistics::R->new();
@@ -46,8 +41,3 @@ use warnings qw'all';
     ok( $R->stopR() );
 
 }
-#########################
-
-print "\nThe End! By!\n";
-
-1;
