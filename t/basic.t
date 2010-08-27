@@ -1,5 +1,5 @@
 use Test;
-BEGIN { plan tests => 1 }
+BEGIN { plan tests => 10 }
 
 use Statistics::R;
 
@@ -11,13 +11,9 @@ use warnings qw'all';
     my $R = Statistics::R->new();
     ok( $R );
 
-    # use Data::Dumper ; print Dumper( $R ) ; exit ;
-
     ok( $R->startR );
 
     ok( $R->Rbin );
-
-    print "----\n";
 
     ok( $R->send(
             q`postscript("file.ps" , horizontal=FALSE , width=500 , height=500 , pointsize=1)`
@@ -35,8 +31,6 @@ use warnings qw'all';
     ok( $R->send( qq`x = 456 \n print(x)` ) );
     $ret = $R->read;
     ok( $ret =~ /^\[\d+\]\s+456\s*$/ );
-
-    print "----\n";
 
     ok( $R->stopR() );
 
