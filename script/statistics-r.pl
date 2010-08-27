@@ -1,42 +1,20 @@
 #!/usr/bin/perl
 
+use strict;
+use warnings;
+
 use Statistics::R;
 
-use strict;
+my $command = lc( shift || '' );
 
-my $do;
-
-if    ( $ARGV[ 0 ] =~ /start/i ) { $do = 'start'; }
-elsif ( $ARGV[ 0 ] =~ /stop/i )  { $do = 'stop'; }
-
-if ( $do eq '' ) {
-
-    my ( $script ) = ( $0 =~ /([^\\\/]+)$/s );
-
-    print
-        qq`____________________________________________________________________
-
-Statistics::R - $Statistics::R::VERSION
-____________________________________________________________________
-
-USAGE:
-
-  $script start
-  $script stop
-
-(C) Copyright 2000-2004, Graciliano M. P. <gm\@virtuasites.com.br>
-____________________________________________________________________
-`;
-
-    exit;
-}
+usage() if !$command;
 
 my $R = Statistics::R->new();
 
-if ( $do eq 'start' ) {
+if ( $command eq 'start' ) {
     print ">> R - STARTING... ";
     if ( $R->start_sharedR ) {
-        print " OK\n";
+        print "OK\n";
         if ( $^O =~ /^(?:.*?win32|dos)$/i ) {
             print "[Press Ctrl+C to terminate].\n";
             while ( 1 ) { sleep( 10 ); }
@@ -53,9 +31,23 @@ if ( $do eq 'start' ) {
         die( "\n** Can't start R!" );
     }
 }
-elsif ( $do eq 'stop' ) {
+elsif ( $command eq 'stop' ) {
     $R->stopR();
 }
 
-exit;
+sub usage {
+    my ( $script ) = ( $0 =~ /([^\\\/]+)$/s );
 
+    print <<"EOUSAGE";
+Statistics::R - $Statistics::R::VERSION
+
+USAGE:
+
+  $script start
+  $script stop
+
+(C) Copyright 2000-2004, Graciliano M. P. <gm\@virtuasites.com.br>
+EOUSAGE
+
+    exit;
+}
