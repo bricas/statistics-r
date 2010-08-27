@@ -45,7 +45,7 @@
   
   use vars qw($VERSION $HOLD_PIPE_X) ;
   
-  $VERSION = 0.01 ;
+  $VERSION = 0.04 ;
   
   sub pipe { 
     my $CLASS_HPLOO ;

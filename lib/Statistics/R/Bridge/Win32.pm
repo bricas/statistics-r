@@ -47,7 +47,7 @@
 
   use vars qw($VERSION) ;
   
-  $VERSION = 0.01 ;
+  $VERSION = 0.04 ;
   
   sub Win32 { 
     my $CLASS_HPLOO ;
