@@ -13,6 +13,7 @@ WriteMakefile(
     AUTHOR        => 'Graciliano M. P. <gm@virtuasites.com.br>',
     ABSTRACT_FROM => 'lib/Statistics/R.pm',
     VERSION_FROM  => 'lib/Statistics/R.pm',
+    EXE_FILES     => [ qw(script/statistics-r.pl) ],
     (   eval { ExtUtils::MakeMaker->VERSION( 6.21 ) }
         ? ( LICENSE => 'perl' )
         : ()
