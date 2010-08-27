@@ -1,10 +1,9 @@
-use Test;
-BEGIN { plan tests => 10 }
+use strict;
+use warnings;
+
+use Test::More tests => 10;
 
 use Statistics::R;
-
-use strict;
-use warnings qw'all';
 
 {
 
