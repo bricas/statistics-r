@@ -184,7 +184,7 @@ This will permit the control of the the R (R-project) interpreter through Perl i
 
 You can for example, start only one instance of the R interpreter and have different Perl process accessing it.
 
-=head1 USAGE
+=head1 SYNOPSIS
 
   use Statistics::R ;
   
@@ -331,21 +331,25 @@ Note that in the example above the method I<stopR()> wasn't called, sine it will
 
 =head1 SEE ALSO
 
-L<Statistics::R::Bridge>.
+=over 4
 
-The R-project web site:
-L<http://www.r-project.org/>
+=item * L<Statistics::R::Bridge>
 
-Statistics:: modules for Perl:
-L<http://search.cpan.org/search?query=Statistics&mode=module>
+=item * The R-project web site: L<http://www.r-project.org/>
+
+=item * Statistics:: modules for Perl: L<http://search.cpan.org/search?query=Statistics&mode=module>
+
+=back
 
 =head1 AUTHOR
 
-Graciliano M. P. <gm@virtuasites.com.br>
+Graciliano M. P. E<lt>gm@virtuasites.com.brE<gt>
 
-I will appreciate any type of feedback (include your opinions and/or suggestions). ;-P
+=head1 MAINTAINER
 
-=head1 COPYRIGHT
+Brian Cassidy E<lt>bricas@cpan.orgE<gt>
+
+=head1 COPYRIGHT & LICENSE
 
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.
