@@ -1,6 +1,6 @@
 Revision history for Perl extension Statistics::R.
 
-0.04  2010-XX-XX
+0.04  2010-08-28
       - Basic code cleanup with the intention of doing major refactoring by-and-by
       - Fix the test suite
 
