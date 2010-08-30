@@ -38,7 +38,9 @@ sub error {
 }
 
 sub startR {
-    shift->{ BRIDGE }->start;
+    my $this = shift;
+    delete $this->{ BRIDGE }->{ START_SHARED };
+    $this->{ BRIDGE }->start;
 }
 
 sub start_sharedR {
@@ -46,7 +48,9 @@ sub start_sharedR {
 }
 
 sub stopR {
-    shift->{ BRIDGE }->stop;
+    my $this = shift;
+    delete $this->{ BRIDGE }->{ START_SHARED };
+    $this->{ BRIDGE }->stop;
 }
 
 sub restartR {
