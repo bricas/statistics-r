@@ -602,12 +602,52 @@ sub save_file_startR {
 
 sub find_file {
     my $this = shift;
-    Statistics::R::Bridge->find_file( @_ );
+
+    my @files
+        = ref( $_[ 0 ] ) eq 'ARRAY'
+        ? @{ shift( @_ ) }
+        : ( ref( $_[ 0 ] ) eq 'HASH' ? %{ shift( @_ ) } : shift( @_ ) );
+    my @path = @_;
+    @_ = ();
+
+    foreach my $path_i ( @path ) {
+        foreach my $files_i ( @files ) {
+            my $file = "$path_i/$files_i";
+            return $file if ( -e $file && -x $file );
+        }
+    }
 }
 
 sub cat_dir {
     my $this = shift;
-    Statistics::R::Bridge->cat_dir( @_ );
+
+    my ( $dir, $cut, $r, $f ) = @_;
+    $dir =~ s/\\/\//g;
+
+    my @files;
+
+    my @DIR = $dir;
+    foreach my $DIR ( @DIR ) {
+        my $DH;
+        opendir( $DH, $DIR );
+
+        while ( my $filename = readdir $DH ) {
+            if ( $filename ne "\." && $filename ne "\.\." ) {
+                my $file = "$DIR/$filename";
+                if ( $r && -d $file ) { push( @DIR, $file ); }
+                else {
+                    if ( !$f || !-d $file ) {
+                        $file =~ s/^\Q$dir\E\/?//s if $cut;
+                        push( @files, $file );
+                    }
+                }
+            }
+        }
+
+        closedir( $DH );
+    }
+
+    return ( @files );
 }
 
 sub error {
