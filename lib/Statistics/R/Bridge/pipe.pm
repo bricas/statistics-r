@@ -16,7 +16,7 @@ sub new {
     if( !defined $this ) {
         $this = bless( {}, $class );
 
-        my( $method  ) = $class =~ m{:([A-Za-z]+)$};
+        my $method = ( $^O =~ /^(?:.*?win32|dos)$/i ) ? 'Win32' : 'Linux';
         $this->$method( @_ );
 
         return unless $this->{ OS };
@@ -653,6 +653,148 @@ sub cat_dir {
 sub error {
     my $this = shift;
     Statistics::R->error( @_ );
+}
+
+sub Linux {
+    my( $this, %args ) = @_;
+
+    $this->{ R_BIN } = $args{ r_bin } || $args{ R_bin } || '';
+    $this->{ R_DIR } = $args{ r_dir } || $args{ R_dir } || '';
+    $this->{ TMP_DIR } = $args{ tmp_dir } || '';
+
+    if ( !-s $this->{ R_BIN } ) {
+        my @files = qw(R R-project Rproject);
+        ## my @path = (split(":" , $ENV{PATH} || $ENV{Path} || $ENV{path} ) , '/usr/lib/R/bin' , '/usr/lib/R/bin' ) ;
+        # CHANGE MADE BY CTBROWN 2008-06-16
+        # RESPONSE TO RT BUG#23948: bug in Statistics::R
+        my @path = (
+            split( ":", $ENV{ PATH } || $ENV{ Path } || $ENV{ path } ),
+            '/usr/lib/R/bin'
+        );
+
+        my $bin;
+        while ( !$bin && @files ) {
+            $bin = $this->find_file( shift( @files ), @path );
+        }
+
+        if ( !$bin ) {
+            my $path = `which R`;
+            $path =~ s/^\s+//s;
+            $path =~ s/\s+$//s;
+            if ( -e $path && -x $path ) { $bin = $path; }
+        }
+
+        $this->{ R_BIN } = $bin;
+    }
+
+    if ( !$this->{ R_DIR } && $this->{ R_BIN } ) {
+        ( $this->{ R_DIR } )
+            = ( $this->{ R_BIN } =~ /^(.*?)[\\\/]+[^\\\/]+$/s );
+        $this->{ R_DIR } =~ s/\/bin$//;
+    }
+
+    if ( !$this->{ TMP_DIR } ) {
+        foreach my $dir ( qw(/tmp /usr/local/tmp) ) {
+            if ( -d $dir ) { $this->{ TMP_DIR } = $dir; last; }
+        }
+    }
+
+    if ( !-s $this->{ R_BIN } ) {
+        $this->error( "Can'find R binary!" );
+        return undef;
+    }
+    if ( !-d $this->{ R_DIR } ) {
+        $this->error( "Can'find R directory!" );
+        return undef;
+    }
+
+    $this->{ START_CMD } = "$this->{R_BIN} --slave --vanilla ";
+
+    if ( !$args{ log_dir } ) {
+        $args{ log_dir } = "$this->{TMP_DIR}/Statistics-R";
+    }
+
+    $this->{ OS } = 'linux';
+
+    $this->pipe( %args );
+}
+
+sub Win32 {
+    my( $this, %args ) = @_;
+
+    $this->{ R_BIN } = $args{ r_bin } || $args{ R_bin };
+    $this->{ R_DIR } = $args{ r_dir } || $args{ R_dir };
+    $this->{ TMP_DIR } = $args{ tmp_dir };
+
+    if ( !-s $this->{ R_BIN } ) {
+        my $ver_dir = ( $this->cat_dir( "$ENV{ProgramFiles}/R" ) )[ 0 ];
+
+        my $bin = "$ver_dir/bin/Rterm.exe";
+        if ( !-e $bin || !-x $bin ) { $bin = undef; }
+
+        if ( !$bin ) {
+            my @dir = $this->cat_dir( "$ENV{ProgramFiles}/R", undef, 1, 1 );
+            foreach my $dir_i ( @dir ) {
+                if ( $dir_i =~ /\/Rterm\.exe$/ ) { $bin = $dir_i; last; }
+            }
+        }
+
+        if ( !$bin ) {
+            my @files = qw(Rterm.exe);
+            my @path  = (
+                split( ";", $ENV{ PATH } || $ENV{ Path } || $ENV{ path } ) );
+            $bin = $this->find_file( \@files, @path );
+        }
+
+        $this->{ R_BIN } = $bin;
+    }
+
+    if ( !$this->{ R_DIR } && $this->{ R_BIN } ) {
+        ( $this->{ R_DIR } )
+            = ( $this->{ R_BIN } =~ /^(.*?)[\\\/]+[^\\\/]+$/s );
+        $this->{ R_DIR } =~ s/\/bin$//;
+    }
+
+    if ( !$this->{ TMP_DIR } ) {
+        $this->{ TMP_DIR } = $ENV{ TMP } || $ENV{ TEMP };
+        if ( !$this->{ TMP_DIR } ) {
+            foreach
+                my $dir ( qw(c:/tmp c:/temp c:/windows/tmp c:/windows/temp) )
+            {
+                if ( -d $dir ) { $this->{ TMP_DIR } = $dir; last; }
+            }
+        }
+    }
+
+    if ( !-s $this->{ R_BIN } ) {
+        $this->error( "Can'find R binary!" );
+        return undef;
+    }
+    if ( !-d $this->{ R_DIR } ) {
+        $this->error( "Can'find R directory!" );
+        return undef;
+    }
+
+    $this->{ R_BIN }   =~ s/\//\\/g;
+    $this->{ R_DIR }   =~ s/\//\\/g;
+    $this->{ TMP_DIR } =~ s/[\/\\]+/\//g;
+
+    my $exec = $this->{ R_BIN };
+    $exec = "\"$exec\"" if $exec =~ /\s/;
+
+    $this->{ START_CMD } = "$exec --slave --vanilla";
+
+    if ( !$args{ log_dir } ) {
+
+# $args{log_dir} = "$this->{R_DIR}/Statistics-R" ;
+# Bug Fix by CTB:  Reponse to RT Bug #17956: Win32: log_dir is not in tmp_dir by default as advertised
+        $args{ log_dir } = "$this->{TMP_DIR}/Statistics-R";
+        $args{ log_dir } =~ s/\\+/\//gs;
+    }
+
+    $this->{ OS } = 'win32';
+
+    $this->pipe( %args );
 }
 
 sub DESTROY {

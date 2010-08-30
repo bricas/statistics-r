@@ -3,6 +3,8 @@ package Statistics::R::Bridge;
 use strict;
 use warnings;
 
+use Statistics::R::Bridge::pipe;
+
 our $VERSION = '0.04';
 
 my $this;
@@ -23,14 +25,7 @@ sub new {
 sub Bridge {
     my $this = shift;
 
-    if ( $^O =~ /^(?:.*?win32|dos)$/i ) {
-        require Statistics::R::Bridge::Win32;
-        $this->{ OS } = Statistics::R::Bridge::Win32->new( @_ );
-    }
-    else {
-        require Statistics::R::Bridge::Linux;
-        $this->{ OS } = Statistics::R::Bridge::Linux->new( @_ );
-    }
+    $this->{ OS } = Statistics::R::Bridge::pipe->new( @_ );
 
     return undef if !$this->{ OS };
 }
