@@ -85,21 +85,6 @@ sub Win32 {
     $this->pipe( %args );
 }
 
-sub find_file {
-    my $this = shift;
-    Statistics::R::Bridge->find_file( @_ );
-}
-
-sub cat_dir {
-    my $this = shift;
-    Statistics::R::Bridge->cat_dir( @_ );
-}
-
-sub error {
-    my $this = shift;
-    Statistics::R->error( @_ );
-}
-
 1;
 
 __END__
