@@ -30,11 +30,6 @@ sub Bridge {
     return undef if !$this->{ OS };
 }
 
-sub error {
-    my $this = shift;
-    Statistics::R->error( @_ );
-}
-
 sub start {
     my $this = shift;
     delete $this->{ OS }->{ START_SHARED };
