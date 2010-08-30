@@ -5,9 +5,16 @@ use Test::More tests => 10;
 
 use Statistics::R;
 
+my $R;
+my $warn = 0;
 {
+    local $SIG{ __WARN__ } = sub { $warn++; };
+    $R = Statistics::R->new();
+}
 
-    my $R = Statistics::R->new();
+SKIP: {
+    skip 'No R binary', 10 if $warn;
+
     ok( $R );
 
     ok( $R->startR );
@@ -32,5 +39,5 @@ use Statistics::R;
     ok( $ret =~ /^\[\d+\]\s+456\s*$/ );
 
     ok( $R->stopR() );
-
 }
+
