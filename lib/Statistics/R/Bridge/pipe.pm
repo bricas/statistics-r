@@ -1,45 +1,32 @@
 package Statistics::R::Bridge::pipe;
 
-use strict qw(vars);
-no warnings;
-
-my ( %CLASS_HPLOO, $this );
-
-sub new {
-    my $class = shift;
-    my $this  = bless( {}, $class );
-    my $undef = \'';
-    sub UNDEF { $undef }
-    my $ret_this = defined &pipe ? $this->pipe( @_ ) : undef;
-    $this = $ret_this if ( UNIVERSAL::isa( $ret_this, $class ) );
-    $this = undef if ( $ret_this == $undef );
-    if ( $this && $CLASS_HPLOO{ ATTR } ) {
-
-        foreach my $Key ( keys %{ $CLASS_HPLOO{ ATTR } } ) {
-            tie($this->{ $Key } => 'Class::HPLOO::TIESCALAR',
-                $CLASS_HPLOO{ ATTR }{ $Key }{ tp },
-                $CLASS_HPLOO{ ATTR }{ $Key }{ pr },
-                \$this->{ CLASS_HPLOO_ATTR }{ $Key }
-            ) if !exists $this->{ $Key };
-        }
-    }
-    return $this;
-}
+use strict;
+use warnings;
 
 use IO::Select;
 
-use vars qw($VERSION $HOLD_PIPE_X);
+our $VERSION = '0.04';
+our $HOLD_PIPE_X;
 
-$VERSION = 0.04;
+my $this;
+
+sub new {
+    my $class = shift;
+
+    if( !defined $this ) {
+        $this = bless( {}, $class );
+
+        my( $method  ) = $class =~ m{:([A-Za-z]+)$};
+        $this->$method( @_ );
+
+        return unless $this->{ OS };
+    }
+
+    return $this;
+}
 
 sub pipe {
-    my $CLASS_HPLOO;
-    $CLASS_HPLOO = $this if defined $this;
-    my $this = UNIVERSAL::isa( $_[ 0 ], 'UNIVERSAL' ) ? shift : $CLASS_HPLOO;
-    my $class = ref( $this ) || __PACKAGE__;
-    $CLASS_HPLOO = undef;
-    my %args = @_;
-    @_ = ();
+    my( $this, %args ) = @_;
 
     $this->{ LOG_DIR } = $args{ log_dir } || "$this->{TMP_DIR}/Statistics-R";
 
@@ -52,7 +39,7 @@ sub pipe {
         $this->error(
             "Can't read or write to the directory (LOG_DIR) $this->{LOG_DIR}"
         );
-        return UNDEF;
+        return undef;
     }
 
     $this->{ OUTPUT_DIR } = $args{ output_dir } || "$this->{LOG_DIR}/output";
@@ -65,7 +52,7 @@ sub pipe {
         $this->error(
             "Can't read or write to the directory (OUTPUT_DIR) $this->{OUTPUT_DIR}"
         );
-        return UNDEF;
+        return undef;
     }
 
     $this->{ START_R }    = "$this->{LOG_DIR}/start.r";
@@ -89,12 +76,7 @@ sub pipe {
 }
 
 sub send {
-    my $CLASS_HPLOO;
-    $CLASS_HPLOO = $this if defined $this;
-    my $this = UNIVERSAL::isa( $_[ 0 ], 'UNIVERSAL' ) ? shift : $CLASS_HPLOO;
-    my $class = ref( $this ) || __PACKAGE__;
-    $CLASS_HPLOO = undef;
-    my $cmd = shift( @_ );
+    my( $this, $cmd ) = @_;
 
     $cmd =~ s/\r\n?/\n/gs;
     $cmd .= "\n" if $cmd !~ /\n$/;
@@ -102,7 +84,7 @@ sub send {
 
     while ( $this->is_blocked ) { sleep( 1 ); }
 
-    my $n = $this->read_processR;
+    my $n = $this->read_processR || 0;
     $n = 1 if $n eq '0' || $n eq '';
 
     my $file = "$this->{LOG_DIR}/input.$n.r";
@@ -144,7 +126,7 @@ sub send {
             ++$xx;
             $delay = 0.5;
         }
-        if ( $xx > 5 ) { $status = undef; }    ## xx > 5 = x > 50
+        if ( $xx || 0 > 5 ) { $status = undef; }    ## xx > 5 = x > 50
     }
 
     if ( $has_quit && !$this->{ STOPING } ) { $this->stop( 1 ); }
@@ -153,21 +135,16 @@ sub send {
 }
 
 sub read {
-    my $CLASS_HPLOO;
-    $CLASS_HPLOO = $this if defined $this;
-    my $this = UNIVERSAL::isa( $_[ 0 ], 'UNIVERSAL' ) ? shift : $CLASS_HPLOO;
-    my $class = ref( $this ) || __PACKAGE__;
-    $CLASS_HPLOO = undef;
-    my $timeout = shift( @_ );
+    my( $this, $timeout ) = @_;
 
-    $timeout = -1 if $timeout eq '';
+    $timeout = -1 if !defined $timeout;
 
     open( my $fh, $this->{ OUTPUT_R } );
     binmode( $fh );
     seek( $fh, ( $this->{ OUTPUT_R_POS } || 0 ), 0 );
 
     my $time = time;
-    my ( $x, $data );
+    my ( $x, $data ) = ( 0, '' );
 
     while ( $x == 0 || ( time - $time ) <= $timeout ) {
         ++$x;
@@ -190,11 +167,7 @@ sub read {
 }
 
 sub clean_log_dir {
-    my $CLASS_HPLOO;
-    $CLASS_HPLOO = $this if defined $this;
-    my $this = UNIVERSAL::isa( $_[ 0 ], 'UNIVERSAL' ) ? shift : $CLASS_HPLOO;
-    my $class = ref( $this ) || __PACKAGE__;
-    $CLASS_HPLOO = undef;
+    my $this = shift;
 
     my @dir = $this->cat_dir( $this->{ LOG_DIR }, 0, 0, 1 );
     foreach my $dir_i ( @dir ) {
@@ -204,12 +177,7 @@ sub clean_log_dir {
 }
 
 sub is_started {
-    my $CLASS_HPLOO;
-    $CLASS_HPLOO = $this if defined $this;
-    my $this = UNIVERSAL::isa( $_[ 0 ], 'UNIVERSAL' ) ? shift : $CLASS_HPLOO;
-    my $class = ref( $this ) || __PACKAGE__;
-    $CLASS_HPLOO = undef;
-    my $can_auto_start = shift( @_ );
+    my( $this, $can_auto_start ) = @_;
 
     if ( $this->{ PID } ) {
         if ( kill( 0, $this->{ PID } ) <= 0 ) {
@@ -241,11 +209,7 @@ sub is_started {
 }
 
 sub lock {
-    my $CLASS_HPLOO;
-    $CLASS_HPLOO = $this if defined $this;
-    my $this = UNIVERSAL::isa( $_[ 0 ], 'UNIVERSAL' ) ? shift : $CLASS_HPLOO;
-    my $class = ref( $this ) || __PACKAGE__;
-    $CLASS_HPLOO = undef;
+    my $this = shift;
 
     while ( $this->is_blocked ) { select( undef, undef, undef, 0.5 ); }
 
@@ -259,11 +223,7 @@ sub lock {
 }
 
 sub unlock {
-    my $CLASS_HPLOO;
-    $CLASS_HPLOO = $this if defined $this;
-    my $this = UNIVERSAL::isa( $_[ 0 ], 'UNIVERSAL' ) ? shift : $CLASS_HPLOO;
-    my $class = ref( $this ) || __PACKAGE__;
-    $CLASS_HPLOO = undef;
+    my $this = shift;
 
     return if $this->is_blocked;
     unlink( $this->{ LOCK_R } );
@@ -271,11 +231,7 @@ sub unlock {
 }
 
 sub is_blocked {
-    my $CLASS_HPLOO;
-    $CLASS_HPLOO = $this if defined $this;
-    my $this = UNIVERSAL::isa( $_[ 0 ], 'UNIVERSAL' ) ? shift : $CLASS_HPLOO;
-    my $class = ref( $this ) || __PACKAGE__;
-    $CLASS_HPLOO = undef;
+    my $this = shift;
 
     return undef
         if ( $this->{ LOCK }
@@ -294,13 +250,9 @@ sub is_blocked {
 }
 
 sub update_pid {
-    my $CLASS_HPLOO;
-    $CLASS_HPLOO = $this if defined $this;
-    my $this = UNIVERSAL::isa( $_[ 0 ], 'UNIVERSAL' ) ? shift : $CLASS_HPLOO;
-    my $class = ref( $this ) || __PACKAGE__;
-    $CLASS_HPLOO = undef;
+    my $this = shift;
 
-    open( my $fh, $this->{ PID_R } );
+    open( my $fh, $this->{ PID_R } ) or return $this->{ PID };
     my $pid = join '', <$fh>;
     close( $fh );
     $pid =~ s/\s//gs;
@@ -309,11 +261,7 @@ sub update_pid {
 }
 
 sub chmod_all {
-    my $CLASS_HPLOO;
-    $CLASS_HPLOO = $this if defined $this;
-    my $this = UNIVERSAL::isa( $_[ 0 ], 'UNIVERSAL' ) ? shift : $CLASS_HPLOO;
-    my $class = ref( $this ) || __PACKAGE__;
-    $CLASS_HPLOO = undef;
+    my $this = shift;
 
     chmod( 0777,
         $this->{ LOG_DIR },
@@ -326,24 +274,23 @@ sub chmod_all {
 }
 
 sub start {
-    my $CLASS_HPLOO;
-    $CLASS_HPLOO = $this if defined $this;
-    my $this = UNIVERSAL::isa( $_[ 0 ], 'UNIVERSAL' ) ? shift : $CLASS_HPLOO;
-    my $class = ref( $this ) || __PACKAGE__;
-    $CLASS_HPLOO = undef;
+    my $this = shift;
 
     return if $this->is_started;
 
     $this->stop( undef, undef, 1 );
+
     $this->clean_log_dir;
 
     $this->save_file_startR;
 
-    open( my $fh, ">$this->{PID_R}" );
+    my $fh;
+
+    open( $fh, ">$this->{PID_R}" );
     close( $fh );
-    open( my $fh, ">$this->{OUTPUT_R}" );
+    open( $fh, ">$this->{OUTPUT_R}" );
     close( $fh );
-    open( my $fh, ">$this->{PROCESS_R}" );
+    open( $fh, ">$this->{PROCESS_R}" );
     close( $fh );
 
     $this->chmod_all;
@@ -357,7 +304,10 @@ sub start {
     $this->{ PIPE } = $read;
 
     $this->{ HOLD_PIPE_X } = ++$HOLD_PIPE_X;
-    *{ "HOLD_PIPE$HOLD_PIPE_X" } = $read;
+    {
+        no strict 'refs'; # squash more errors
+        *{ "HOLD_PIPE$HOLD_PIPE_X" } = $read;
+    }
 
     $this->{ PID } = $pid;
 
@@ -377,11 +327,7 @@ sub start {
 }
 
 sub wait_starting {
-    my $CLASS_HPLOO;
-    $CLASS_HPLOO = $this if defined $this;
-    my $this = UNIVERSAL::isa( $_[ 0 ], 'UNIVERSAL' ) ? shift : $CLASS_HPLOO;
-    my $class = ref( $this ) || __PACKAGE__;
-    $CLASS_HPLOO = undef;
+    my $this = shift;
 
     {
         my $c;
@@ -409,11 +355,7 @@ sub wait_starting {
 }
 
 sub wait_stoping {
-    my $CLASS_HPLOO;
-    $CLASS_HPLOO = $this if defined $this;
-    my $this = UNIVERSAL::isa( $_[ 0 ], 'UNIVERSAL' ) ? shift : $CLASS_HPLOO;
-    my $class = ref( $this ) || __PACKAGE__;
-    $CLASS_HPLOO = undef;
+    my $this = shift;
 
     my $c;
     while ( -e $this->{ STOPING_R } ) {
@@ -425,23 +367,14 @@ sub wait_stoping {
 }
 
 sub sleep_unsync {
-    my $CLASS_HPLOO;
-    $CLASS_HPLOO = $this if defined $this;
-    my $this = UNIVERSAL::isa( $_[ 0 ], 'UNIVERSAL' ) ? shift : $CLASS_HPLOO;
-    my $class = ref( $this ) || __PACKAGE__;
-    $CLASS_HPLOO = undef;
+    my $this = shift;
 
     my $n = "0." . int( rand( 100 ) );
     select( undef, undef, undef, $n );
 }
 
 sub start_shared {
-    my $CLASS_HPLOO;
-    $CLASS_HPLOO = $this if defined $this;
-    my $this = UNIVERSAL::isa( $_[ 0 ], 'UNIVERSAL' ) ? shift : $CLASS_HPLOO;
-    my $class = ref( $this ) || __PACKAGE__;
-    $CLASS_HPLOO = undef;
-    my $no_recall = shift( @_ );
+    my( $this, $no_recall ) = @_;
 
     return if $this->is_started;
     $this->{ START_SHARED } = 1;
@@ -497,11 +430,8 @@ sub start_shared {
 }
 
 sub stop {
-    my $CLASS_HPLOO;
-    $CLASS_HPLOO = $this if defined $this;
-    my $this = UNIVERSAL::isa( $_[ 0 ], 'UNIVERSAL' ) ? shift : $CLASS_HPLOO;
-    my $class = ref( $this ) || __PACKAGE__;
-    $CLASS_HPLOO = undef;
+    no warnings; # squash "Killed" warning for now
+    my $this = shift;
     my $no_send         = shift( @_ );
     my $not_started     = shift( @_ );
     my $no_stoping_file = shift( @_ );
@@ -532,7 +462,10 @@ sub stop {
         for ( 1 .. 3 ) { kill( 9, $pid ); }
     }
 
-    close( *{ 'HOLD_PIPE' . $this->{ HOLD_PIPE_X } } );
+    {
+        no strict 'refs'; # squash more errors
+        close( *{ 'HOLD_PIPE' . $this->{ HOLD_PIPE_X } } );
+    }
 
     delete $this->{ PIPE };
     delete $this->{ PID };
@@ -550,30 +483,22 @@ sub stop {
 }
 
 sub restart {
-    my $CLASS_HPLOO;
-    $CLASS_HPLOO = $this if defined $this;
-    my $this = UNIVERSAL::isa( $_[ 0 ], 'UNIVERSAL' ) ? shift : $CLASS_HPLOO;
-    my $class = ref( $this ) || __PACKAGE__;
-    $CLASS_HPLOO = undef;
+    my $this = shift;
 
     $this->stop;
     $this->start;
 }
 
 sub read_processR {
-    my $CLASS_HPLOO;
-    $CLASS_HPLOO = $this if defined $this;
-    my $this = UNIVERSAL::isa( $_[ 0 ], 'UNIVERSAL' ) ? shift : $CLASS_HPLOO;
-    my $class = ref( $this ) || __PACKAGE__;
-    $CLASS_HPLOO = undef;
+    my $this = shift;
 
-    my $s = -s $this->{ PROCESS_R };
+    my $s = -s $this->{ PROCESS_R } || 0;
 
-    open( my $fh, $this->{ PROCESS_R } );
+    open( my $fh, $this->{ PROCESS_R } ) || return;
     seek( $fh, ( $s - 100 ), 0 );
 
     my $data;
-    my $r = read( $fh, $data, 1000 );
+    my $r = CORE::read( $fh, $data, 1000 );
     close( $fh );
 
     return if !$r;
@@ -586,11 +511,7 @@ sub read_processR {
 }
 
 sub save_file_startR {
-    my $CLASS_HPLOO;
-    $CLASS_HPLOO = $this if defined $this;
-    my $this = UNIVERSAL::isa( $_[ 0 ], 'UNIVERSAL' ) ? shift : $CLASS_HPLOO;
-    my $class = ref( $this ) || __PACKAGE__;
-    $CLASS_HPLOO = undef;
+    my $this = shift;
 
     open( my $fh, ">$this->{START_R}" );
 
@@ -680,11 +601,7 @@ sub save_file_startR {
 }
 
 sub DESTROY {
-    my $CLASS_HPLOO;
-    $CLASS_HPLOO = $this if defined $this;
-    my $this = UNIVERSAL::isa( $_[ 0 ], 'UNIVERSAL' ) ? shift : $CLASS_HPLOO;
-    my $class = ref( $this ) || __PACKAGE__;
-    $CLASS_HPLOO = undef;
+    my $this = shift;
 
     $this->unlock;
     $this->stop if !$this->{ START_SHARED };

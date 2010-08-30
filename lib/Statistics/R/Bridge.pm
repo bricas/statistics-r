@@ -1,165 +1,98 @@
 package Statistics::R::Bridge;
 
-use strict qw(vars);
-no warnings;
+use strict;
+use warnings;
 
-my ( %CLASS_HPLOO, $this );
+our $VERSION = '0.04';
+
+my $this;
 
 sub new {
     my $class = shift;
-    my $this  = bless( {}, $class );
-    my $undef = \'';
-    sub UNDEF { $undef }
-    my $ret_this = defined &Bridge ? $this->Bridge( @_ ) : undef;
-    $this = $ret_this if ( UNIVERSAL::isa( $ret_this, $class ) );
-    $this = undef if ( $ret_this == $undef );
-    if ( $this && $CLASS_HPLOO{ ATTR } ) {
 
-        foreach my $Key ( keys %{ $CLASS_HPLOO{ ATTR } } ) {
-            tie($this->{ $Key } => 'Class::HPLOO::TIESCALAR',
-                $CLASS_HPLOO{ ATTR }{ $Key }{ tp },
-                $CLASS_HPLOO{ ATTR }{ $Key }{ pr },
-                \$this->{ CLASS_HPLOO_ATTR }{ $Key }
-            ) if !exists $this->{ $Key };
-        }
+    if( !defined $this ) {
+        $this = bless( {}, $class );
+        $this->Bridge( @_ );
+
+        return unless $this->{ OS };
     }
+
     return $this;
 }
 
-use vars qw($VERSION);
-
-$VERSION = 0.04;
-
 sub Bridge {
-    my $CLASS_HPLOO;
-    $CLASS_HPLOO = $this if defined $this;
-    my $this = UNIVERSAL::isa( $_[ 0 ], 'UNIVERSAL' ) ? shift : $CLASS_HPLOO;
-    my $class = ref( $this ) || __PACKAGE__;
-    $CLASS_HPLOO = undef;
-    my %args = @_;
-    @_ = ();
+    my $this = shift;
 
     if ( $^O =~ /^(?:.*?win32|dos)$/i ) {
         require Statistics::R::Bridge::Win32;
-        $this->{ OS } = Statistics::R::Bridge::Win32->new( %args );
+        $this->{ OS } = Statistics::R::Bridge::Win32->new( @_ );
     }
     else {
         require Statistics::R::Bridge::Linux;
-        $this->{ OS } = Statistics::R::Bridge::Linux->new( %args );
+        $this->{ OS } = Statistics::R::Bridge::Linux->new( @_ );
     }
 
-    return UNDEF if !$this->{ OS };
+    return undef if !$this->{ OS };
 }
 
 sub error {
-    my $CLASS_HPLOO;
-    $CLASS_HPLOO = $this if defined $this;
-    my $this = UNIVERSAL::isa( $_[ 0 ], 'UNIVERSAL' ) ? shift : $CLASS_HPLOO;
-    my $class = ref( $this ) || __PACKAGE__;
-    $CLASS_HPLOO = undef;
-    &Statistics::R::error;
+    my $this = shift;
+    Statistics::R->error( @_ );
 }
 
 sub start {
-    my $CLASS_HPLOO;
-    $CLASS_HPLOO = $this if defined $this;
-    my $this = UNIVERSAL::isa( $_[ 0 ], 'UNIVERSAL' ) ? shift : $CLASS_HPLOO;
-    my $class = ref( $this ) || __PACKAGE__;
-    $CLASS_HPLOO = undef;
-
+    my $this = shift;
     delete $this->{ OS }->{ START_SHARED };
+
     $this->{ OS }->start;
 }
 
 sub start_shared {
-    my $CLASS_HPLOO;
-    $CLASS_HPLOO = $this if defined $this;
-    my $this = UNIVERSAL::isa( $_[ 0 ], 'UNIVERSAL' ) ? shift : $CLASS_HPLOO;
-    my $class = ref( $this ) || __PACKAGE__;
-    $CLASS_HPLOO = undef;
-    $this->{ OS }->start_shared;
+    shift->{ OS }->start_shared;
 }
 
 sub stop {
-    my $CLASS_HPLOO;
-    $CLASS_HPLOO = $this if defined $this;
-    my $this = UNIVERSAL::isa( $_[ 0 ], 'UNIVERSAL' ) ? shift : $CLASS_HPLOO;
-    my $class = ref( $this ) || __PACKAGE__;
-    $CLASS_HPLOO = undef;
-
+    my $this = shift;
     delete $this->{ OS }->{ START_SHARED };
     $this->{ OS }->stop;
 }
 
 sub restart {
-    my $CLASS_HPLOO;
-    $CLASS_HPLOO = $this if defined $this;
-    my $this = UNIVERSAL::isa( $_[ 0 ], 'UNIVERSAL' ) ? shift : $CLASS_HPLOO;
-    my $class = ref( $this ) || __PACKAGE__;
-    $CLASS_HPLOO = undef;
-    $this->{ OS }->restart;
+    shift->{ OS }->restart;
 }
 
 sub bin {
-    my $CLASS_HPLOO;
-    $CLASS_HPLOO = $this if defined $this;
-    my $this = UNIVERSAL::isa( $_[ 0 ], 'UNIVERSAL' ) ? shift : $CLASS_HPLOO;
-    my $class = ref( $this ) || __PACKAGE__;
-    $CLASS_HPLOO = undef;
-    $this->{ OS }->{ R_BIN };
+    shift->{ OS }->{ R_BIN };
 }
 
 sub lock {
-    my $CLASS_HPLOO;
-    $CLASS_HPLOO = $this if defined $this;
-    my $this = UNIVERSAL::isa( $_[ 0 ], 'UNIVERSAL' ) ? shift : $CLASS_HPLOO;
-    my $class = ref( $this ) || __PACKAGE__;
-    $CLASS_HPLOO = undef;
+    my $this = shift;
     $this->{ OS }->lock( @_ );
 }
 
 sub unlock {
-    my $CLASS_HPLOO;
-    $CLASS_HPLOO = $this if defined $this;
-    my $this = UNIVERSAL::isa( $_[ 0 ], 'UNIVERSAL' ) ? shift : $CLASS_HPLOO;
-    my $class = ref( $this ) || __PACKAGE__;
-    $CLASS_HPLOO = undef;
+    my $this = shift;
     $this->{ OS }->unlock( @_ );
 }
 
 sub is_blocked {
-    my $CLASS_HPLOO;
-    $CLASS_HPLOO = $this if defined $this;
-    my $this = UNIVERSAL::isa( $_[ 0 ], 'UNIVERSAL' ) ? shift : $CLASS_HPLOO;
-    my $class = ref( $this ) || __PACKAGE__;
-    $CLASS_HPLOO = undef;
+    my $this = shift;
     $this->{ OS }->is_blocked( @_ );
 }
 
 sub send {
-    my $CLASS_HPLOO;
-    $CLASS_HPLOO = $this if defined $this;
-    my $this = UNIVERSAL::isa( $_[ 0 ], 'UNIVERSAL' ) ? shift : $CLASS_HPLOO;
-    my $class = ref( $this ) || __PACKAGE__;
-    $CLASS_HPLOO = undef;
+    my $this = shift;
     $this->{ OS }->send( @_ );
 }
 
 sub read {
-    my $CLASS_HPLOO;
-    $CLASS_HPLOO = $this if defined $this;
-    my $this = UNIVERSAL::isa( $_[ 0 ], 'UNIVERSAL' ) ? shift : $CLASS_HPLOO;
-    my $class = ref( $this ) || __PACKAGE__;
-    $CLASS_HPLOO = undef;
+    my $this = shift;
     $this->{ OS }->read( @_ );
 }
 
 sub find_file {
-    my $CLASS_HPLOO;
-    $CLASS_HPLOO = $this if defined $this;
-    my $this = UNIVERSAL::isa( $_[ 0 ], 'UNIVERSAL' ) ? shift : $CLASS_HPLOO;
-    my $class = ref( $this ) || __PACKAGE__;
-    $CLASS_HPLOO = undef;
+    my $this = shift;
+
     my @files
         = ref( $_[ 0 ] ) eq 'ARRAY'
         ? @{ shift( @_ ) }
@@ -176,11 +109,7 @@ sub find_file {
 }
 
 sub cat_dir {
-    my $CLASS_HPLOO;
-    $CLASS_HPLOO = $this if defined $this;
-    my $this = UNIVERSAL::isa( $_[ 0 ], 'UNIVERSAL' ) ? shift : $CLASS_HPLOO;
-    my $class = ref( $this ) || __PACKAGE__;
-    $CLASS_HPLOO = undef;
+    my $this = shift;
 
     my ( $dir, $cut, $r, $f ) = @_;
     $dir =~ s/\\/\//g;

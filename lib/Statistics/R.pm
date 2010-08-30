@@ -1,58 +1,34 @@
 package Statistics::R;
 
-use strict qw(vars);
+use strict;
 no warnings;
-
-my ( %CLASS_HPLOO, $this );
-
-sub new {
-    my $class = shift;
-    my $this  = bless( {}, $class );
-    my $undef = \'';
-    sub UNDEF { $undef }
-    my $ret_this = defined &R ? $this->R( @_ ) : undef;
-    $this = $ret_this if ( UNIVERSAL::isa( $ret_this, $class ) );
-    $this = undef if ( $ret_this == $undef );
-    if ( $this && $CLASS_HPLOO{ ATTR } ) {
-
-        foreach my $Key ( keys %{ $CLASS_HPLOO{ ATTR } } ) {
-            tie($this->{ $Key } => 'Class::HPLOO::TIESCALAR',
-                $CLASS_HPLOO{ ATTR }{ $Key }{ tp },
-                $CLASS_HPLOO{ ATTR }{ $Key }{ pr },
-                \$this->{ CLASS_HPLOO_ATTR }{ $Key }
-            ) if !exists $this->{ $Key };
-        }
-    }
-    return $this;
-}
 
 use Statistics::R::Bridge;
 
-use vars qw($VERSION);
+our $VERSION = '0.04';
 
-$VERSION = 0.04;
+my( $this, @ERROR );
 
-my @ERROR;
+sub new {
+    my $class = shift;
+
+    if( !defined $this ) {
+        $this  = bless( {}, $class );
+        $this->R;
+
+        return unless $this->{ BRIDGE };
+    }
+
+    return $this;
+}
 
 sub R {
-    my $CLASS_HPLOO;
-    $CLASS_HPLOO = $this if defined $this;
-    my $this = UNIVERSAL::isa( $_[ 0 ], 'UNIVERSAL' ) ? shift : $CLASS_HPLOO;
-    my $class = ref( $this ) || __PACKAGE__;
-    $CLASS_HPLOO = undef;
-    my %args = @_;
-    @_ = ();
-
-    $this->{ BRIDGE } = Statistics::R::Bridge->new( %args ) || return UNDEF;
+    my $this = shift;
+    $this->{ BRIDGE } = Statistics::R::Bridge->new( @_ );
 }
 
 sub error {
-    my $CLASS_HPLOO;
-    $CLASS_HPLOO = $this if defined $this;
-    my $this = UNIVERSAL::isa( $_[ 0 ], 'UNIVERSAL' ) ? shift : $CLASS_HPLOO;
-    my $class = ref( $this ) || __PACKAGE__;
-    $CLASS_HPLOO = undef;
-    my $error = shift( @_ );
+    my( $this, $error ) = @_;
 
     if ( $error ne '' ) { push( @ERROR, $error ); }
     splice( @ERROR, 0, ( $#ERROR - 10 ) ) if @ERROR > 10;
@@ -62,112 +38,57 @@ sub error {
 }
 
 sub startR {
-    my $CLASS_HPLOO;
-    $CLASS_HPLOO = $this if defined $this;
-    my $this = UNIVERSAL::isa( $_[ 0 ], 'UNIVERSAL' ) ? shift : $CLASS_HPLOO;
-    my $class = ref( $this ) || __PACKAGE__;
-    $CLASS_HPLOO = undef;
-    $this->{ BRIDGE }->start;
+    shift->{ BRIDGE }->start;
 }
 
 sub start_sharedR {
-    my $CLASS_HPLOO;
-    $CLASS_HPLOO = $this if defined $this;
-    my $this = UNIVERSAL::isa( $_[ 0 ], 'UNIVERSAL' ) ? shift : $CLASS_HPLOO;
-    my $class = ref( $this ) || __PACKAGE__;
-    $CLASS_HPLOO = undef;
-    $this->{ BRIDGE }->start_shared;
+    shift->{ BRIDGE }->start_shared;
 }
 
 sub stopR {
-    my $CLASS_HPLOO;
-    $CLASS_HPLOO = $this if defined $this;
-    my $this = UNIVERSAL::isa( $_[ 0 ], 'UNIVERSAL' ) ? shift : $CLASS_HPLOO;
-    my $class = ref( $this ) || __PACKAGE__;
-    $CLASS_HPLOO = undef;
-    $this->{ BRIDGE }->stop;
+    shift->{ BRIDGE }->stop;
 }
 
 sub restartR {
-    my $CLASS_HPLOO;
-    $CLASS_HPLOO = $this if defined $this;
-    my $this = UNIVERSAL::isa( $_[ 0 ], 'UNIVERSAL' ) ? shift : $CLASS_HPLOO;
-    my $class = ref( $this ) || __PACKAGE__;
-    $CLASS_HPLOO = undef;
-    $this->{ BRIDGE }->restart;
+    shift->{ BRIDGE }->restart;
 }
 
 sub Rbin {
-    my $CLASS_HPLOO;
-    $CLASS_HPLOO = $this if defined $this;
-    my $this = UNIVERSAL::isa( $_[ 0 ], 'UNIVERSAL' ) ? shift : $CLASS_HPLOO;
-    my $class = ref( $this ) || __PACKAGE__;
-    $CLASS_HPLOO = undef;
-    $this->{ BRIDGE }->bin;
+    shift->{ BRIDGE }->bin;
 }
 
 sub lock {
-    my $CLASS_HPLOO;
-    $CLASS_HPLOO = $this if defined $this;
-    my $this = UNIVERSAL::isa( $_[ 0 ], 'UNIVERSAL' ) ? shift : $CLASS_HPLOO;
-    my $class = ref( $this ) || __PACKAGE__;
-    $CLASS_HPLOO = undef;
+    my $this = shift;
     $this->{ BRIDGE }->lock( @_ );
 }
 
 sub unlock {
-    my $CLASS_HPLOO;
-    $CLASS_HPLOO = $this if defined $this;
-    my $this = UNIVERSAL::isa( $_[ 0 ], 'UNIVERSAL' ) ? shift : $CLASS_HPLOO;
-    my $class = ref( $this ) || __PACKAGE__;
-    $CLASS_HPLOO = undef;
-    $this->{ BRIDGE }->unlock( @_ );
+    my $this = shift;
+    shift->{ BRIDGE }->unlock( @_ );
 }
 
 sub is_blocked {
-    my $CLASS_HPLOO;
-    $CLASS_HPLOO = $this if defined $this;
-    my $this = UNIVERSAL::isa( $_[ 0 ], 'UNIVERSAL' ) ? shift : $CLASS_HPLOO;
-    my $class = ref( $this ) || __PACKAGE__;
-    $CLASS_HPLOO = undef;
+    my $this = shift;
     $this->{ BRIDGE }->is_blocked( @_ );
 }
 
 sub is_started {
-    my $CLASS_HPLOO;
-    $CLASS_HPLOO = $this if defined $this;
-    my $this = UNIVERSAL::isa( $_[ 0 ], 'UNIVERSAL' ) ? shift : $CLASS_HPLOO;
-    my $class = ref( $this ) || __PACKAGE__;
-    $CLASS_HPLOO = undef;
+    my $this = shift;
     $this->{ BRIDGE }->{ OS }->is_started;
 }
 
 sub send {
-    my $CLASS_HPLOO;
-    $CLASS_HPLOO = $this if defined $this;
-    my $this = UNIVERSAL::isa( $_[ 0 ], 'UNIVERSAL' ) ? shift : $CLASS_HPLOO;
-    my $class = ref( $this ) || __PACKAGE__;
-    $CLASS_HPLOO = undef;
+    my $this = shift;
     $this->{ BRIDGE }->send( @_ );
 }
 
 sub read {
-    my $CLASS_HPLOO;
-    $CLASS_HPLOO = $this if defined $this;
-    my $this = UNIVERSAL::isa( $_[ 0 ], 'UNIVERSAL' ) ? shift : $CLASS_HPLOO;
-    my $class = ref( $this ) || __PACKAGE__;
-    $CLASS_HPLOO = undef;
+    my $this = shift;
     $this->{ BRIDGE }->read( @_ );
 }
 
 sub clean_up {
-    my $CLASS_HPLOO;
-    $CLASS_HPLOO = $this if defined $this;
-    my $this = UNIVERSAL::isa( $_[ 0 ], 'UNIVERSAL' ) ? shift : $CLASS_HPLOO;
-    my $class = ref( $this ) || __PACKAGE__;
-    $CLASS_HPLOO = undef;
-
-    $this->send( 'rm(list = ls(all = TRUE))' );
+    shift->send( 'rm(list = ls(all = TRUE))' );
 }
 
 1;

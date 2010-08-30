@@ -1,52 +1,18 @@
 package Statistics::R::Bridge::Linux;
 
-use Statistics::R::Bridge::pipe;
+use strict;
+use warnings;
 
-use strict qw(vars);
-no warnings;
+use base 'Statistics::R::Bridge::pipe';
 
-use vars qw(@ISA);
-push( @ISA, qw(Statistics::R::Bridge::pipe UNIVERSAL) );
-
-my ( %CLASS_HPLOO, $this );
-
-sub new {
-    my $class = shift;
-    my $this  = bless( {}, $class );
-    my $undef = \'';
-    sub UNDEF { $undef }
-    my $ret_this = defined &Linux ? $this->Linux( @_ ) : undef;
-    $this = $ret_this if ( UNIVERSAL::isa( $ret_this, $class ) );
-    $this = undef if ( $ret_this == $undef );
-    if ( $this && $CLASS_HPLOO{ ATTR } ) {
-
-        foreach my $Key ( keys %{ $CLASS_HPLOO{ ATTR } } ) {
-            tie($this->{ $Key } => 'Class::HPLOO::TIESCALAR',
-                $CLASS_HPLOO{ ATTR }{ $Key }{ tp },
-                $CLASS_HPLOO{ ATTR }{ $Key }{ pr },
-                \$this->{ CLASS_HPLOO_ATTR }{ $Key }
-            ) if !exists $this->{ $Key };
-        }
-    }
-    return $this;
-}
-
-use vars qw($VERSION);
-
-$VERSION = 0.04;
+our $VERSION = '0.04';
 
 sub Linux {
-    my $CLASS_HPLOO;
-    $CLASS_HPLOO = $this if defined $this;
-    my $this = UNIVERSAL::isa( $_[ 0 ], 'UNIVERSAL' ) ? shift : $CLASS_HPLOO;
-    my $class = ref( $this ) || __PACKAGE__;
-    $CLASS_HPLOO = undef;
-    my %args = @_;
-    @_ = ();
+    my( $this, %args ) = @_;
 
-    $this->{ R_BIN } = $args{ r_bin } || $args{ R_bin };
-    $this->{ R_DIR } = $args{ r_dir } || $args{ R_dir };
-    $this->{ TMP_DIR } = $args{ tmp_dir };
+    $this->{ R_BIN } = $args{ r_bin } || $args{ R_bin } || '';
+    $this->{ R_DIR } = $args{ r_dir } || $args{ R_dir } || '';
+    $this->{ TMP_DIR } = $args{ tmp_dir } || '';
 
     if ( !-s $this->{ R_BIN } ) {
         my @files = qw(R R-project Rproject);
@@ -87,11 +53,11 @@ sub Linux {
 
     if ( !-s $this->{ R_BIN } ) {
         $this->error( "Can'find R binary!" );
-        return UNDEF;
+        return undef;
     }
     if ( !-d $this->{ R_DIR } ) {
         $this->error( "Can'find R directory!" );
-        return UNDEF;
+        return undef;
     }
 
     $this->{ START_CMD } = "$this->{R_BIN} --slave --vanilla ";
@@ -102,34 +68,22 @@ sub Linux {
 
     $this->{ OS } = 'linux';
 
-    $this->SUPER::pipe( %args );
+    $this->pipe( %args );
 }
 
 sub find_file {
-    my $CLASS_HPLOO;
-    $CLASS_HPLOO = $this if defined $this;
-    my $this = UNIVERSAL::isa( $_[ 0 ], 'UNIVERSAL' ) ? shift : $CLASS_HPLOO;
-    my $class = ref( $this ) || __PACKAGE__;
-    $CLASS_HPLOO = undef;
-    &Statistics::R::Bridge::find_file;
+    my $this = shift;
+    Statistics::R::Bridge->find_file( @_ );
 }
 
 sub cat_dir {
-    my $CLASS_HPLOO;
-    $CLASS_HPLOO = $this if defined $this;
-    my $this = UNIVERSAL::isa( $_[ 0 ], 'UNIVERSAL' ) ? shift : $CLASS_HPLOO;
-    my $class = ref( $this ) || __PACKAGE__;
-    $CLASS_HPLOO = undef;
-    &Statistics::R::Bridge::cat_dir;
+    my $this = shift;
+    Statistics::R::Bridge->cat_dir( @_ );
 }
 
 sub error {
-    my $CLASS_HPLOO;
-    $CLASS_HPLOO = $this if defined $this;
-    my $this = UNIVERSAL::isa( $_[ 0 ], 'UNIVERSAL' ) ? shift : $CLASS_HPLOO;
-    my $class = ref( $this ) || __PACKAGE__;
-    $CLASS_HPLOO = undef;
-    &Statistics::R::error;
+    my $this = shift;
+    Statistics::R->error( @_ );
 }
 
 1;
