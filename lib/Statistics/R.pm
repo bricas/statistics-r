@@ -1,7 +1,7 @@
 package Statistics::R;
 
 use strict;
-no warnings;
+use warnings;
 
 use Statistics::R::Bridge;
 
@@ -34,7 +34,7 @@ sub error {
     splice( @ERROR, 0, ( $#ERROR - 10 ) ) if @ERROR > 10;
     warn( $error );
     return @ERROR if wantarray;
-    return @ERROR[ -1 ];
+    return $ERROR[ -1 ];
 }
 
 sub startR {
