@@ -605,19 +605,14 @@ sub save_file_startR {
 }
 
 sub find_file {
-    my $this = shift;
+    my $this  = shift;
+    my @files = ref $_[ 0 ] ? @{ shift() } : shift;
+    my @paths = @_;
 
-    my @files
-        = ref( $_[ 0 ] ) eq 'ARRAY'
-        ? @{ shift( @_ ) }
-        : ( ref( $_[ 0 ] ) eq 'HASH' ? %{ shift( @_ ) } : shift( @_ ) );
-    my @path = @_;
-    @_ = ();
-
-    foreach my $path_i ( @path ) {
-        foreach my $files_i ( @files ) {
-            my $file = "$path_i/$files_i";
-            return $file if ( -e $file && -x $file );
+    for my $path ( @paths ) {
+        for my $file ( @files ) {
+            my $fn = "$path/$file";
+            return $fn if -e $fn && -x $fn;
         }
     }
 }
