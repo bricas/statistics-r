@@ -5,7 +5,7 @@ use warnings;
 
 use IO::Select;
 
-our $VERSION = '0.04';
+our $VERSION = '0.05';
 our $HOLD_PIPE_X;
 
 my $this;
