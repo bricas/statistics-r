@@ -183,33 +183,33 @@ sub clean_log_dir {
 sub is_started {
     my( $this, $can_auto_start ) = @_;
 
-    if ( $this->{ PID } ) {
-        if ( kill( 0, $this->{ PID } ) <= 0 ) {
-            $this->update_pid;
-            $this->stop( undef, 1 ) if ( kill( 0, $this->{ PID } ) <= 0 );
-            return 0;
-        }
-        elsif ( !-s $this->{ PID_R } ) {
-            $this->sleep_unsync;
+    return unless $this->{ PID };
 
-            if ( $can_auto_start ) {
-                $this->wait_stoping;
-                if ( -e $this->{ PID_R } ) { $this->wait_starting; }
-            }
-
-            if ( -s $this->{ PID_R } ) { $this->update_pid; }
-            elsif ( $can_auto_start ) {
-                open( my $fh, ">$this->{PID_R}" );
-                close( $fh );
-                chmod( 0777, $this->{ PID_R } );
-                $this->stop;
-                return $this->start_shared;
-            }
-            else { return; }
-        }
-        return 1;
+    if ( kill( 0, $this->{ PID } ) <= 0 ) {
+        $this->update_pid;
+        $this->stop( undef, 1 ) if ( kill( 0, $this->{ PID } ) <= 0 );
+        return 0;
     }
-    return undef;
+    elsif ( !-s $this->{ PID_R } ) {
+        $this->sleep_unsync;
+
+        if ( $can_auto_start ) {
+            $this->wait_stoping;
+            if ( -e $this->{ PID_R } ) { $this->wait_starting; }
+        }
+
+        if ( -s $this->{ PID_R } ) { $this->update_pid; }
+        elsif ( $can_auto_start ) {
+            open( my $fh, ">$this->{PID_R}" );
+            close( $fh );
+            chmod( 0777, $this->{ PID_R } );
+            $this->stop;
+            return $this->start_shared;
+        }
+        else { return; }
+    }
+
+    return 1;
 }
 
 sub lock {
@@ -631,15 +631,14 @@ sub cat_dir {
         opendir( $DH, $DIR );
 
         while ( my $filename = readdir $DH ) {
-            if ( $filename ne "\." && $filename ne "\.\." ) {
-                my $file = "$DIR/$filename";
-                if ( $r && -d $file ) { push( @DIR, $file ); }
-                else {
-                    if ( !$f || !-d $file ) {
-                        $file =~ s/^\Q$dir\E\/?//s if $cut;
-                        push( @files, $file );
-                    }
-                }
+            next if $filename eq '.' or $filename eq '..';
+            my $file = "$DIR/$filename";
+            if ( $r && -d $file ) {
+                push( @DIR, $file );
+            }
+            elsif ( !$f || !-d $file ) {
+                $file =~ s/^\Q$dir\E\/?//s if $cut;
+                push( @files, $file );
             }
         }
 
