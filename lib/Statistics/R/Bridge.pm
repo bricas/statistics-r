@@ -858,6 +858,8 @@ Return the last error message.
 
 =item * L<Statistics::R>
 
+=back 
+
 =head1 AUTHOR
 
 Graciliano M. P. E<lt>gm@virtuasites.com.brE<gt>
