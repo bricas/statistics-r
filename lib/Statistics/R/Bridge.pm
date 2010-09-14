@@ -798,6 +798,8 @@ sub Win32 {
 sub DESTROY {
     my $this = shift;
 
+    return unless $this->{ OS };
+
     $this->unlock;
     $this->stop if !$this->{ START_SHARED };
 }
