@@ -5,7 +5,7 @@ use warnings;
 
 use Statistics::R::Bridge;
 
-our $VERSION = '0.05';
+our $VERSION = '0.06';
 
 my( $this, @ERROR );
 
@@ -28,11 +28,16 @@ sub R {
 }
 
 sub error {
-    my( $this, $error ) = @_;
+    my $this = shift;
 
-    if ( $error ne '' ) { push( @ERROR, $error ); }
+    if( @_ ) {
+        my $e = shift;
+        push @ERROR, $e;
+        warn $e;
+    }
+
     splice( @ERROR, 0, ( $#ERROR - 10 ) ) if @ERROR > 10;
-    warn( $error );
+
     return @ERROR if wantarray;
     return $ERROR[ -1 ];
 }
