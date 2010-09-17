@@ -508,7 +508,7 @@ sub read_processR {
     return if !$r;
 
     my ( $n ) = ( $data =~ /(\d+)\s*$/gi );
-    $n = 1 if $n eq '';
+    $n = 1 unless $n;
 
     return ( $n, $data ) if wantarray;
     return $n;
