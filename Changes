@@ -1,5 +1,10 @@
 Revision history for Perl extension Statistics::R.
 
+0.07  2010-11-08
+    - Tidy up SYNOPSIS (RT #62776)
+    - Fix undef warning on Win32 (RT #62776)
+    - Fix is_started() method (RT #62776)
+
 0.06  2010-09-17
     - Fix error() when used as an accessor (RT #61335)
     - Silence DESTROY() when R is not found

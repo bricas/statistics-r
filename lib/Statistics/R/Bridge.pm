@@ -5,7 +5,7 @@ use warnings;
 
 use IO::Select;
 
-our $VERSION = '0.06';
+our $VERSION = '0.07';
 our $HOLD_PIPE_X;
 
 my $this;
@@ -720,9 +720,9 @@ sub Linux {
 sub Win32 {
     my( $this, %args ) = @_;
 
-    $this->{ R_BIN } = $args{ r_bin } || $args{ R_bin };
-    $this->{ R_DIR } = $args{ r_dir } || $args{ R_dir };
-    $this->{ TMP_DIR } = $args{ tmp_dir };
+    $this->{ R_BIN } = $args{ r_bin } || $args{ R_bin } || '';
+    $this->{ R_DIR } = $args{ r_dir } || $args{ R_dir } || '';
+    $this->{ TMP_DIR } = $args{ tmp_dir } || '';
 
     if ( !-s $this->{ R_BIN } ) {
         my $ver_dir = ( $this->cat_dir( "$ENV{ProgramFiles}/R" ) )[ 0 ];

@@ -5,7 +5,7 @@ use warnings;
 
 use Statistics::R::Bridge;
 
-our $VERSION = '0.06';
+our $VERSION = '0.07';
 
 my( $this, @ERROR );
 
@@ -83,7 +83,7 @@ sub is_blocked {
 
 sub is_started {
     my $this = shift;
-    $this->{ BRIDGE }->{ OS }->is_started;
+    $this->{ BRIDGE }->is_started;
 }
 
 sub send {
@@ -116,19 +116,20 @@ You can for example, start only one instance of the R interpreter and have diffe
 
 =head1 SYNOPSIS
 
-  use Statistics::R ;
+  use Statistics::R;
   
-  my $R = Statistics::R->new() ;
+  my $R = Statistics::R->new();
   
-  $R->startR ;
+  $R->startR;
   
-  $R->send(q`postscript("file.ps" , horizontal=FALSE , width=500 , height=500 , pointsize=1)`) ;
-  $R->send(q`plot(c(1, 5, 10), type = "l")`) ;
-  
-  $R->send(qq`x = 123 \n print(x)`) ;
-  my $ret = $R->read ;
-  
-  $R->stopR() ;
+  $R->send(q`postscript("file.ps" , horizontal=FALSE , width=500 , height=500 , pointsize=1)`);
+  $R->send(q`plot(c(1, 5, 10), type = "l")`);
+  $R->send(q`dev.off()`);
+  $R->send(qq`x = 123 \n print(x)`);
+  my $ret = $R->read;
+
+  print "\$ret : $ret\n";  
+  $R->stopR();
 
 =head1 NEW
 
@@ -247,13 +248,13 @@ To start the I<Statistics::R> bridge you can use the script I<statistics-r.pl>:
 
 From your script you need to use the I<start_sharedR()> option:
 
-  use Statistics::R ;
+  use Statistics::R;
   
-  my $R = Statistics::R->new() ;
+  my $R = Statistics::R->new();
   
-  $R->start_sharedR ;
+  $R->start_sharedR;
   
-  $R->send('x = 123') ;
+  $R->send('x = 123');
   
   exit;
 
