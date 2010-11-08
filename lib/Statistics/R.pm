@@ -126,9 +126,10 @@ You can for example, start only one instance of the R interpreter and have diffe
   $R->send(q`plot(c(1, 5, 10), type = "l")`);
   $R->send(q`dev.off()`);
   $R->send(qq`x = 123 \n print(x)`);
-  my $ret = $R->read;
 
-  print "\$ret : $ret\n";  
+  my $ret = $R->read;
+  print "\$ret : $ret\n";
+
   $R->stopR();
 
 =head1 NEW
