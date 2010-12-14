@@ -1,5 +1,8 @@
 Revision history for Perl extension Statistics::R.
 
+0.08  TO BE RELEASED
+    - Pass options in new() to Statistics::R::Bridge constructor (RT #63906)
+
 0.07  2010-11-08
     - Tidy up SYNOPSIS (RT #62776)
     - Fix undef warning on Win32 (RT #62776)

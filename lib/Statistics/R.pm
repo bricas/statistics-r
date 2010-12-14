@@ -5,7 +5,7 @@ use warnings;
 
 use Statistics::R::Bridge;
 
-our $VERSION = '0.07';
+our $VERSION = '0.08';
 
 my( $this, @ERROR );
 
@@ -14,7 +14,7 @@ sub new {
 
     if( !defined $this ) {
         $this  = bless( {}, $class );
-        $this->R;
+        $this->R( @_ );
 
         return unless $this->{ BRIDGE };
     }
