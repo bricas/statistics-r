@@ -1,6 +1,6 @@
 Revision history for Perl extension Statistics::R.
 
-0.08  TO BE RELEASED
+0.08  2011-03-01
     - Pass options in new() to Statistics::R::Bridge constructor (RT #63906)
 
 0.07  2010-11-08
