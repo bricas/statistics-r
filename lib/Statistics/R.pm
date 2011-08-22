@@ -111,6 +111,12 @@ sub clean_up {
 }
 
 
+sub error {
+    # For backward compatibility
+    return '';
+}
+
+
 1;
 
 __END__

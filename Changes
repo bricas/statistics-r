@@ -1,9 +1,9 @@
 Revision history for Perl extension Statistics::R.
 
 x.xx 
+    - Replaced the error() method by a dummy. Errors are now fatal are die() right away
     - Added a load test
     - Added a run() method that replaces send() and read() and checks for errors
-    - Removed the error() method. Errors are now fatal are die() right away
     - Removed the undocumented R() method
     - POD work
     - Version number in sync between Statistics::R and Statistics::R::Bridge
