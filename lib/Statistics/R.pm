@@ -22,13 +22,13 @@ sub new {
 
 
 sub run {
-   # Run a command in R, read the command output and return it, or die if there
-   # was an error
+   # Send a command to R, receive its output and return it, or die if there was
+   # an error
    my ($this, $cmd) = @_;
-   # Execute command
+   # Send command
    $this->send($cmd);
-   # Read command output
-   my $output = $this->read();
+   # Receive command output
+   my $output = $this->receive();
    # Check for errors
    if ($output =~ m/^<.*>$/) {
       my $msg = "Error: There was a problem running the R command\n".
@@ -41,38 +41,38 @@ sub run {
 }
 
 
-*startR = \&start;
 sub start {
     my $this = shift;
     delete $this->{ BRIDGE }->{ START_SHARED };
     $this->{ BRIDGE }->start;
 }
+*startR = \&start;
 
 
-*start_sharedR = \&start_shared;
 sub start_shared {
     shift->{ BRIDGE }->start_shared;
 }
+*start_sharedR = \&start_shared;
 
 
-*stopR = \&stop;
 sub stop {
     my $this = shift;
     delete $this->{ BRIDGE }->{ START_SHARED };
     $this->{ BRIDGE }->stop;
 }
+*stopR = \&stop;
 
 
-*restartR = \&restart;
 sub restart {
     shift->{ BRIDGE }->restart;
 }
+*restartR = \&restart;
 
 
-*Rbin = \&bin;
 sub bin {
     shift->{ BRIDGE }->bin;
 }
+*Rbin = \&bin;
 
 
 sub lock {
@@ -105,10 +105,11 @@ sub send {
 }
 
 
-sub read {
+sub receive {
     my $this = shift;
     $this->{ BRIDGE }->read( @_ );
 }
+*read = \&receive;
 
 
 sub clean_up {
@@ -212,9 +213,9 @@ Return the path to the R binary (executable).
 
 Send some command to be executed inside R. Note that I<$CMD> will be loaded by R with I<source()>
 
-=item read($TIMEOUT)
+=item receive($TIMEOUT)
 
-Read the output of R for the last group of commands sent to R by I<send()>.
+Get the output of R for the last group of commands sent to R by I<send()>.
 
 =item lock()
 

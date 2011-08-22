@@ -5,7 +5,7 @@ use warnings;
 use Test::More;
 use Statistics::R;
 
-plan tests => 7;
+plan tests => 9;
 
 
 my $R;
@@ -20,7 +20,9 @@ SKIP: {
 
     ok $R;
 
-    ok $R->startR;
+    ok $R->start();
+
+    ok $R->bin() =~ /\S+/;
 
     is $R->run(
             q`postscript("file.ps" , horizontal=FALSE , width=500 , height=500 , pointsize=1)`
@@ -30,7 +32,8 @@ SKIP: {
 
     ok $R->run( qq`x = 123 \n print(x)` ) =~ /^\[\d+\]\s+123\s*$/;
 
-    ok $R->run( qq`x = 456 \n print(x)` ) =~ /^\[\d+\]\s+456\s*$/;
+    ok $R->send( qq`x = 456 \n print(x)` );
+    ok $R->receive() =~ /^\[\d+\]\s+456\s*$/;
 
     ok $R->stopR();
 }

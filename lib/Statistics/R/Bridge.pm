@@ -127,7 +127,7 @@ sub send {
 }
 
 
-sub read {
+sub receive {
     my( $this, $timeout ) = @_;
 
     $timeout = -1 if !defined $timeout;
@@ -158,6 +158,7 @@ sub read {
     return @lines if wantarray;
     return join( "\n", @lines );
 }
+*read = \&receive;
 
 
 sub clean_log_dir {

@@ -2,7 +2,9 @@ Revision history for Perl extension Statistics::R.
 
 x.xx 
     - More tests: start/stop
-    - Aliased a few functions for consistency
+    - Aliased a few functions for consistency:
+         startR -> start, stopR -> stop, restartR -> restart, Rbin -> bin,
+         start_sharedR -> start_shared, read -> receive
     - Replaced the error() method by a dummy. Errors are now fatal are die() right away
     - Added a load test
     - Added a run() method that replaces send() and read() and checks for errors (RT #70361)
