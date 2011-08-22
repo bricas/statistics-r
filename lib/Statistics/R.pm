@@ -5,7 +5,7 @@ use warnings;
 
 use Statistics::R::Bridge;
 
-our $VERSION = '0.08';
+our $VERSION = $Statistics::R::Bridge::VERSION;
 
 my( $this, @ERROR );
 
