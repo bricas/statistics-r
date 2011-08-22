@@ -1,6 +1,7 @@
 Revision history for Perl extension Statistics::R.
 
 x.xx
+    - Removed the R() method
     - POD work
     - Version number in sync between Statistics::R and Statistics::R::Bridge
     - More portable filenames (RT #70391)

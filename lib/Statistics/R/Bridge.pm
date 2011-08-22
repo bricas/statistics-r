@@ -646,8 +646,8 @@ sub error {
 sub Linux {
     my( $this, %args ) = @_;
 
-    $this->{ R_BIN } = $args{ r_bin } || $args{ R_bin } || '';
-    $this->{ R_DIR } = $args{ r_dir } || $args{ R_dir } || '';
+    $this->{ R_BIN }   = $args{ r_bin }   || $args{ R_bin } || '';
+    $this->{ R_DIR }   = $args{ r_dir }   || $args{ R_dir } || '';
     $this->{ TMP_DIR } = $args{ tmp_dir } || '';
 
     if ( !-s $this->{ R_BIN } ) {
@@ -710,8 +710,8 @@ sub Linux {
 sub Win32 {
     my( $this, %args ) = @_;
 
-    $this->{ R_BIN } = $args{ r_bin } || $args{ R_bin } || '';
-    $this->{ R_DIR } = $args{ r_dir } || $args{ R_dir } || '';
+    $this->{ R_BIN }   = $args{ r_bin }   || $args{ R_bin } || '';
+    $this->{ R_DIR }   = $args{ r_dir }   || $args{ R_dir } || '';
     $this->{ TMP_DIR } = $args{ tmp_dir } || '';
 
     if ( !-s $this->{ R_BIN } ) {
@@ -755,11 +755,11 @@ sub Win32 {
     }
 
     if ( !-s $this->{ R_BIN } ) {
-        $this->error( "Can'find R binary!" );
+        $this->error( "Can't find R binary!" );
         return undef;
     }
     if ( !-d $this->{ R_DIR } ) {
-        $this->error( "Can'find R directory!" );
+        $this->error( "Can't find R directory!" );
         return undef;
     }
 

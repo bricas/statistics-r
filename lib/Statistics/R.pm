@@ -8,12 +8,13 @@ our $VERSION = $Statistics::R::Bridge::VERSION;
 
 my( $this, @ERROR );
 
+
 sub new {
     my $class = shift;
 
     if( !defined $this ) {
         $this  = bless( {}, $class );
-        $this->R( @_ );
+        $this->{ BRIDGE } = Statistics::R::Bridge->new( @_ );
 
         return unless $this->{ BRIDGE };
     }
@@ -21,10 +22,6 @@ sub new {
     return $this;
 }
 
-sub R {
-    my $this = shift;
-    $this->{ BRIDGE } = Statistics::R::Bridge->new( @_ );
-}
 
 sub error {
     my $this = shift;
@@ -41,15 +38,18 @@ sub error {
     return $ERROR[ -1 ];
 }
 
+
 sub startR {
     my $this = shift;
     delete $this->{ BRIDGE }->{ START_SHARED };
     $this->{ BRIDGE }->start;
 }
 
+
 sub start_sharedR {
     shift->{ BRIDGE }->start_shared;
 }
+
 
 sub stopR {
     my $this = shift;
@@ -57,47 +57,57 @@ sub stopR {
     $this->{ BRIDGE }->stop;
 }
 
+
 sub restartR {
     shift->{ BRIDGE }->restart;
 }
 
+
 sub Rbin {
     shift->{ BRIDGE }->bin;
 }
+
 
 sub lock {
     my $this = shift;
     $this->{ BRIDGE }->lock( @_ );
 }
 
+
 sub unlock {
     my $this = shift;
     shift->{ BRIDGE }->unlock( @_ );
 }
+
 
 sub is_blocked {
     my $this = shift;
     $this->{ BRIDGE }->is_blocked( @_ );
 }
 
+
 sub is_started {
     my $this = shift;
     $this->{ BRIDGE }->is_started;
 }
+
 
 sub send {
     my $this = shift;
     $this->{ BRIDGE }->send( @_ );
 }
 
+
 sub read {
     my $this = shift;
     $this->{ BRIDGE }->read( @_ );
 }
 
+
 sub clean_up {
     shift->send( 'rm(list = ls(all = TRUE))' );
 }
+
 
 1;
 
