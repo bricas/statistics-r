@@ -810,11 +810,12 @@ __END__
 
 =head1 NAME
 
-Statistics::R::Bridge - Implements a communication bridge between Perl and R (R-project).
+Statistics::R::Bridge - Implements a communication bridge between Perl and R.
 
 =head1 DESCRIPTION
 
-This will implements a communication bridge between Perl and R (R-project) in different architectures and OS.
+This will implements a communication bridge between Perl and R (R project for statistical computing:
+L<http://www.r-project.org/>) in different architectures and OS.
 
 =head1 USAGE
 
@@ -866,9 +867,11 @@ Return the last error message.
 
 Graciliano M. P. E<lt>gm@virtuasites.com.brE<gt>
 
-=head1 MAINTAINER
+=head1 MAINTAINERS
 
 Brian Cassidy E<lt>bricas@cpan.orgE<gt>
+
+Florent Angly E<lt>florent.angly@gmail.comE<gt>
 
 =head1 COPYRIGHT & LICENSE
 

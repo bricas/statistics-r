@@ -106,13 +106,13 @@ __END__
 
 =head1 NAME
 
-Statistics::R - Controls the R (R-project) interpreter through Perl.
+Statistics::R - Controls the R interpreter through Perl.
 
 =head1 DESCRIPTION
 
-This will permit the control of the the R (R-project) interpreter through Perl in different architectures and OS.
-
-You can for example, start only one instance of the R interpreter and have different Perl process accessing it.
+This module controls the R interpreter (R project for statistical computing:
+L<http://www.r-project.org/>). Multiple architectures and OS are supported and 
+a single instance of R can be accessed by several Perl processes.
 
 =head1 SYNOPSIS
 
@@ -134,7 +134,7 @@ You can for example, start only one instance of the R interpreter and have diffe
 
 =head1 NEW
 
-When creating the R bridje object (Statistics::R), you can set some options:
+When creating the R bridge object (Statistics::R), you can set some options:
 
 =over 4
 
@@ -142,9 +142,10 @@ When creating the R bridje object (Statistics::R), you can set some options:
 
 The directory where the bridge between R and Perl will be created.
 
-B<R and Perl need to have read and write access to the directory!>
+B<R and Perl need to have read and write access to the directory and Perl will
+ change to this directory!>
 
-I<By dafault it will be created at I<%TMP_DIR%/Statistics-R>.>
+I<By default it will be created at I<%TMP_DIR%/Statistics-R>.>
 
 =item r_bin
 
@@ -170,7 +171,7 @@ I<By default the temporary directory of the OS will be used/searched.>
 
 =item startR
 
-Start R and the communication bridge.
+Start R and set the communication bridge between Perl and R.
 
 =item start_sharedR
 
@@ -178,7 +179,7 @@ Start R or use an already running communication bridge.
 
 =item stopR
 
-Stop R and the bridge.
+Stop R and stop the bridge.
 
 =item restartR
 
@@ -216,7 +217,7 @@ Return I<TRUE> if the R interpreter is started, or still started.
 
 =item clean_up
 
-Clean up the enverioment, removing all the objects.
+Clean up the environment, removing all the objects.
 
 =item error
 
@@ -226,9 +227,9 @@ Return the last error message.
 
 =head1 INSTALL
 
-To install this package you need to install R in your OS first, since I<Statistics::R> need to find R path to work fine.
+To install this package you need to install R in your OS first, since I<Statistics::R> need to find R path to work.
 
-A standart installation of R on Win32 and Linux will work fine and detected automatically by I<Statistics::R>.
+A standard installation of R on Win32 or Linux will work fine and be detected automatically by I<Statistics::R>.
 
 Download page of R:
 L<http://cran.r-project.org/banner.shtml>
@@ -236,14 +237,14 @@ L<http://cran.r-project.org/banner.shtml>
 Or go to the R web site:
 L<http://www.r-project.org/>
 
-=head1 EXECUTION FOR MULTIPLE PROCESS
+=head1 EXECUTION FOR MULTIPLE PROCESSES
 
-The main pourpose of I<Statistics::R> is to start a single R interpreter that hear
-multiple Perl process.
+The main purpose of I<Statistics::R> is to start a single R interpreter that
+listens to multiple Perl processes.
 
 Note that to do that R and Perl need to be running with the same user/group level.
 
-To start the I<Statistics::R> bridge you can use the script I<statistics-r.pl>:
+To start the I<Statistics::R> bridge, you can use the script I<statistics-r.pl>:
 
   $> statistics-r.pl start
 
@@ -259,7 +260,8 @@ From your script you need to use the I<start_sharedR()> option:
   
   exit;
 
-Note that in the example above the method I<stopR()> wasn't called, sine it will close the bridge.
+Note that in the example above the method I<stopR()> wasn't called, since it will
+close the bridge.
 
 =head1 SEE ALSO
 
@@ -277,9 +279,11 @@ Note that in the example above the method I<stopR()> wasn't called, sine it will
 
 Graciliano M. P. E<lt>gm@virtuasites.com.brE<gt>
 
-=head1 MAINTAINER
+=head1 MAINTAINERS
 
 Brian Cassidy E<lt>bricas@cpan.orgE<gt>
+
+Florent Angly E<lt>florent.angly@gmail.comE<gt>
 
 =head1 COPYRIGHT & LICENSE
 
