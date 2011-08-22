@@ -1,6 +1,8 @@
 Revision history for Perl extension Statistics::R.
 
 x.xx
+    - More portable filename (RT #70391)
+    - Typo fixes
     - Improved readme generation in Makefile.PL
     - Git and bug tracker URL information
 

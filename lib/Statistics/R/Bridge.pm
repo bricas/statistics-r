@@ -2,8 +2,8 @@ package Statistics::R::Bridge;
 
 use strict;
 use warnings;
-
 use IO::Select;
+use File::Spec::Functions;
 
 our $VERSION = '0.07';
 our $HOLD_PIPE_X;
@@ -28,7 +28,7 @@ sub new {
 sub pipe {
     my( $this, %args ) = @_;
 
-    $this->{ LOG_DIR } = $args{ log_dir } || "$this->{TMP_DIR}/Statistics-R";
+    $this->{ LOG_DIR } = $args{ log_dir } || catfile($this->{TMP_DIR}, 'Statistics-R');
 
     if ( !-e $this->{ LOG_DIR } ) { mkdir( $this->{ LOG_DIR }, 0777 ); }
 
@@ -37,12 +37,12 @@ sub pipe {
         || !-w $this->{ LOG_DIR } )
     {
         $this->error(
-            "Can't read or write to the directory (LOG_DIR) $this->{LOG_DIR}"
+            "Can't read or write to the directory (LOG_DIR) ".$this->{LOG_DIR}."\n"
         );
         return undef;
     }
 
-    $this->{ OUTPUT_DIR } = $args{ output_dir } || "$this->{LOG_DIR}/output";
+    $this->{ OUTPUT_DIR } = $args{ output_dir } || catfile($this->{LOG_DIR}, 'output');
 
     if ( !-d $this->{ OUTPUT_DIR } || !-e $this->{ OUTPUT_DIR } ) {
         mkdir( $this->{ OUTPUT_DIR }, 0777 );
@@ -50,28 +50,18 @@ sub pipe {
 
     if ( !-r $this->{ OUTPUT_DIR } || !-w $this->{ OUTPUT_DIR } ) {
         $this->error(
-            "Can't read or write to the directory (OUTPUT_DIR) $this->{OUTPUT_DIR}"
+            "Can't read or write to the directory (OUTPUT_DIR) ".$this->{OUTPUT_DIR}."\n"
         );
         return undef;
     }
 
-    $this->{ START_R }    = "$this->{LOG_DIR}/start.r";
-    $this->{ OUTPUT_R }   = "$this->{LOG_DIR}/output.log";
-    $this->{ PROCESS_R }  = "$this->{LOG_DIR}/process.log";
-    $this->{ PID_R }      = "$this->{LOG_DIR}/R.pid";
-    $this->{ LOCK_R }     = "$this->{LOG_DIR}/lock.pid";
-    $this->{ STARTING_R } = "$this->{LOG_DIR}/R.starting";
-    $this->{ STOPING_R }  = "$this->{LOG_DIR}/R.stoping";
-
-    if ( $this->{ OS } eq 'win32' ) {
-        $this->{ START_R }    =~ s/\//\\/g;
-        $this->{ OUTPUT_R }   =~ s/\//\\/g;
-        $this->{ PROCESS_R }  =~ s/\//\\/g;
-        $this->{ PID_R }      =~ s/\//\\/g;
-        $this->{ LOCK_R }     =~ s/\//\\/g;
-        $this->{ STARTING_R } =~ s/\//\\/g;
-        $this->{ STOPING_R }  =~ s/\//\\/g;
-    }
+    $this->{ START_R }    = catfile($this->{LOG_DIR}, 'start.r');
+    $this->{ OUTPUT_R }   = catfile($this->{LOG_DIR}, 'output.log');
+    $this->{ PROCESS_R }  = catfile($this->{LOG_DIR}, 'process.log');
+    $this->{ PID_R }      = catfile($this->{LOG_DIR}, 'R.pid');
+    $this->{ LOCK_R }     = catfile($this->{LOG_DIR}, 'lock.pid');
+    $this->{ STARTING_R } = catfile($this->{LOG_DIR}, 'R.starting');
+    $this->{ STOPING_R }  = catfile($this->{LOG_DIR}, 'R.stoping');
 
 }
 
@@ -91,11 +81,11 @@ sub send {
     my $n = $this->read_processR || 0;
     $n = 1 if $n eq '0' || $n eq '';
 
-    my $file = "$this->{LOG_DIR}/input.$n.r";
+    my $file = catfile( $this->{LOG_DIR}, "input.$n.r" );
 
     while ( -e $file || -e "$file._" ) {
         ++$n;
-        $file = "$this->{LOG_DIR}/input.$n.r";
+        $file = catfile( $this->{LOG_DIR}, "input.$n.r" );
     }
 
     open( my $fh, ">$file._" );
@@ -290,18 +280,18 @@ sub start {
 
     my $fh;
 
-    open( $fh, ">$this->{PID_R}" );
-    close( $fh );
-    open( $fh, ">$this->{OUTPUT_R}" );
-    close( $fh );
-    open( $fh, ">$this->{PROCESS_R}" );
-    close( $fh );
+    open $fh, '>', $this->{PID_R};
+    close $fh;
+    open $fh, '>', $this->{OUTPUT_R};
+    close $fh;
+    open $fh, '>', $this->{PROCESS_R};
+    close $fh;
 
     $this->chmod_all;
 
     my $cmd = "$this->{START_CMD} <start.r >output.log";
 
-    chdir( "$this->{LOG_DIR}" );
+    chdir $this->{LOG_DIR};
     my $pid = open( my $read, "| $cmd" );
     return if !$pid;
 
@@ -611,7 +601,7 @@ sub find_file {
 
     for my $path ( @paths ) {
         for my $file ( @files ) {
-            my $fn = "$path/$file";
+            my $fn = catfile( $path, $file);
             return $fn if -e $fn && -x $fn;
         }
     }
@@ -698,18 +688,18 @@ sub Linux {
     }
 
     if ( !-s $this->{ R_BIN } ) {
-        $this->error( "Can'find R binary!" );
+        $this->error( "Can't find the R binary!" );
         return undef;
     }
     if ( !-d $this->{ R_DIR } ) {
-        $this->error( "Can'find R directory!" );
+        $this->error( "Can't find the R directory!" );
         return undef;
     }
 
     $this->{ START_CMD } = "$this->{R_BIN} --slave --vanilla ";
 
     if ( !$args{ log_dir } ) {
-        $args{ log_dir } = "$this->{TMP_DIR}/Statistics-R";
+        $args{ log_dir } = catfile( $this->{TMP_DIR}, 'Statistics-R');
     }
 
     $this->{ OS } = 'linux';
@@ -786,7 +776,7 @@ sub Win32 {
 
 # $args{log_dir} = "$this->{R_DIR}/Statistics-R" ;
 # Bug Fix by CTB:  Reponse to RT Bug #17956: Win32: log_dir is not in tmp_dir by default as advertised
-        $args{ log_dir } = "$this->{TMP_DIR}/Statistics-R";
+        $args{ log_dir } = catfile( $this->{TMP_DIR}, 'Statistics-R');
         $args{ log_dir } =~ s/\\+/\//gs;
     }
 
