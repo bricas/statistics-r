@@ -10,6 +10,7 @@ our $HOLD_PIPE_X;
 
 my $this;
 
+
 sub new {
     my $class = shift;
 
@@ -25,6 +26,7 @@ sub new {
     return $this;
 }
 
+
 sub pipe {
     my( $this, %args ) = @_;
 
@@ -36,10 +38,7 @@ sub pipe {
         || !-r $this->{ LOG_DIR }
         || !-w $this->{ LOG_DIR } )
     {
-        $this->error(
-            "Can't read or write to the directory (LOG_DIR) ".$this->{LOG_DIR}."\n"
-        );
-        return undef;
+        die "Error: Could not read or write the LOG_DIR directory ".$this->{LOG_DIR}."\n"
     }
 
     $this->{ OUTPUT_DIR } = $args{ output_dir } || catfile($this->{LOG_DIR}, 'output');
@@ -49,10 +48,7 @@ sub pipe {
     }
 
     if ( !-r $this->{ OUTPUT_DIR } || !-w $this->{ OUTPUT_DIR } ) {
-        $this->error(
-            "Can't read or write to the directory (OUTPUT_DIR) ".$this->{OUTPUT_DIR}."\n"
-        );
-        return undef;
+        die "Error: Could not read or write the OUTPUT_DIR directory ".$this->{OUTPUT_DIR}."\n"
     }
 
     $this->{ START_R }    = catfile($this->{LOG_DIR}, 'start.r');
@@ -65,9 +61,11 @@ sub pipe {
 
 }
 
+
 sub bin {
     shift->{ R_BIN };
 }
+
 
 sub send {
     my( $this, $cmd ) = @_;
@@ -128,6 +126,7 @@ sub send {
     return $status;
 }
 
+
 sub read {
     my( $this, $timeout ) = @_;
 
@@ -160,6 +159,7 @@ sub read {
     return join( "\n", @lines );
 }
 
+
 sub clean_log_dir {
     my $this = shift;
 
@@ -169,6 +169,7 @@ sub clean_log_dir {
         unlink $dir_i if $dir_i !~ /R\.(?:starting|stoping)$/;
     }
 }
+
 
 sub is_started {
     my( $this, $can_auto_start ) = @_;
@@ -202,6 +203,7 @@ sub is_started {
     return 1;
 }
 
+
 sub lock {
     my $this = shift;
 
@@ -216,6 +218,7 @@ sub lock {
     $this->{ LOCK } = 1;
 }
 
+
 sub unlock {
     my $this = shift;
 
@@ -223,6 +226,7 @@ sub unlock {
     unlink( $this->{ LOCK_R } );
     return 1;
 }
+
 
 sub is_blocked {
     my $this = shift;
@@ -243,6 +247,7 @@ sub is_blocked {
     return 1;
 }
 
+
 sub update_pid {
     my $this = shift;
 
@@ -253,6 +258,7 @@ sub update_pid {
     return $this->{ PID } if $pid eq '';
     $this->{ PID } = $pid;
 }
+
 
 sub chmod_all {
     my $this = shift;
@@ -266,6 +272,7 @@ sub chmod_all {
         $this->{ LOCK_R },
         $this->{ PID_R } );
 }
+
 
 sub start {
     my $this = shift;
@@ -348,6 +355,7 @@ sub wait_starting {
     return;
 }
 
+
 sub wait_stoping {
     my $this = shift;
 
@@ -360,12 +368,14 @@ sub wait_stoping {
     return 1;
 }
 
+
 sub sleep_unsync {
     my $this = shift;
 
     my $n = "0." . int( rand( 100 ) );
     select( undef, undef, undef, $n );
 }
+
 
 sub start_shared {
     my( $this, $no_recall ) = @_;
@@ -423,6 +433,7 @@ sub start_shared {
     return $stat;
 }
 
+
 sub stop {
     no warnings; # squash "Killed" warning for now
     my $this = shift;
@@ -476,12 +487,14 @@ sub stop {
     return 1;
 }
 
+
 sub restart {
     my $this = shift;
 
     $this->stop;
     $this->start;
 }
+
 
 sub read_processR {
     my $this = shift;
@@ -503,6 +516,7 @@ sub read_processR {
     return ( $n, $data ) if wantarray;
     return $n;
 }
+
 
 sub save_file_startR {
     my $this = shift;
@@ -594,6 +608,7 @@ sub save_file_startR {
     chmod( 0777, $this->{ START_R } );
 }
 
+
 sub find_file {
     my $this  = shift;
     my @files = ref $_[ 0 ] ? @{ shift() } : shift;
@@ -606,6 +621,7 @@ sub find_file {
         }
     }
 }
+
 
 sub cat_dir {
     my $this = shift;
@@ -638,10 +654,6 @@ sub cat_dir {
     return ( @files );
 }
 
-sub error {
-    my $this = shift;
-    Statistics::R->error( @_ );
-}
 
 sub Linux {
     my( $this, %args ) = @_;
@@ -688,12 +700,10 @@ sub Linux {
     }
 
     if ( !-s $this->{ R_BIN } ) {
-        $this->error( "Can't find the R binary!" );
-        return undef;
+        die "Error: Could not find the R binary!\n";
     }
     if ( !-d $this->{ R_DIR } ) {
-        $this->error( "Can't find the R directory!" );
-        return undef;
+        die "Error: Could not find the R directory!\n";
     }
 
     $this->{ START_CMD } = "$this->{R_BIN} --slave --vanilla ";
@@ -706,6 +716,7 @@ sub Linux {
 
     $this->pipe( %args );
 }
+
 
 sub Win32 {
     my( $this, %args ) = @_;
@@ -755,12 +766,10 @@ sub Win32 {
     }
 
     if ( !-s $this->{ R_BIN } ) {
-        $this->error( "Can't find R binary!" );
-        return undef;
+        die "Error: Could not find the R binary!\n";
     }
     if ( !-d $this->{ R_DIR } ) {
-        $this->error( "Can't find R directory!" );
-        return undef;
+        die "Error: Could not find the R directory!\n";
     }
 
     $this->{ R_BIN }   =~ s/\//\\/g;
@@ -774,8 +783,8 @@ sub Win32 {
 
     if ( !$args{ log_dir } ) {
 
-# $args{log_dir} = "$this->{R_DIR}/Statistics-R" ;
-# Bug Fix by CTB:  Reponse to RT Bug #17956: Win32: log_dir is not in tmp_dir by default as advertised
+        # $args{log_dir} = "$this->{R_DIR}/Statistics-R" ;
+        # Bug Fix by CTB:  Reponse to RT Bug #17956: Win32: log_dir is not in tmp_dir by default as advertised
         $args{ log_dir } = catfile( $this->{TMP_DIR}, 'Statistics-R');
         $args{ log_dir } =~ s/\\+/\//gs;
     }
@@ -785,6 +794,7 @@ sub Win32 {
     $this->pipe( %args );
 }
 
+
 sub DESTROY {
     my $this = shift;
 
@@ -793,6 +803,7 @@ sub DESTROY {
     $this->unlock;
     $this->stop if !$this->{ START_SHARED };
 }
+
 
 1;
 

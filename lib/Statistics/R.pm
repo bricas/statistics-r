@@ -6,7 +6,7 @@ use Statistics::R::Bridge;
 
 our $VERSION = $Statistics::R::Bridge::VERSION;
 
-my( $this, @ERROR );
+my $this;
 
 
 sub new {
@@ -20,22 +20,6 @@ sub new {
     }
 
     return $this;
-}
-
-
-sub error {
-    my $this = shift;
-
-    if( @_ ) {
-        my $e = shift;
-        push @ERROR, $e;
-        warn $e;
-    }
-
-    splice( @ERROR, 0, ( $#ERROR - 10 ) ) if @ERROR > 10;
-
-    return @ERROR if wantarray;
-    return $ERROR[ -1 ];
 }
 
 
@@ -227,10 +211,6 @@ Return I<TRUE> if the R interpreter is started, or still started.
 =item clean_up()
 
 Clean up the environment, removing all the objects.
-
-=item error()
-
-Return the last error message.
 
 =back
 

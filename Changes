@@ -1,6 +1,7 @@
 Revision history for Perl extension Statistics::R.
 
-x.xx
+x.xx 
+    - Removed the error() method. Errors are fatal are die() right away
     - Removed the R() method
     - POD work
     - Version number in sync between Statistics::R and Statistics::R::Bridge
