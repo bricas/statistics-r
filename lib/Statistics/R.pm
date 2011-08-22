@@ -290,5 +290,16 @@ Florent Angly E<lt>florent.angly@gmail.comE<gt>
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.
 
-=cut
+=head1 BUGS
 
+All complex software has bugs lurking in it, and this program is no exception.
+If you find a bug, please report it on the CPAN Tracker of Statistics::R:
+L<http://rt.cpan.org/Dist/Display.html?Name=Statistics-R>
+
+Bug reports, suggestions and patches are welcome. The Statistics::R code is
+developed on Github (L<http://github.com/bricas/statistics-r>) and is under Git
+revision control. To get the latest revision, run:
+
+   git clone git@github.com:bricas/statistics-r.git
+
+=cut

@@ -2,6 +2,7 @@ Revision history for Perl extension Statistics::R.
 
 x.xx
     - Improved readme generation in Makefile.PL
+    - Git and bug tracker URL information
 
 0.08  2011-03-01
     - Pass options in new() to Statistics::R::Bridge constructor (RT #63906)
