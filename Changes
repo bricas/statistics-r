@@ -1,6 +1,7 @@
 Revision history for Perl extension Statistics::R.
 
 x.xx 
+    - More tests: start/stop
     - Aliased a few functions for consistency
     - Replaced the error() method by a dummy. Errors are now fatal are die() right away
     - Added a load test
