@@ -41,7 +41,7 @@ sub run {
 }
 
 
-*start = \&start;
+*startR = \&start;
 sub start {
     my $this = shift;
     delete $this->{ BRIDGE }->{ START_SHARED };
@@ -63,7 +63,7 @@ sub stop {
 }
 
 
-*restart = \&restart;
+*restartR = \&restart;
 sub restart {
     shift->{ BRIDGE }->restart;
 }
