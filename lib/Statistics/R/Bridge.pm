@@ -289,7 +289,7 @@ sub start {
 
     $this->chmod_all;
 
-    my $cmd = "$this->{START_CMD} <start.r >output.log";
+    my $cmd = $this->{START_CMD}." <start.r >output.log";
 
     chdir $this->{LOG_DIR};
     my $pid = open( my $read, "| $cmd" );
@@ -804,80 +804,10 @@ Statistics::R::Bridge - Implements a communication bridge between Perl and R.
 
 =head1 DESCRIPTION
 
-This will implements a communication bridge between Perl and R (R project for statistical computing:
-L<http://www.r-project.org/>) in different architectures and OS.
-
-=head1 USAGE
+This will implements a communication bridge between Perl and R (R project for
+statistical computing: L<http://www.r-project.org/>) in different architectures
+and OS.
 
 B<You shouldn't use this directly. See L<Statistics::R> for usage.>
-
-=head1 METHODS
-
-=over 4
-
-=item start
-
-Start R and the bridge.
-
-=item stop
-
-Stop R and the bridge.
-
-=item restart
-
-stop() and start() R.
-
-=item bin
-
-Return the path to the R binary (executable).
-
-=item send ($CMD)
-
-Send some command to be executed inside R. Note that I<$CMD> will be loaded by R with I<source()>
-
-=item read ($TIMEOUT)
-
-Read the output of R for the last group of commands sent to R by I<send()>.
-
-=item error
-
-Return the last error message.
-
-=back
-
-=head1 SEE ALSO
-
-=over 4 
-
-=item * L<Statistics::R>
-
-=back 
-
-=head1 AUTHOR
-
-Graciliano M. P. E<lt>gm@virtuasites.com.brE<gt>
-
-=head1 MAINTAINERS
-
-Brian Cassidy E<lt>bricas@cpan.orgE<gt>
-
-Florent Angly E<lt>florent.angly@gmail.comE<gt>
-
-=head1 COPYRIGHT & LICENSE
-
-This program is free software; you can redistribute it and/or
-modify it under the same terms as Perl itself.
-
-=head1 BUGS
-
-All complex software has bugs lurking in it, and this program is no exception.
-If you find a bug, please report it on the CPAN Tracker of Statistics::R:
-L<http://rt.cpan.org/Dist/Display.html?Name=Statistics-R>
-
-Bug reports, suggestions and patches are welcome. The Statistics::R code is
-developed on Github (L<http://github.com/bricas/statistics-r>) and is under Git
-revision control. To get the latest revision, run:
-
-   git clone git@github.com:bricas/statistics-r.git
 
 =cut

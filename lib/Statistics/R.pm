@@ -2,7 +2,6 @@ package Statistics::R;
 
 use strict;
 use warnings;
-
 use Statistics::R::Bridge;
 
 our $VERSION = $Statistics::R::Bridge::VERSION;
@@ -132,9 +131,13 @@ a single instance of R can be accessed by several Perl processes.
 
   $R->stopR();
 
-=head1 NEW
+=head1 METHODS
 
-When creating the R bridge object (Statistics::R), you can set some options:
+=over 4
+
+=item new()
+
+Create a Statistics::R bridge object between Perl and R. Available options are:
 
 =over 4
 
@@ -161,65 +164,61 @@ The directory of R.
 
 A temporary directory.
 
-I<By default the temporary directory of the OS will be used/searched.>
+I<By default the temporary directory of the OS will be used>
 
 =back
 
-=head1 METHODS
-
-=over 4
-
-=item startR
+=item startR()
 
 Start R and set the communication bridge between Perl and R.
 
-=item start_sharedR
+=item start_sharedR()
 
 Start R or use an already running communication bridge.
 
-=item stopR
+=item stopR()
 
 Stop R and stop the bridge.
 
-=item restartR
+=item restartR()
 
 stop() and start() R.
 
-=item Rbin
+=item Rbin()
 
 Return the path to the R binary (executable).
 
-=item send ($CMD)
+=item send($CMD)
 
 Send some command to be executed inside R. Note that I<$CMD> will be loaded by R with I<source()>
 
-=item read ($TIMEOUT)
+=item read($TIMEOUT)
 
 Read the output of R for the last group of commands sent to R by I<send()>.
 
-=item lock
+=item lock()
 
 Lock the bridge for your PID.
 
-=item unlock
+=item unlock()
 
 Unlock the bridge if your PID have locked it.
 
-=item is_blocked
+=item is_blocked()
 
 Return I<TRUE> if the bridge is blocked for your PID.
 
 In other words, returns I<TRUE> if other process has I<lock()ed> the bridge.
 
-=item is_started
+=item is_started()
 
 Return I<TRUE> if the R interpreter is started, or still started.
 
-=item clean_up
+=item clean_up()
 
 Clean up the environment, removing all the objects.
 
-=item error
+=item error()
 
 Return the last error message.
 
@@ -227,7 +226,7 @@ Return the last error message.
 
 =head1 INSTALL
 
-To install this package you need to install R in your OS first, since I<Statistics::R> need to find R path to work.
+To install this package you need to install R on your system first, since I<Statistics::R> need to find R path to work.
 
 A standard installation of R on Win32 or Linux will work fine and be detected automatically by I<Statistics::R>.
 
