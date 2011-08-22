@@ -41,31 +41,36 @@ sub run {
 }
 
 
-sub startR {
+*start = \&start;
+sub start {
     my $this = shift;
     delete $this->{ BRIDGE }->{ START_SHARED };
     $this->{ BRIDGE }->start;
 }
 
 
-sub start_sharedR {
+*start_sharedR = \&start_shared;
+sub start_shared {
     shift->{ BRIDGE }->start_shared;
 }
 
 
-sub stopR {
+*stopR = \&stop;
+sub stop {
     my $this = shift;
     delete $this->{ BRIDGE }->{ START_SHARED };
     $this->{ BRIDGE }->stop;
 }
 
 
-sub restartR {
+*restart = \&restart;
+sub restart {
     shift->{ BRIDGE }->restart;
 }
 
 
-sub Rbin {
+*Rbin = \&bin;
+sub bin {
     shift->{ BRIDGE }->bin;
 }
 
@@ -137,14 +142,14 @@ a single instance of R can be accessed by several Perl processes.
   
   my $R = Statistics::R->new();
 
-  $R->startR;
+  $R->start;
   
   $R->run(q`postscript("file.ps" , horizontal=FALSE , width=500 , height=500 , pointsize=1)`);
   $R->run(q`plot(c(1, 5, 10), type = "l")`);
   $R->run(q`dev.off()`);
   my $ret = $R->run(qq`x = 123 \n print(x)`);
 
-  $R->stopR();
+  $R->stop();
 
 =head1 METHODS
 
@@ -183,23 +188,23 @@ I<By default the temporary directory of the OS will be used>
 
 =back
 
-=item startR()
+=item start()
 
 Start R and set the communication bridge between Perl and R.
 
-=item start_sharedR()
+=item start_shared()
 
 Start R or use an already running communication bridge.
 
-=item stopR()
+=item stop()
 
 Stop R and stop the bridge.
 
-=item restartR()
+=item restart()
 
 stop() and start() R.
 
-=item Rbin()
+=item bin()
 
 Return the path to the R binary (executable).
 
@@ -258,19 +263,19 @@ To start the I<Statistics::R> bridge, you can use the script I<statistics-r.pl>:
 
   $> statistics-r.pl start
 
-From your script you need to use the I<start_sharedR()> option:
+From your script you need to use the I<start_shared()> option:
 
   use Statistics::R;
   
   my $R = Statistics::R->new();
   
-  $R->start_sharedR;
+  $R->start_shared;
   
   $R->send('x = 123');
   
   exit;
 
-Note that in the example above the method I<stopR()> wasn't called, since it will
+Note that in the example above the method I<stop()> wasn't called, since it will
 close the bridge.
 
 =head1 SEE ALSO

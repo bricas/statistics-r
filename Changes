@@ -1,6 +1,7 @@
 Revision history for Perl extension Statistics::R.
 
 x.xx 
+    - Aliased a few functions for consistency
     - Replaced the error() method by a dummy. Errors are now fatal are die() right away
     - Added a load test
     - Added a run() method that replaces send() and read() and checks for errors
