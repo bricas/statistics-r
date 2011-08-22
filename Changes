@@ -1,6 +1,7 @@
 Revision history for Perl extension Statistics::R.
 
 x.xx 
+    - More illustrative synopsis
     - More tests: start/stop
     - Aliased a few functions for consistency:
          startR -> start, stopR -> stop, restartR -> restart, Rbin -> bin,

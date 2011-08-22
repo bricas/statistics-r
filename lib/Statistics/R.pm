@@ -145,10 +145,18 @@ a single instance of R can be accessed by several Perl processes.
 
   $R->start;
   
+  my @input_array  = (1, 5, 10);
+  my $input_string = join ', ', @input_array;
+
   $R->run(q`postscript("file.ps" , horizontal=FALSE , width=500 , height=500 , pointsize=1)`);
-  $R->run(q`plot(c(1, 5, 10), type = "l")`);
+  # Note the use of q`` to pass a string as-is
+
+  $R->run(qq`plot(c($input_string), type = "l")`);
+  # Note the use of qq`` to interpolate the $input_string variable
+
   $R->run(q`dev.off()`);
-  my $ret = $R->run(qq`x = 123 \n print(x)`);
+
+  my $output_string = $R->run(qq`x = 123 \n print(x)`);
 
   $R->stop();
 
