@@ -15,11 +15,29 @@ sub new {
     if( !defined $this ) {
         $this  = bless( {}, $class );
         $this->{ BRIDGE } = Statistics::R::Bridge->new( @_ );
-
-        return unless $this->{ BRIDGE };
     }
 
     return $this;
+}
+
+
+sub run {
+   # Run a command in R, read the command output and return it, or die if there
+   # was an error
+   my ($this, $cmd) = @_;
+   # Execute command
+   $this->send($cmd);
+   # Read command output
+   my $output = $this->read();
+   # Check for errors
+   if ($output =~ m/^<.*>$/) {
+      my $msg = "Error: There was a problem running the R command\n".
+                "   $cmd\n".
+                "Reason\n".
+                "   $output\n";
+      die $msg;
+   }
+   return $output;
 }
 
 
@@ -112,16 +130,13 @@ a single instance of R can be accessed by several Perl processes.
   use Statistics::R;
   
   my $R = Statistics::R->new();
-  
+
   $R->startR;
   
-  $R->send(q`postscript("file.ps" , horizontal=FALSE , width=500 , height=500 , pointsize=1)`);
-  $R->send(q`plot(c(1, 5, 10), type = "l")`);
-  $R->send(q`dev.off()`);
-  $R->send(qq`x = 123 \n print(x)`);
-
-  my $ret = $R->read;
-  print "\$ret : $ret\n";
+  $R->run(q`postscript("file.ps" , horizontal=FALSE , width=500 , height=500 , pointsize=1)`);
+  $R->run(q`plot(c(1, 5, 10), type = "l")`);
+  $R->run(q`dev.off()`);
+  my $ret = $R->run(qq`x = 123 \n print(x)`);
 
   $R->stopR();
 

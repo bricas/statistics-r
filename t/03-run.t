@@ -5,7 +5,7 @@ use warnings;
 use Test::More;
 use Statistics::R;
 
-plan tests => 10;
+plan tests => 7;
 
 
 my $R;
@@ -22,23 +22,15 @@ SKIP: {
 
     ok $R->startR;
 
-    ok $R->Rbin;
-
-    ok $R->send(
+    is $R->run(
             q`postscript("file.ps" , horizontal=FALSE , width=500 , height=500 , pointsize=1)`
-        );
+        ), '';
 
-    ok $R->send( q`plot(c(1, 5, 10), type = "l")` );
+    is $R->run( q`plot(c(1, 5, 10), type = "l")` ), '';
 
-    ok $R->send( qq`x = 123 \n print(x)` );
+    ok $R->run( qq`x = 123 \n print(x)` ) =~ /^\[\d+\]\s+123\s*$/;
 
-    my $ret = $R->read;
-    ok $ret =~ /^\[\d+\]\s+123\s*$/;
-
-    ok $R->send( qq`x = 456 \n print(x)` );
-
-    $ret = $R->read;
-    ok $ret =~ /^\[\d+\]\s+456\s*$/;
+    ok $R->run( qq`x = 456 \n print(x)` ) =~ /^\[\d+\]\s+456\s*$/;
 
     ok $R->stopR();
 }
