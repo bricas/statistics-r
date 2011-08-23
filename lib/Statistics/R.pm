@@ -64,7 +64,8 @@ sub start {
 
 
 sub start_shared {
-    shift->start( shared => 1 );
+    my $this = shift;
+    $this->start( shared => 1 );
 }
 *start_sharedR = \&start_shared;
 
@@ -78,13 +79,15 @@ sub stop {
 
 
 sub restart {
-    shift->{ BRIDGE }->restart;
+    my $this = shift;
+    $this->{ BRIDGE }->restart;
 }
 *restartR = \&restart;
 
 
 sub bin {
-    shift->{ BRIDGE }->bin;
+    my $this = shift;
+    $this->{ BRIDGE }->bin;
 }
 *Rbin = \&bin;
 
@@ -97,14 +100,15 @@ sub lock {
 
 sub unlock {
     my $this = shift;
-    shift->{ BRIDGE }->unlock( @_ );
+    $this->{ BRIDGE }->unlock( @_ );
 }
 
 
-sub is_blocked {
+sub is_locked {
     my $this = shift;
-    $this->{ BRIDGE }->is_blocked( @_ );
+    $this->{ BRIDGE }->is_locked( @_ );
 }
+*is_blocked = \&is_locked;
 
 
 sub is_started {
@@ -127,7 +131,8 @@ sub receive {
 
 
 sub clean_up {
-    shift->send( 'rm(list = ls(all = TRUE))' );
+    my $this = shift;
+    $this->send( 'rm(list = ls(all = TRUE))' );
 }
 
 
@@ -253,9 +258,9 @@ Lock the bridge for your PID.
 
 Unlock the bridge if your PID have locked it.
 
-=item is_blocked()
+=item is_locked()
 
-Return I<TRUE> if the bridge is blocked for your PID.
+Return I<TRUE> if the bridge is locked for your PID.
 
 In other words, returns I<TRUE> if other process has I<lock()ed> the bridge.
 

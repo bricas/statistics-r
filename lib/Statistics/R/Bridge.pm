@@ -63,7 +63,8 @@ sub pipe {
 
 
 sub bin {
-    shift->{ R_BIN };
+    my $this = shift;
+    $this->{ R_BIN };
 }
 
 
@@ -74,7 +75,7 @@ sub send {
     $cmd .= "\n" if $cmd !~ /\n$/;
     $cmd =~ s/\n/\r\n/gs;
 
-    while ( $this->is_blocked ) { sleep( 1 ); }
+    while ( $this->is_locked ) { sleep( 1 ); }
 
     my $n = $this->read_processR || 0;
     $n = 1 if $n eq '0' || $n eq '';
@@ -208,7 +209,7 @@ sub is_started {
 sub lock {
     my $this = shift;
 
-    while ( $this->is_blocked ) { select( undef, undef, undef, 0.5 ); }
+    while ( $this->is_locked ) { select( undef, undef, undef, 0.5 ); }
 
     open( my $fh, ">$this->{LOCK_R}" );
     print $fh "$$\n";
@@ -223,13 +224,13 @@ sub lock {
 sub unlock {
     my $this = shift;
 
-    return if $this->is_blocked;
+    return if $this->is_locked;
     unlink( $this->{ LOCK_R } );
     return 1;
 }
 
 
-sub is_blocked {
+sub is_locked {
     my $this = shift;
 
     return undef
@@ -247,6 +248,7 @@ sub is_blocked {
     if ( !kill( 0, $pid ) ) { unlink( $this->{ LOCK_R } ); return undef; }
     return 1;
 }
+*is_blocked = \&is_locked;
 
 
 sub update_pid {
