@@ -26,11 +26,12 @@ is ref($output), '';
 is $output, 123;
 
 
+# R default number of digits is 7
 $input = 0.93945768644;
 ok $R->set('x', $input), 'real number';
 ok $output = $R->get('x');
 is ref($output), '';
-is $output, 0.93945768644;
+is $output, sprintf("%.7f", $input);
 
 
 $input = "apocalypse";
@@ -47,6 +48,7 @@ is ref($output), '';
 is $output, "a string";
 
 
+# Mixed arrays are considered as string arrays by R, thus there is no digit limit
 $input = [123, "a string", 'two strings', 0.93945768644];
 ok $R->set('x', $input), 'mixed array';
 ok $output = $R->get('x');
