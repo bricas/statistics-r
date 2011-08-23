@@ -1,29 +1,20 @@
 Revision history for Perl extension Statistics::R.
 
-x.xx 
-    - Replaced "$shift->" by "$this = shift; $this->" everywhere for consistency
-      and readability
-    - Fixed a bug in the unlock() method
-    - Minor scripts touchups
-    - New option for new(): shared
-    - Automatically call start() when creating a Statistics::R object with new()
-    - More illustrative synopsis
-    - More tests: start/stop, shared
-    - Aliased a few functions for consistency:
-         startR -> start, stopR -> stop, restartR -> restart, Rbin -> bin,
-         start_sharedR -> start_shared, read -> receive, is_blocked -> is_locked
-    - Replaced the error() method by a dummy. Errors are now fatal are die() right away
-    - Added a load test
-    - Added a run() method that replaces send() and read() and checks for errors (RT #70361)
-    - Added a get() method to get the value of an R variable (RT #70361)
-    - Added a set() method to set the value of an R variable
-    - Removed the undocumented R() method
-    - POD work
-    - Version number in sync between Statistics::R and Statistics::R::Bridge
+0.09 
+    - Changes in the new() method:
+       * it automatically calls start()
+       * it has the 'shared' option to start a shared bridge
     - More portable filenames (RT #70391)
-    - Typo fixes
-    - Improved readme generation in Makefile.PL
-    - Git and bug tracker URL information
+    - Added convenience methods:
+       * run() replaces send() and read() and checks for errors (RT #70361)
+       * get() fetches the values in an R vector (RT #70361)
+       * set() assigns values to an R vector
+    - Fixed a bug in the unlock() method
+    - Removed the R() and error() methods and renamed some other. These changes
+      should be transparent and backward compatible
+    - Maintenance: many more unit tests, synopsis clarification, POD work, script
+      touchups, small code cleanups, version numbering, better README generation,
+      Git and bug tracker URLs
 
 0.08  2011-03-01
     - Pass options in new() to Statistics::R::Bridge constructor (RT #63906)

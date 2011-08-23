@@ -5,7 +5,7 @@ use warnings;
 use IO::Select;
 use File::Spec::Functions;
 
-our $VERSION = '0.08';
+our $VERSION = '0.09';
 our $HOLD_PIPE_X;
 
 my $this;
