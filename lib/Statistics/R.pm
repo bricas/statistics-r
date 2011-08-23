@@ -10,11 +10,13 @@ my $this;
 
 
 sub new {
-    my $class = shift;
+    my ($class, @args) = @_;
 
     if( !defined $this ) {
         $this  = bless( {}, $class );
-        $this->{ BRIDGE } = Statistics::R::Bridge->new( @_ );
+        # Create bridge
+        $this->{ BRIDGE } = Statistics::R::Bridge->new( @args );
+        $this->start;
     }
 
     return $this;
@@ -31,7 +33,7 @@ sub run {
    my $output = $this->receive();
    # Check for errors
    if ($output =~ m/^<.*>$/) {
-      my $msg = "Error: There was a problem running the R command\n".
+      my $msg = "Error running the R command\n".
                 "   $cmd\n".
                 "Reason\n".
                 "   $output\n";
@@ -44,7 +46,13 @@ sub run {
 sub start {
     my $this = shift;
     delete $this->{ BRIDGE }->{ START_SHARED };
-    $this->{ BRIDGE }->start;
+    # Start R if it was not already started
+    my $status;
+    if (not $this->is_started) {
+        $status = $this->{ BRIDGE }->start;
+    } else {
+        $status = 1;
+    }
 }
 *startR = \&start;
 
@@ -141,23 +149,25 @@ a single instance of R can be accessed by several Perl processes.
 
   use Statistics::R;
   
+  # Create a communication bridge with R and start R
   my $R = Statistics::R->new();
-
-  $R->start;
   
-  my @input_array  = (1, 5, 10);
-  my $input_string = join ', ', @input_array;
-
+  # Run a simple command in R
   $R->run(q`postscript("file.ps" , horizontal=FALSE , width=500 , height=500 , pointsize=1)`);
   # Note the use of q`` to pass a string as-is
 
+  # Pass some data to R. Note the use of qq`` instead of q`` to interpolate the
+  # $input_string variable name
+  my @input_array  = (1, 5, 10);
+  my $input_string = join ', ', @input_array;
   $R->run(qq`plot(c($input_string), type = "l")`);
-  # Note the use of qq`` to interpolate the $input_string variable
 
   $R->run(q`dev.off()`);
 
+  # Retrieve data from R
   my $output_string = $R->run(qq`x = 123 \n print(x)`);
 
+  # Stop R
   $R->stop();
 
 =head1 METHODS
@@ -166,7 +176,8 @@ a single instance of R can be accessed by several Perl processes.
 
 =item new()
 
-Create a Statistics::R bridge object between Perl and R. Available options are:
+Create a Statistics::R bridge object between Perl and R and start() R. Available
+options are:
 
 =over 4
 

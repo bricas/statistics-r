@@ -5,7 +5,7 @@ use warnings;
 use Test::More;
 use Statistics::R;
 
-plan tests => 9;
+plan tests => 8;
 
 
 my $R;
@@ -19,8 +19,6 @@ SKIP: {
     skip 'No R binary', 10 if $warn;
 
     ok $R;
-
-    ok $R->start();
 
     ok $R->bin() =~ /\S+/;
 
