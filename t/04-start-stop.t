@@ -9,30 +9,20 @@ plan tests => 8;
 
 
 my $R;
-my $warn = 0;
-{
-    local $SIG{ __WARN__ } = sub { $warn++; };
-    $R = Statistics::R->new();
-}
 
-SKIP: {
-    skip 'No R binary', 10 if $warn;
+ok $R = Statistics::R->new();
 
-    ok $R;
+ok $R->start();
 
-    ok $R->start();
+ok $R->restart();
 
-    ok $R->restart();
+ok $R->stop();
 
-    ok $R->stop();
+ok $R->start_shared();
 
-    ok $R->start_shared();
+ok $R->stop();
 
-    ok $R->stop();
+ok $R->start( shared => 1);
 
-    ok $R->start( shared => 1);
-
-    ok $R->stop();
-
-}
+ok $R->stop();
 
