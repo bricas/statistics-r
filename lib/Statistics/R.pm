@@ -16,7 +16,7 @@ sub new {
         $this  = bless( {}, $class );
         # Create bridge
         $this->{ BRIDGE } = Statistics::R::Bridge->new( @args );
-        $this->start;
+        $this->start( @args );
     }
 
     return $this;
@@ -44,12 +44,18 @@ sub run {
 
 
 sub start {
-    my $this = shift;
-    delete $this->{ BRIDGE }->{ START_SHARED };
+    my ($this, %args) = @_;
     # Start R if it was not already started
     my $status;
     if (not $this->is_started) {
-        $status = $this->{ BRIDGE }->start;
+        if ( (exists $args{ shared }) && ($args{ shared } == 1) ) {
+            # Start R in shared mode
+            $status = $this->{ BRIDGE }->start_shared;
+        } else {
+            # Start R in regular mode
+            delete $this->{ BRIDGE }->{ START_SHARED };
+            $status = $this->{ BRIDGE }->start;
+        }
     } else {
         $status = 1;
     }
@@ -58,7 +64,7 @@ sub start {
 
 
 sub start_shared {
-    shift->{ BRIDGE }->start_shared;
+    shift->start( shared => 1 );
 }
 *start_sharedR = \&start_shared;
 
@@ -179,7 +185,12 @@ a single instance of R can be accessed by several Perl processes.
 Create a Statistics::R bridge object between Perl and R and start() R. Available
 options are:
 
+
 =over 4
+
+=item shared
+
+Start a shared bridge. See start().
 
 =item log_dir
 
@@ -208,13 +219,11 @@ I<By default the temporary directory of the OS will be used>
 
 =back
 
+
 =item start()
 
-Start R and set the communication bridge between Perl and R.
-
-=item start_shared()
-
-Start R or use an already running communication bridge.
+Start R and set the communication bridge between Perl and R. Pass the option
+shared => 1 to use an already running bridge.
 
 =item stop()
 
@@ -283,13 +292,13 @@ To start the I<Statistics::R> bridge, you can use the script I<statistics-r.pl>:
 
   $> statistics-r.pl start
 
-From your script you need to use the I<start_shared()> option:
+From your script you need to use the I<start()> option in shared mode:
 
   use Statistics::R;
   
   my $R = Statistics::R->new();
   
-  $R->start_shared;
+  $R->start( shared => 1 );
   
   $R->send('x = 123');
   

@@ -5,7 +5,7 @@ use warnings;
 use Test::More;
 use Statistics::R;
 
-plan tests => 6;
+plan tests => 8;
 
 
 my $R;
@@ -27,6 +27,10 @@ SKIP: {
     ok $R->stop();
 
     ok $R->start_shared();
+
+    ok $R->stop();
+
+    ok $R->start( shared => 1);
 
     ok $R->stop();
 
