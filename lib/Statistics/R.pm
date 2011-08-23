@@ -265,22 +265,18 @@ a single instance of R can be accessed by several Perl processes.
   # Create a communication bridge with R and start R
   my $R = Statistics::R->new();
   
-  # Run a simple command in R
+  # Run simple R commands
   $R->run(q`postscript("file.ps" , horizontal=FALSE , width=500 , height=500 , pointsize=1)`);
-  # Note the use of q`` to pass a string as-is
-
-  # Pass some data to R. Note the use of qq`` instead of q`` to interpolate the
-  # $input_string variable name
-  my @input_array  = (1, 5, 10);
-  my $input_string = join ', ', @input_array;
-  $R->run(qq`plot(c($input_string), type = "l")`);
-
+  $R->run(q`plot(c(1, 5, 10), type = "l")`);
   $R->run(q`dev.off()`);
 
-  # Retrieve data from R
-  my $output_string = $R->run(qq`x = 123 \n print(x)`);
+  # Pass and retrieve data
+  my $input_value = 1;
+  $R->set('x', $input_value);
+  $R->run(q`y <- x^2`);
+  my $output_value = $R->get('y');
+  print "y = $output_value\n";
 
-  # Stop R
   $R->stop();
 
 =head1 METHODS
