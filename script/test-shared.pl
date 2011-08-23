@@ -2,11 +2,11 @@
 
 use Statistics::R;
 
-my $R = Statistics::R->new();
-
 print "Starting R...";
 
-if ( $R->start_sharedR ) {
+my $R = Statistics::R->new( shared => 1 );
+
+if ( $R->is_started ) {
     print " OK\n";
 }
 else {

@@ -13,7 +13,7 @@ my $R = Statistics::R->new();
 
 if ( $command eq 'start' ) {
     print ">> R - STARTING... ";
-    if ( $R->start_sharedR ) {
+    if ( $R->start( shared => 1 ) {
         print "OK\n";
         if ( $^O =~ /^(?:.*?win32|dos)$/i ) {
             print "[Press Ctrl+C to terminate].\n";
@@ -32,7 +32,7 @@ if ( $command eq 'start' ) {
     }
 }
 elsif ( $command eq 'stop' ) {
-    $R->stopR();
+    $R->stop();
 }
 
 sub usage {
