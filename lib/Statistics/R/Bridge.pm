@@ -630,18 +630,18 @@ sub cat_dir {
     my $this = shift;
 
     my ( $dir, $cut, $r, $f ) = @_;
-    $dir =~ s/\\/\//g;
 
     my @files;
 
     my @DIR = $dir;
-    foreach my $DIR ( @DIR ) {
-        my $DH;
-        opendir( $DH, $DIR );
+    for my $dir ( @DIR ) {
+        
+        opendir( my $dh, $dir ) || die "Error: Could not read directory $dir\n$!\n";
 
-        while ( my $filename = readdir $DH ) {
+        while ( my $filename = readdir $dh ) {
             next if $filename eq '.' or $filename eq '..';
-            my $file = "$DIR/$filename";
+            my $file = catfile($dir, $filename);
+			
             if ( $r && -d $file ) {
                 push( @DIR, $file );
             }
@@ -651,7 +651,7 @@ sub cat_dir {
             }
         }
 
-        closedir( $DH );
+        closedir $dh;
     }
 
     return ( @files );
@@ -728,14 +728,16 @@ sub Win32 {
     $this->{ R_DIR }   = $args{ r_dir }   || $args{ R_dir } || '';
     $this->{ TMP_DIR } = $args{ tmp_dir } || '';
 
+    # Get the R binary full path
     if ( !-s $this->{ R_BIN } ) {
-        my $ver_dir = ( $this->cat_dir( "$ENV{ProgramFiles}/R" ) )[ 0 ];
+	
+        my $ver_dir = ( $this->cat_dir( catfile($ENV{ProgramFiles},'R') ) )[ 0 ];
 
-        my $bin = "$ver_dir/bin/Rterm.exe";
+        my $bin = catfile($ver_dir, 'bin', 'Rterm.exe');
         if ( !-e $bin || !-x $bin ) { $bin = undef; }
 
         if ( !$bin ) {
-            my @dir = $this->cat_dir( "$ENV{ProgramFiles}/R", undef, 1, 1 );
+            my @dir = $this->cat_dir( catfile($ENV{ProgramFiles},'R'), undef, 1, 1 );
             foreach my $dir_i ( @dir ) {
                 if ( $dir_i =~ /\/Rterm\.exe$/ ) { $bin = $dir_i; last; }
             }
@@ -750,48 +752,61 @@ sub Win32 {
 
         $this->{ R_BIN } = $bin;
     }
+	if ( !-s $this->{ R_BIN } ) {
+        die "Error: Could not find the R binary!\n";
+    }
 
+	####
+	print "Got   r_bin: ".$this->{R_BIN}."\n";
+	####
+	
+	# Get the R directory
     if ( !$this->{ R_DIR } && $this->{ R_BIN } ) {
         ( $this->{ R_DIR } )
             = ( $this->{ R_BIN } =~ /^(.*?)[\\\/]+[^\\\/]+$/s );
         $this->{ R_DIR } =~ s/\/bin$//;
     }
+	if ( !-d $this->{ R_DIR } ) {
+        die "Error: Could not find the R directory!\n";
+    }
 
+	####
+	print "Got   r_dir: ".$this->{R_DIR}."\n";
+	####
+	
+	# Get a temp directory
     if ( !$this->{ TMP_DIR } ) {
         $this->{ TMP_DIR } = $ENV{ TMP } || $ENV{ TEMP };
         if ( !$this->{ TMP_DIR } ) {
-            foreach
-                my $dir ( qw(c:/tmp c:/temp c:/windows/tmp c:/windows/temp) )
+            for my $dir ( qw(c:\tmp c:\temp c:\windows\tmp c:\windows\temp) )
             {
                 if ( -d $dir ) { $this->{ TMP_DIR } = $dir; last; }
             }
         }
     }
-
-    if ( !-s $this->{ R_BIN } ) {
-        die "Error: Could not find the R binary!\n";
+	if ( !-d $this->{ TMP_DIR } ) {
+        die "Error: Could not find a temporary directory!\n";
     }
-    if ( !-d $this->{ R_DIR } ) {
-        die "Error: Could not find the R directory!\n";
-    }
-
-    $this->{ R_BIN }   =~ s/\//\\/g;
-    $this->{ R_DIR }   =~ s/\//\\/g;
-    $this->{ TMP_DIR } =~ s/[\/\\]+/\//g;
+	
+	####
+	print "Got tmp_dir: ".$this->{TMP_DIR}."\n";
+	####
 
     my $exec = $this->{ R_BIN };
-    $exec = "\"$exec\"" if $exec =~ /\s/;
-
+    $exec = '"'.$exec.'"' if $exec =~ /\s/;
     $this->{ START_CMD } = "$exec --slave --vanilla";
 
     if ( !$args{ log_dir } ) {
-
         # $args{log_dir} = "$this->{R_DIR}/Statistics-R" ;
         # Bug Fix by CTB:  Reponse to RT Bug #17956: Win32: log_dir is not in tmp_dir by default as advertised
+		
         $args{ log_dir } = catfile( $this->{TMP_DIR}, 'Statistics-R');
-        $args{ log_dir } =~ s/\\+/\//gs;
     }
-
+	
+	####
+	print "Got log_dir: ".$args{ log_dir }."\n";
+	####
+	
     $this->{ OS } = 'win32';
 
     $this->pipe( %args );
