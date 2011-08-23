@@ -4,13 +4,13 @@ use Statistics::R;
 
 my $R = Statistics::R->new();
 
-print "STARTING...";
+print "Starting R...";
 
 if ( $R->start_sharedR ) {
     print " OK\n";
 }
 else {
-    die( "Can't start R" );
+    die "Error: Could not start R\n";
 }
 
 $R->lock;
@@ -25,5 +25,5 @@ for ( 0 .. 10 ) {
 
 $R->unlock;
 
-print "by!\n";
+print "Bye!\n";
 

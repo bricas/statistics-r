@@ -39,7 +39,9 @@ sub usage {
     my ( $script ) = ( $0 =~ /([^\\\/]+)$/s );
 
     print <<"EOUSAGE";
-Statistics::R - $Statistics::R::VERSION
+Statistics::R version $Statistics::R::VERSION
+
+Start or stop a Perl-R communication bridge
 
 USAGE:
 

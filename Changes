@@ -1,6 +1,7 @@
 Revision history for Perl extension Statistics::R.
 
 x.xx 
+    - Minor script touchups
     - New option for new(): shared
     - Automatically call start() when creating a Statistics::R object with new()
     - More illustrative synopsis
