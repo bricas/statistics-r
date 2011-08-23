@@ -388,6 +388,16 @@ L<http://cran.r-project.org/banner.shtml>
 Or go to the R web site:
 L<http://www.r-project.org/>
 
+You also need to have the following CPAN Perl modules installed:
+
+=over 4
+
+=item Text::Balanced
+
+=item Regexp::Common
+
+=back
+
 =head1 EXECUTION FOR MULTIPLE PROCESSES
 
 The main purpose of I<Statistics::R> is to start a single R interpreter that

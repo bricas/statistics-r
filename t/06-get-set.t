@@ -5,7 +5,7 @@ use warnings;
 use Test::More;
 use Statistics::R;
 
-plan tests => 16;
+plan tests => 76;
 
 
 my ($R, $input, $output);

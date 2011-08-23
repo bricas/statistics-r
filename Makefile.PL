@@ -20,7 +20,9 @@ WriteMakefile(
         : ()
     ),
     PREREQ_PM => {
-        'Test::More' => '0.47',
+        'Test::More'     => '0.47',
+        'Text::Balanced' => '0',
+        'Regexp::Common' => '0',
     },
 );
 
