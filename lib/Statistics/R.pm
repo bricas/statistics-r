@@ -2,6 +2,8 @@ package Statistics::R;
 
 use strict;
 use warnings;
+use Regexp::Common;
+use Text::Balanced qw ( extract_delimited extract_multiple );
 use Statistics::R::Bridge;
 
 our $VERSION = $Statistics::R::Bridge::VERSION;
@@ -24,22 +26,122 @@ sub new {
 
 
 sub run {
-   # Send a command to R, receive its output and return it, or die if there was
-   # an error
-   my ($this, $cmd) = @_;
-   # Send command
-   $this->send($cmd);
-   # Receive command output
-   my $output = $this->receive();
-   # Check for errors
-   if ($output =~ m/^<.*>$/) {
-      my $msg = "Error running the R command\n".
-                "   $cmd\n".
-                "Reason\n".
-                "   $output\n";
-      die $msg;
-   }
-   return $output;
+    # Send a command to R, receive its output and return it, or die if there was
+    # an error
+    my ($this, $cmd) = @_;
+    # Send command
+    $this->send($cmd);
+    # Receive command output
+    my $output = $this->receive();
+    # Check for errors
+    if ($output =~ m/^<.*>$/) {
+        my $msg = "Error running the R command\n".
+                  "   $cmd\n".
+                  "Reason\n".
+                  "   $output\n";
+        die $msg;
+    }
+    return $output;
+}
+
+
+sub set {
+    # Assign a variable or array of variables in R. Use undef if you want to
+    # assign NULL to an R variable
+    my ($this, $varname, $arr) = @_;
+    
+    # Check variable type, convert everything into an arrayref
+    my $ref = ref $arr;
+    if ($ref eq '') {
+        # This is a scalar
+        $arr = [ $arr ];
+    } elsif ($ref eq 'ARRAY') {
+        # This is an array reference, nothing to do
+    } else {
+        die "Error: Import variable of type $ref is not supported\n";
+    }
+
+    # Quote strings and nullify undef variables
+    for (my $i = 0; $i < scalar @$arr; $i++) {
+        if (defined $$arr[$i]) {
+            if ( $$arr[$i] !~ /$RE{num}{real}/ ) {
+                $$arr[$i] = '"'.$$arr[$i].'"';
+            }
+        } else {
+            $$arr[$i] = 'NULL';
+        }
+    }
+
+    # Build a string and run it to import data
+    my $cmd = $varname.' <- c('.join(', ',@$arr).')';
+    $this->run($cmd);
+    return 1;
+}
+
+
+sub get {
+    # Get the value of an R variable
+    my ($this, $varname) = @_;
+    my $string = $this->run(qq`print($varname)`);
+
+    # Parse R output
+    my $value;
+    if ($string eq 'NULL') {
+        $value = undef;
+    } elsif ($string =~ m/^\s*\[\d+\]/) {
+        # Vector: its string look like:
+        # ' [1]  6.4 13.3  4.1  1.3 14.1 10.6  9.9  9.6 15.3
+        #  [16]  5.2 10.9 14.4'
+        my @lines = split /\n/, $string;
+        for (my $i = 0; $i < scalar @lines; $i++) {
+            $lines[$i] =~ s/^\s*\[\d+\] //;
+        }
+        $value = join ' ', @lines;
+    } else {
+        my @lines = split /\n/, $string;
+        if (scalar @lines == 2) {
+            # String looks like: '    mean 
+            # 10.41111 '
+            # Extract value from second line
+            $value = $lines[1];
+            $value =~ s/^\s*(\S+)\s*$/$1/;
+        } else {
+            die "Error: Don't know how to handle this R output\n$string\n";
+        }
+    }
+
+    # Clean
+    my @arr;
+    if (not defined $value) {
+        @arr = ( undef );
+    } else {
+        # Split string into an array, paying attention to strings containing spaces
+        @arr = extract_multiple( $value, [sub { extract_delimited($_[0],q{ '"}) },] );
+        for (my $i = 0; $i < scalar @arr; $i++) {
+            my $elem = $arr[$i];
+            if ($elem =~ m/^\s*$/) {
+                # Remove elements that are simply whitespaces
+                splice @arr, $i, 1;
+                $i--;
+            } else {
+                # Trim whitespaces
+                $arr[$i] =~ s/^\s*(.*?)\s*$/$1/;
+                # Remove double-quotes
+                $arr[$i] =~ s/^"(.*)"$/$1/; 
+            }
+        }
+
+    }
+
+    # Return either a scalar of an arrayref
+    my $ret_val;
+    if (scalar @arr == 1) {
+        $ret_val = $arr[0];
+    } else {
+        $ret_val = \@arr;
+    }
+
+    return $ret_val;
 }
 
 

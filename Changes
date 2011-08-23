@@ -15,6 +15,8 @@ x.xx
     - Replaced the error() method by a dummy. Errors are now fatal are die() right away
     - Added a load test
     - Added a run() method that replaces send() and read() and checks for errors (RT #70361)
+    - Added a get() method to get the value of an R variable (RT #70361)
+    - Added a set() method to set the value of an R variable
     - Removed the undocumented R() method
     - POD work
     - Version number in sync between Statistics::R and Statistics::R::Bridge
