@@ -3,12 +3,12 @@ Revision history for Perl extension Statistics::R.
 x.xx 
     - Replaced "$shift->" by "$this = shift; $this->" everywhere for consistency
       and readability
-    - Fixed a bug in unlock() method
+    - Fixed a bug in the unlock() method
     - Minor scripts touchups
     - New option for new(): shared
     - Automatically call start() when creating a Statistics::R object with new()
     - More illustrative synopsis
-    - More tests: start/stop
+    - More tests: start/stop, shared
     - Aliased a few functions for consistency:
          startR -> start, stopR -> stop, restartR -> restart, Rbin -> bin,
          start_sharedR -> start_shared, read -> receive, is_blocked -> is_locked
