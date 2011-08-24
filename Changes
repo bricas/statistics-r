@@ -1,6 +1,6 @@
 Revision history for Perl extension Statistics::R.
 
-0.09 
+0.09  2011-08-23 
     - Changes in the new() method:
        * it automatically calls start()
        * it has the 'shared' option to start a shared bridge
