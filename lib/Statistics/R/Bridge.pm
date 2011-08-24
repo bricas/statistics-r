@@ -12,17 +12,22 @@ my $this;
 
 
 sub new {
-    my $class = shift;
+    my ($class, %args) = @_;
 
+	#### TEMPORARY HARDCODING THE LOCATION OF R ####
+	$args{r_dir} = 'C:\Program Files (x86)\R';
+    $args{r_bin} = 'C:\Program Files (x86)\R\bin\x64\R.exe';
+	################################################
+	
     if( !defined $this ) {
         $this = bless( {}, $class );
-
+		
         my $method = ( $^O =~ /^(?:.*?win32|dos)$/i ) ? 'Win32' : 'Linux';
-        $this->$method( @_ );
-
+        $this->$method( %args );
+		
         return unless $this->{ OS };
     }
-
+	
     return $this;
 }
 
@@ -279,7 +284,7 @@ sub chmod_all {
 
 sub start {
     my $this = shift;
-
+	
     return if $this->is_started;
 
     $this->stop( undef, undef, 1 );
@@ -287,23 +292,44 @@ sub start {
     $this->clean_log_dir;
 
     $this->save_file_startR;
-
+	
     my $fh;
 
-    open $fh, '>', $this->{PID_R};
+    open($fh, '>', $this->{PID_R}) or die "Error: Could not write file ".$this->{PID_R}."\n$!\n";
     close $fh;
-    open $fh, '>', $this->{OUTPUT_R};
+    open($fh, '>', $this->{OUTPUT_R}) or die "Error: Could not write file ".$this->{OUTPUT_R}."\n$!\n";
     close $fh;
-    open $fh, '>', $this->{PROCESS_R};
+    open($fh, '>', $this->{PROCESS_R})or die "Error: Could not write file ".$this->{PROCESS_R}."\n$!\n";
     close $fh;
-
+	
     $this->chmod_all;
 
-    my $cmd = $this->{START_CMD}." <start.r >output.log";
-
+	
+    #### WE WANT TO AVOID THIS
     chdir $this->{LOG_DIR};
-    my $pid = open( my $read, "| $cmd" );
-    return if !$pid;
+    ##########################
+	
+	####
+	#use Cwd;
+	#print "We are in directory: ".cwd."\n";
+	####
+	
+	####
+	# Original
+	my $cmd = $this->{START_CMD}." <start.r >output.log";
+	# Attempt:
+	#my $cmd = $this->{START_CMD};
+	# This may be better?
+	#my $cmd = $this->{START_CMD}." <".$this->{START_R}." >".$this->{ OUTPUT_R };
+	#print "START_R = ".$this->{START_R}."\n";
+	#print "OUTPUT_R = ".$this->{OUTPUT_R}."\n";
+	####
+
+	####
+	#warn "Running CMD = $cmd\n";
+	####
+	
+    my $pid = open( my $read, "| $cmd" ) or die "Error: Could not run the commmand\n$!\n";	
 
     $this->{ PIPE } = $read;
 
@@ -316,17 +342,21 @@ sub start {
     $this->{ PID } = $pid;
 
     $this->chmod_all;
-
-    while ( !-s $this->{ PID_R } ) { select( undef, undef, undef, 0.05 ); }
-
+	
+    # Wait
+    while ( !-s $this->{ PID_R } ) {
+	    select( undef, undef, undef, 0.05 );
+	}
+	
     $this->update_pid;
-
+	
+    # Wait
     while ( $this->read_processR() eq '' ) {
         select( undef, undef, undef, 0.10 );
     }
-
+	
     $this->chmod_all;
-
+	
     return 1;
 }
 
@@ -755,10 +785,6 @@ sub Win32 {
 	if ( !-s $this->{ R_BIN } ) {
         die "Error: Could not find the R binary!\n";
     }
-
-	####
-	print "Got   r_bin: ".$this->{R_BIN}."\n";
-	####
 	
 	# Get the R directory
     if ( !$this->{ R_DIR } && $this->{ R_BIN } ) {
@@ -769,10 +795,6 @@ sub Win32 {
 	if ( !-d $this->{ R_DIR } ) {
         die "Error: Could not find the R directory!\n";
     }
-
-	####
-	print "Got   r_dir: ".$this->{R_DIR}."\n";
-	####
 	
 	# Get a temp directory
     if ( !$this->{ TMP_DIR } ) {
@@ -787,10 +809,6 @@ sub Win32 {
 	if ( !-d $this->{ TMP_DIR } ) {
         die "Error: Could not find a temporary directory!\n";
     }
-	
-	####
-	print "Got tmp_dir: ".$this->{TMP_DIR}."\n";
-	####
 
     my $exec = $this->{ R_BIN };
     $exec = '"'.$exec.'"' if $exec =~ /\s/;
@@ -802,10 +820,6 @@ sub Win32 {
 		
         $args{ log_dir } = catfile( $this->{TMP_DIR}, 'Statistics-R');
     }
-	
-	####
-	print "Got log_dir: ".$args{ log_dir }."\n";
-	####
 	
     $this->{ OS } = 'win32';
 
