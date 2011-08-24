@@ -3,7 +3,9 @@ package Statistics::R::Bridge;
 use strict;
 use warnings;
 use IO::Select;
+use Time::HiRes;
 use File::Spec::Functions;
+
 
 our $VERSION = '0.09';
 our $HOLD_PIPE_X;
@@ -14,10 +16,10 @@ my $this;
 sub new {
     my ($class, %args) = @_;
 
-	#### TEMPORARY HARDCODING THE LOCATION OF R ####
-	$args{r_dir} = 'C:\Program Files (x86)\R';
+	###### TEMPORARY HARDCODING THE LOCATION OF R ######
+    $args{r_dir} = 'C:\Program Files (x86)\R';
     $args{r_bin} = 'C:\Program Files (x86)\R\bin\x64\R.exe';
-	################################################
+	####################################################
 	
     if( !defined $this ) {
         $this = bless( {}, $class );
@@ -79,54 +81,64 @@ sub send {
     $cmd =~ s/\r\n?/\n/gs;
     $cmd .= "\n" if $cmd !~ /\n$/;
     $cmd =~ s/\n/\r\n/gs;
-
+	
     while ( $this->is_locked ) { sleep( 1 ); }
-
+	
     my $n = $this->read_processR || 0;
     $n = 1 if $n eq '0' || $n eq '';
-
+	
+	# Increment file number until the first free slot
     my $file = catfile( $this->{LOG_DIR}, "input.$n.r" );
-
     while ( -e $file || -e "$file._" ) {
         ++$n;
         $file = catfile( $this->{LOG_DIR}, "input.$n.r" );
     }
-
-    open( my $fh, ">$file._" );
+	
+    open( my $fh, '>', "$file._" ) or die "Error: Could not write file $file._\n$!\n";
     print $fh "$cmd\n";
     close( $fh );
-
+	
     chmod( 0777, "$file._" );
 
     $this->{ OUTPUT_R_POS } = -s $this->{ OUTPUT_R };
 
     rename( "$file._", $file );
-
+	
     my $has_quit = 1 if $cmd =~ /^\s*(?:q|quit)\s*\(.*?\)\s*$/s;
 
     ##print "CMD[$n]$has_quit>> $cmd\n" ;
 
     my $status = 1;
     my $delay  = 0.02;
-
+	
     my ( $x, $xx );
-    while (( !$has_quit || $this->{ STOPING } == 1 )
-        && -e $file
-        && $this->is_started( !$this->{ STOPING } ) )
+    while (
+            ( !$has_quit || $this->{ STOPING } == 1 )
+            &&  -e $file
+            &&  $this->is_started( !$this->{ STOPING } )
+		  )
     {
+		
         ++$x;
         ##print "sleep $file\n" ;
-        select( undef, undef, undef, $delay );
+        sleep( $delay );
         if ( $x == 20 ) {
-            my ( undef, $data ) = $this->read_processR;
-            if ( $data =~ /\s$n\s+\.\.\.\s+\// ) { last; }
+            
+			my ( undef, $data ) = $this->read_processR;
+			
+            if ( $data =~ /\s$n\s+\.\.\.\s+\// ) { 
+			    last;
+		    }
             $x = 0;
             ++$xx;
             $delay = 0.5;
         }
-        if ( $xx || 0 > 5 ) { $status = undef; }    ## xx > 5 = x > 50
+        if ( $xx || 0 > 5 ) {
+			
+            $status = undef;
+		}    ## xx > 5 = x > 50
     }
-
+	
     if ( $has_quit && !$this->{ STOPING } ) { $this->stop( 1 ); }
 
     return $status;
@@ -138,7 +150,7 @@ sub receive {
 
     $timeout = -1 if !defined $timeout;
 
-    open( my $fh, $this->{ OUTPUT_R } );
+    open( my $fh, '<', $this->{ OUTPUT_R } ) or die "Error: Could not read file ".$this->{ OUTPUT_R }."\n$!\n";
     binmode( $fh );
     seek( $fh, ( $this->{ OUTPUT_R_POS } || 0 ), 0 );
 
@@ -175,6 +187,7 @@ sub clean_log_dir {
         ##print "RM>> $dir_i\n" ;
         unlink $dir_i if $dir_i !~ /R\.(?:starting|stoping)$/;
     }
+	
 }
 
 
@@ -214,7 +227,7 @@ sub is_started {
 sub lock {
     my $this = shift;
 
-    while ( $this->is_locked ) { select( undef, undef, undef, 0.5 ); }
+    while ( $this->is_locked ) { sleep( 0.5 ); }
 
     open( my $fh, ">$this->{LOCK_R}" );
     print $fh "$$\n";
@@ -288,11 +301,11 @@ sub start {
     return if $this->is_started;
 
     $this->stop( undef, undef, 1 );
-
-    $this->clean_log_dir;
-
-    $this->save_file_startR;
 	
+    $this->clean_log_dir;
+	
+    $this->save_file_startR;
+
     my $fh;
 
     open($fh, '>', $this->{PID_R}) or die "Error: Could not write file ".$this->{PID_R}."\n$!\n";
@@ -310,27 +323,17 @@ sub start {
     ##########################
 	
 	####
-	#use Cwd;
-	#print "We are in directory: ".cwd."\n";
-	####
-	
-	####
 	# Original
 	my $cmd = $this->{START_CMD}." <start.r >output.log";
 	# Attempt:
 	#my $cmd = $this->{START_CMD};
 	# This may be better?
 	#my $cmd = $this->{START_CMD}." <".$this->{START_R}." >".$this->{ OUTPUT_R };
-	#print "START_R = ".$this->{START_R}."\n";
-	#print "OUTPUT_R = ".$this->{OUTPUT_R}."\n";
+	#print "Running CMD = $cmd\n";
 	####
 
-	####
-	#warn "Running CMD = $cmd\n";
-	####
-	
     my $pid = open( my $read, "| $cmd" ) or die "Error: Could not run the commmand\n$!\n";	
-
+	
     $this->{ PIPE } = $read;
 
     $this->{ HOLD_PIPE_X } = ++$HOLD_PIPE_X;
@@ -345,14 +348,14 @@ sub start {
 	
     # Wait
     while ( !-s $this->{ PID_R } ) {
-	    select( undef, undef, undef, 0.05 );
+	    sleep( 0.05 );
 	}
 	
     $this->update_pid;
 	
     # Wait
     while ( $this->read_processR() eq '' ) {
-        select( undef, undef, undef, 0.10 );
+        sleep( 0.10 );
     }
 	
     $this->chmod_all;
@@ -406,7 +409,7 @@ sub sleep_unsync {
     my $this = shift;
 
     my $n = "0." . int( rand( 100 ) );
-    select( undef, undef, undef, $n );
+    sleep( $n );
 }
 
 
@@ -435,7 +438,7 @@ sub start_shared {
 
         if ( $this->is_started ) {
             while ( $this->read_processR() eq '' ) {
-                select( undef, undef, undef, 0.10 );
+                sleep( 0.10 );
             }
             return 1;
         }
@@ -469,17 +472,14 @@ sub start_shared {
 
 sub stop {
     no warnings; # squash "Killed" warning for now
-    my $this = shift;
-    my $no_send         = shift( @_ );
-    my $not_started     = shift( @_ );
-    my $no_stoping_file = shift( @_ );
+    my ($this, $no_send, $not_started, $no_stopping_file) = @_;
 
     my $started = $not_started ? undef : $this->is_started;
 
     $this->{ STOPING } = $started ? 1 : 2;
-
-    if ( !$no_stoping_file ) {
-        open( my $fh, ">$this->{STOPING_R}" );
+	
+    if ( !$no_stopping_file ) {
+        open( my $fh, '>', $this->{STOPING_R} ) or die "Error: Could not write file ".$this->{STOPING_R}."\n$!\n";
         close( $fh );
     }
 
@@ -499,6 +499,7 @@ sub stop {
     if ( $pid ) {
         for ( 1 .. 3 ) { kill( 9, $pid ); }
     }
+
 
     {
         no strict 'refs'; # squash more errors
@@ -554,12 +555,14 @@ sub read_processR {
 sub save_file_startR {
     my $this = shift;
 
-    open( my $fh, ">$this->{START_R}" );
+    open( my $fh, '>', $this->{START_R} ) or die "Error: Could not write file ".$this->{START_R}."\n$!\n";
 
     my $process_r = $this->{ PROCESS_R };
+	
     $process_r =~ s/\\/\\\\/g;
 
     my $pid_r = $this->{ PID_R };
+	
     $pid_r =~ s/\\/\\\\/g;
 
     print $fh qq`
@@ -833,7 +836,9 @@ sub DESTROY {
     return unless $this->{ OS };
 
     $this->unlock;
-    $this->stop if !$this->{ START_SHARED };
+	
+	$this->stop if !$this->{ START_SHARED };
+	
 }
 
 
