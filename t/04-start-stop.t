@@ -4,15 +4,20 @@ use strict;
 use warnings;
 use Test::More;
 use Statistics::R;
+use Cwd;
 
-plan tests => 8;
+plan tests => 10;
 
 
 my $R;
 
+my $initial_dir = cwd;
+
 ok $R = Statistics::R->new();
 
 ok $R->start();
+
+is cwd, $initial_dir; # Bug RT #6724
 
 ok $R->restart();
 
@@ -26,3 +31,4 @@ ok $R->start( shared => 1);
 
 ok $R->stop();
 
+is cwd, $initial_dir; # Bug RT #6724

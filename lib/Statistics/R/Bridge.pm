@@ -275,20 +275,7 @@ sub start {
     
     $this->chmod_all;
 
-    
-    #### WE WANT TO AVOID THIS
-    chdir $this->{LOG_DIR};
-    ##########################
-    
-    ####
-    # Original
-    my $cmd = $this->{START_CMD}." <start.r >output.log";
-    # Attempt:
-    #my $cmd = $this->{START_CMD};
-    # This may be better?
-    #my $cmd = $this->{START_CMD}." <".$this->{START_R}." >".$this->{ OUTPUT_R };
-    #print "Running CMD = $cmd\n";
-    ####
+    my $cmd = $this->{START_CMD}." < ".$this->{START_R}." > ".$this->{ OUTPUT_R };
 
     my $pid = open( my $read, "| $cmd" ) or die "Error: Could not run the commmand\n$!\n";
     
@@ -519,14 +506,11 @@ sub save_file_startR {
 
     open( my $fh, '>', $this->{START_R} ) or die "Error: Could not write file ".$this->{START_R}."\n$!\n";
 
-    my $process_r = $this->{ PROCESS_R };
+    my $pid_r          = win32_double_bs( $this->{ PID_R } );
+    my $process_r      = win32_double_bs( $this->{ PROCESS_R } ); 
+    my $input_r_prefix = win32_double_bs( $this->{ INPUT_R_PREFIX } );
+    my $input_r_suffix = $this->{ INPUT_R_SUFFIX };
     
-    $process_r =~ s/\\/\\\\/g;
-
-    my $pid_r = $this->{ PID_R };
-    
-    $pid_r =~ s/\\/\\\\/g;
-
     print $fh qq`
       print("Statistics::R - Perl bridge started!") ;
       
@@ -555,7 +539,7 @@ sub save_file_startR {
         ##print(PERLINPUTFILEX) ;
         cat(PERLINPUTFILEX , "\\n" , file=PERLOUTPUTFILE)
         
-        PERLINPUTFILE <- paste("input.", PERLINPUTFILEX , ".r" , sep="") ;
+        PERLINPUTFILE <- paste("$input_r_prefix", PERLINPUTFILEX , "$input_r_suffix" , sep="") ;
         
         ##print(PERLINPUTFILE) ;
         
@@ -699,9 +683,13 @@ sub initialize {
     $this->{ OUTPUT_R }   = catfile($this->{LOG_DIR}, 'output.log');
     $this->{ PROCESS_R }  = catfile($this->{LOG_DIR}, 'process.log');
     $this->{ PID_R }      = catfile($this->{LOG_DIR}, 'R.pid');
-    $this->{ LOCK_R }     = catfile($this->{LOG_DIR}, 'lock.pid');
     $this->{ STARTING_R } = catfile($this->{LOG_DIR}, 'R.starting');
     $this->{ STOPPING_R } = catfile($this->{LOG_DIR}, 'R.stopping');
+    $this->{ LOCK_R }     = catfile($this->{LOG_DIR}, 'lock.pid');
+    
+    # The name of R input file will be something like input.1.r
+    $this->{ INPUT_R_PREFIX } = catfile($this->{LOG_DIR}, 'input.');
+    $this->{ INPUT_R_SUFFIX } = '.r';
 
     return 1;
 }
@@ -774,7 +762,8 @@ sub win32_double_bs {
 #    my( $this, %args ) = @_;
 #    if ( !-s $this->{ R_BIN } ) {
 #        my @files = qw(R R-project Rproject);
-#        ## my @path = (split(":" , $ENV{PATH} || $ENV{Path} || $ENV{path} ) , '/usr/lib/R/bin' , '/usr/lib/R/bin' ) ;
+#        ## my @path = (split(":" , $ENV{PATH} || $ENV{Path} || $ENV{path} ) ,
+#        # '/usr/lib/R/bin' , '/usr/lib/R/bin' ) ;
 #        # CHANGE MADE BY CTBROWN 2008-06-16
 #        # RESPONSE TO RT BUG#23948: bug in Statistics::R
 #        my @path = (
