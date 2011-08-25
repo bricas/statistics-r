@@ -10,8 +10,6 @@ use File::Spec::Functions;
 our $VERSION = '0.09';
 our $HOLD_PIPE_X;
 
-my $this;
-
 
 sub new {
     my ($class, %args) = @_;
@@ -21,10 +19,9 @@ sub new {
     $args{r_bin} = 'C:\Program Files (x86)\R\bin\x64\R.exe';
     ####################################################
     
-    if( !defined $this ) {
-        $this = bless( {}, $class );
-        $this->initialize( %args );
-    }
+    my $this = {};
+    bless $this, ref($class) || $class;
+    $this->initialize( %args );
     
     return $this;
 }

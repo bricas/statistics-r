@@ -6,20 +6,21 @@ use Regexp::Common;
 use Text::Balanced qw ( extract_delimited extract_multiple );
 use Statistics::R::Bridge;
 
-our $VERSION = '0.09';
 
-my $this;
+our $VERSION = '0.09';
 
 
 sub new {
     my ($class, @args) = @_;
 
-    if( !defined $this ) {
-        $this  = bless( {}, $class );
-        # Create bridge
-        $this->{ BRIDGE } = Statistics::R::Bridge->new( @args );
-        $this->start( @args );
-    }
+    my $this = {};
+    bless $this, ref($class) || $class;
+
+    # Create bridge
+    $this->{ BRIDGE } = Statistics::R::Bridge->new( @args );
+    
+    # Start R
+    $this->start( @args );
 
     return $this;
 }
