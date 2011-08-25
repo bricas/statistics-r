@@ -3,7 +3,7 @@ package Statistics::R::Bridge;
 use strict;
 use warnings;
 use IO::Select;
-use Time::HiRes;
+use Time::HiRes qw( sleep );
 use File::Spec::Functions;
 
 
