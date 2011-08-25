@@ -833,11 +833,11 @@ __END__
 
 =head1 NAME
 
-Statistics::R::Bridge - Implements a communication bridge between Perl and R.
+Statistics::R::Bridge - A communication bridge between Perl and R.
 
 =head1 DESCRIPTION
 
-This will implements a communication bridge between Perl and R (R project for
+This module implements a communication bridge between Perl and R (R project for
 statistical computing: L<http://www.r-project.org/>) in different architectures
 and OS.
 
