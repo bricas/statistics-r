@@ -168,8 +168,7 @@ sub is_started {
 
         if ( -s $this->{ PID_R } ) { $this->update_pid; }
         elsif ( $can_auto_start ) {
-            open( my $fh, ">$this->{PID_R}" );
-            close( $fh );
+            $this->touch_file( $this->{PID_R} );
             chmod( 0777, $this->{ PID_R } );
             $this->stop;
             return $this->start_shared;
@@ -263,14 +262,9 @@ sub start {
     
     $this->save_file_startR;
 
-    my $fh;
-
-    open($fh, '>', $this->{PID_R}) or die "Error: Could not write file ".$this->{PID_R}."\n$!\n";
-    close $fh;
-    open($fh, '>', $this->{OUTPUT_R}) or die "Error: Could not write file ".$this->{OUTPUT_R}."\n$!\n";
-    close $fh;
-    open($fh, '>', $this->{PROCESS_R})or die "Error: Could not write file ".$this->{PROCESS_R}."\n$!\n";
-    close $fh;
+    $this->touch_file( $this->{PID_R} );
+    $this->touch_file( $this->{OUTPUT_R} );
+    $this->touch_file( $this->{PROCESS_R} );
     
     $this->chmod_all;
 
@@ -390,8 +384,7 @@ sub start_shared {
 
     my $starting;
     if ( !-e $this->{ STARTING_R } ) {
-        open( my $fh, ">$this->{STARTING_R}" );
-        close( $fh );
+        $this->touch_file( $this->{STARTING_R} );
         $starting = 1;
     }
 
@@ -423,8 +416,7 @@ sub stop {
     $this->{ STOPPING } = $started ? 1 : 2;
     
     if ( !$no_stopping_file ) {
-        open( my $fh, '>', $this->{STOPPING_R} ) or die "Error: Could not write file ".$this->{STOPPING_R}."\n$!\n";
-        close( $fh );
+        $this->touch_file( $this->{STOPPING_R} );
     }
 
     $this->unlock if $started;
@@ -639,6 +631,15 @@ sub write_file {
     my ($this, $file, $content) = @_;
     open( my $fh, '>', $file ) or die "Error: Could not write file $file\n$!\n";
     print $fh "$content";
+    close $fh;
+    return 1;
+}
+
+
+sub touch_file {
+    # Create an empty file
+    my ($this, $file) = @_;
+    open( my $fh, '>', $file ) or die "Error: Could not write file $file\n$!\n";
     close $fh;
     return 1;
 }
