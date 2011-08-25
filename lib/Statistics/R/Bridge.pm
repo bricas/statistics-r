@@ -49,9 +49,7 @@ sub send {
         $file = catfile( $this->{LOG_DIR}, "input.$n.r" );
     }
     
-    open( my $fh, '>', "$file._" ) or die "Error: Could not write file $file._\n$!\n";
-    print $fh "$cmd\n";
-    close( $fh );
+    $this->write_file( "$file._", "$cmd\n");
     
     chmod( 0777, "$file._" );
 
@@ -146,6 +144,7 @@ sub clean_log_dir {
         }
     }
     
+    return 1;    
 }
 
 
@@ -187,13 +186,13 @@ sub lock {
 
     while ( $this->is_locked ) { sleep( 0.5 ); }
 
-    open( my $fh, ">$this->{LOCK_R}" );
-    print $fh "$$\n";
-    close( $fh );
+    $this->write_file( $this->{LOCK_R}, "$$\n");
 
     chmod( 0777, $this->{ LOCK_R } );
 
     $this->{ LOCK } = 1;
+    
+    return 1;
 }
 
 
@@ -504,14 +503,12 @@ sub read_processR {
 sub save_file_startR {
     my $this = shift;
 
-    open( my $fh, '>', $this->{START_R} ) or die "Error: Could not write file ".$this->{START_R}."\n$!\n";
-
     my $pid_r          = win32_double_bs( $this->{ PID_R } );
     my $process_r      = win32_double_bs( $this->{ PROCESS_R } ); 
     my $input_r_prefix = win32_double_bs( $this->{ INPUT_R_PREFIX } );
     my $input_r_suffix = $this->{ INPUT_R_SUFFIX };
-    
-    print $fh qq`
+
+    my $bridge_code = qq`
       print("Statistics::R - Perl bridge started!") ;
       
       PERLINPUTFILEX = 0 ;
@@ -584,8 +581,8 @@ sub save_file_startR {
       
       close(PERLOUTPUTFILE) ;
     `;
-
-    close( $fh );
+    
+    $this->write_file( $this->{START_R}, $bridge_code );
 
     chmod( 0777, $this->{ START_R } );
 }
@@ -634,6 +631,16 @@ sub cat_dir {
     }
 
     return ( @files );
+}
+
+
+sub write_file {
+    # Write some content in a file
+    my ($this, $file, $content) = @_;
+    open( my $fh, '>', $file ) or die "Error: Could not write file $file\n$!\n";
+    print $fh "$content";
+    close $fh;
+    return 1;
 }
 
 
