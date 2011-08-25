@@ -36,9 +36,7 @@ sub new {
 
 sub pipe {
     my( $this, %args ) = @_;
-
-    $this->{ LOG_DIR } = $args{ log_dir } || catfile($this->{TMP_DIR}, 'Statistics-R');
-
+	
     if ( !-e $this->{ LOG_DIR } ) { mkdir( $this->{ LOG_DIR }, 0777 ); }
 
     if (   !-d $this->{ LOG_DIR }
@@ -48,7 +46,7 @@ sub pipe {
         die "Error: Could not read or write the LOG_DIR directory ".$this->{LOG_DIR}."\n"
     }
 
-    $this->{ OUTPUT_DIR } = $args{ output_dir } || catfile($this->{LOG_DIR}, 'output');
+    $this->{ OUTPUT_DIR } = catfile($this->{LOG_DIR}, 'output');
 
     if ( !-d $this->{ OUTPUT_DIR } || !-e $this->{ OUTPUT_DIR } ) {
         mkdir( $this->{ OUTPUT_DIR }, 0777 );
@@ -744,9 +742,7 @@ sub Linux {
 
     $this->{ START_CMD } = "$this->{R_BIN} --slave --vanilla ";
 
-    if ( !$args{ log_dir } ) {
-        $args{ log_dir } = catfile( $this->{TMP_DIR}, 'Statistics-R');
-    }
+    $this->{ LOG_DIR } = $args{ log_dir } || catfile( $this->{TMP_DIR}, 'Statistics-R');
 
     $this->{ OS } = 'linux';
 
@@ -817,12 +813,8 @@ sub Win32 {
     $exec = '"'.$exec.'"' if $exec =~ /\s/;
     $this->{ START_CMD } = "$exec --slave --vanilla";
 
-    if ( !$args{ log_dir } ) {
-        # $args{log_dir} = "$this->{R_DIR}/Statistics-R" ;
-        # Bug Fix by CTB:  Reponse to RT Bug #17956: Win32: log_dir is not in tmp_dir by default as advertised
-		
-        $args{ log_dir } = catfile( $this->{TMP_DIR}, 'Statistics-R');
-    }
+    $this->{ LOG_DIR } = $args{ log_dir } || catfile( $this->{TMP_DIR}, 'Statistics-R');
+    # Bug Fix by CTB:  Reponse to RT Bug #17956: Win32: log_dir is not in tmp_dir by default as advertised
 	
     $this->{ OS } = 'win32';
 
