@@ -30,40 +30,6 @@ sub new {
 }
 
 
-sub pipe {
-    my( $this, %args ) = @_;
-    
-    # Find and create log dir
-    $this->{ LOG_DIR } = $args{ log_dir } || catfile( $this->{TMP_DIR}, 'Statistics-R');
-    # Bug Fix by CTB:  Reponse to RT Bug #17956: Win32: log_dir is not in tmp_dir by default as advertised
-    if ( !-e $this->{ LOG_DIR } ) { mkdir( $this->{ LOG_DIR }, 0777 ); }
-    if (   !-d $this->{ LOG_DIR }
-        || !-r $this->{ LOG_DIR }
-        || !-w $this->{ LOG_DIR } )
-    {
-        die "Error: Could not read or write the LOG_DIR directory ".$this->{LOG_DIR}."\n"
-    }
-
-    # Find and create output dir
-    $this->{ OUTPUT_DIR } = catfile($this->{LOG_DIR}, 'output');
-    if ( !-d $this->{ OUTPUT_DIR } || !-e $this->{ OUTPUT_DIR } ) {
-        mkdir( $this->{ OUTPUT_DIR }, 0777 );
-    }
-    if ( !-r $this->{ OUTPUT_DIR } || !-w $this->{ OUTPUT_DIR } ) {
-        die "Error: Could not read or write the OUTPUT_DIR directory ".$this->{OUTPUT_DIR}."\n"
-    }
-
-    $this->{ START_R }    = catfile($this->{LOG_DIR}, 'start.r');
-    $this->{ OUTPUT_R }   = catfile($this->{LOG_DIR}, 'output.log');
-    $this->{ PROCESS_R }  = catfile($this->{LOG_DIR}, 'process.log');
-    $this->{ PID_R }      = catfile($this->{LOG_DIR}, 'R.pid');
-    $this->{ LOCK_R }     = catfile($this->{LOG_DIR}, 'lock.pid');
-    $this->{ STARTING_R } = catfile($this->{LOG_DIR}, 'R.starting');
-    $this->{ STOPING_R }  = catfile($this->{LOG_DIR}, 'R.stoping');
-
-}
-
-
 sub bin {
     my $this = shift;
     $this->{ R_BIN };
@@ -694,12 +660,38 @@ sub initialize {
     
     $this->{ R_BIN }   = $args{ r_bin }   || $args{ R_bin } || '';
     $this->{ R_DIR }   = $args{ r_dir }   || $args{ R_dir } || '';
-    $this->{ TMP_DIR } = $args{ tmp_dir } || '';
 
+    # Find and create log dir
+    $this->{ LOG_DIR } = $args{ log_dir } || catfile( File::Spec->tmpdir(), 'Statistics-R');
+    # Bug Fix by CTB:  Reponse to RT Bug #17956: Win32: log_dir is not in tmp_dir by default as advertised
+    if ( !-e $this->{ LOG_DIR } ) { mkdir( $this->{ LOG_DIR }, 0777 ); }
+    if (   !-d $this->{ LOG_DIR }
+        || !-r $this->{ LOG_DIR }
+        || !-w $this->{ LOG_DIR } )
+    {
+        die "Error: Could not read or write the LOG_DIR directory ".$this->{LOG_DIR}."\n"
+    }
+
+    # Find and create output dir
+    $this->{ OUTPUT_DIR } = catfile($this->{LOG_DIR}, 'output');
+    if ( !-d $this->{ OUTPUT_DIR } || !-e $this->{ OUTPUT_DIR } ) {
+        mkdir( $this->{ OUTPUT_DIR }, 0777 );
+    }
+    if ( !-r $this->{ OUTPUT_DIR } || !-w $this->{ OUTPUT_DIR } ) {
+        die "Error: Could not read or write the OUTPUT_DIR directory ".$this->{OUTPUT_DIR}."\n"
+    }
+    
     my $method = ( $^O =~ /^(?:.*?win32|dos)$/i ) ? 'Win32' : 'Linux';
     $this->$method( %args );
     
-    $this->pipe( %args );
+    # Files necessary for the pipe to R...
+    $this->{ START_R }    = catfile($this->{LOG_DIR}, 'start.r');
+    $this->{ OUTPUT_R }   = catfile($this->{LOG_DIR}, 'output.log');
+    $this->{ PROCESS_R }  = catfile($this->{LOG_DIR}, 'process.log');
+    $this->{ PID_R }      = catfile($this->{LOG_DIR}, 'R.pid');
+    $this->{ LOCK_R }     = catfile($this->{LOG_DIR}, 'lock.pid');
+    $this->{ STARTING_R } = catfile($this->{LOG_DIR}, 'R.starting');
+    $this->{ STOPING_R }  = catfile($this->{LOG_DIR}, 'R.stoping');
 
 }
 
@@ -742,20 +734,8 @@ sub Linux {
         die "Error: Could not find the R directory!\n";
     }
     
-    if ( !$this->{ TMP_DIR } ) {
-        for my $dir ( qw(/tmp /usr/local/tmp) ) {
-            if ( -d $dir ) {
-                $this->{ TMP_DIR } = $dir;
-                last;
-            }
-        }
-    }
-
     $this->{ START_CMD } = "$this->{R_BIN} --slave --vanilla ";
-    if ( !-d $this->{ TMP_DIR } ) {
-        die "Error: Could not find a temporary directory!\n";
-    }
-    
+
     $this->{ OS } = 'linux';
 
 }
@@ -802,23 +782,6 @@ sub Win32 {
         die "Error: Could not find the R directory!\n";
     }
     
-    # Get a temp directory
-    if ( !$this->{ TMP_DIR } ) {
-        $this->{ TMP_DIR } = $ENV{ TMP } || $ENV{ TEMP };
-        if ( !$this->{ TMP_DIR } ) {
-            for my $dir ( qw(c:\tmp c:\temp c:\windows\tmp c:\windows\temp) )
-            {
-                if ( -d $dir ) {
-                    $this->{ TMP_DIR } = $dir;
-                    last;
-                }
-            }
-        }
-    }
-    if ( !-d $this->{ TMP_DIR } ) {
-        die "Error: Could not find a temporary directory!\n";
-    }
-
     my $exec = $this->{ R_BIN };
     $exec = '"'.$exec.'"' if $exec =~ /\s/;
     $this->{ START_CMD } = "$exec --slave --vanilla";

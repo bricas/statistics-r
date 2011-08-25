@@ -297,12 +297,13 @@ Start a shared bridge. See start().
 
 =item log_dir
 
-The directory where the bridge between R and Perl will be created.
+A temporary directory where the bridge between R and Perl will be created.
 
 B<R and Perl need to have read and write access to the directory and Perl will
  change to this directory!>
 
-I<By default it will be created at I<%TMP_DIR%/Statistics-R>.>
+I<By default this will be created in a folder called Statistics-R-XXXX in a
+temporary directory of the system>
 
 =item r_bin
 
@@ -313,12 +314,6 @@ I<By default the path will be searched in the default installation path of R in 
 =item r_dir
 
 The directory of R.
-
-=item tmp_dir
-
-A temporary directory.
-
-I<By default the temporary directory of the OS will be used>
 
 =back
 
