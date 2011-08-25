@@ -3,8 +3,9 @@ package Statistics::R::Bridge;
 use strict;
 use warnings;
 use IO::Select;
-use Time::HiRes qw( sleep );
 use File::Spec::Functions;
+use Time::HiRes qw( sleep );
+use File::Which qw( which where );
 
 
 our $VERSION = '0.09';
@@ -15,8 +16,8 @@ sub new {
     my ($class, %args) = @_;
 
     ###### TEMPORARY HARDCODING THE LOCATION OF R ######
-    $args{r_dir} = 'C:\Program Files (x86)\R';
     $args{r_bin} = 'C:\Program Files (x86)\R\bin\x64\R.exe';
+    #$args{r_bin} = 'R.exe';
     ####################################################
     
     my $this = {};
@@ -657,7 +658,7 @@ sub initialize {
     
     # Find and create log dir
     $this->{ LOG_DIR } = $args{ log_dir } || catfile( File::Spec->tmpdir(), 'Statistics-R');
-    # Bug Fix by CTB:  Reponse to RT Bug #17956: Win32: log_dir is not in tmp_dir by default as advertised
+    # Fix by CTB for RT Bug #17956: log_dir should be in tmp_dir by default
     if ( !-e $this->{ LOG_DIR } ) { mkdir( $this->{ LOG_DIR }, 0777 ); }
     if (   !-d $this->{ LOG_DIR }
         || !-r $this->{ LOG_DIR }
@@ -727,32 +728,36 @@ sub Win32 {
 
     # Get the R binary full path
     if ( !-s $this->{ R_BIN } ) {
-    
         my $ver_dir = ( $this->cat_dir( catfile($ENV{ProgramFiles},'R') ) )[ 0 ];
-
         my $bin = catfile($ver_dir, 'bin', 'Rterm.exe');
         if ( !-e $bin || !-x $bin ) { $bin = undef; }
-
         if ( !$bin ) {
             my @dir = $this->cat_dir( catfile($ENV{ProgramFiles},'R'), undef, 1, 1 );
             foreach my $dir_i ( @dir ) {
                 if ( $dir_i =~ /\/Rterm\.exe$/ ) { $bin = $dir_i; last; }
             }
         }
-
         if ( !$bin ) {
             my @files = qw(Rterm.exe);
             my @path  = (
                 split( ";", $ENV{ PATH } || $ENV{ Path } || $ENV{ path } ) );
             $bin = $this->find_file( \@files, @path );
         }
-
         $this->{ R_BIN } = $bin;
     }
     if ( !-s $this->{ R_BIN } ) {
         die "Error: Could not find the R binary!\n";
     }
     
+    #### Code does not work... probably because R is not in my path??
+    #my @paths = where('R');
+    #if (scalar @paths == 0) {
+    #    die "Error: Could not find the R binary!\n";
+    #} elsif (scalar @paths > 1) {
+    #    warn "Warning: Multiple binaries where found for R. Using the first one...\n";    
+    #}
+    #$this->{ R_BIN } = $paths[0];
+    ####
     
     my $exec = $this->{ R_BIN };
     $exec = '"'.$exec.'"' if $exec =~ /\s/;
