@@ -23,6 +23,7 @@ WriteMakefile(
         'Test::More'     => '0.47',
         'Text::Balanced' => '0',
         'Regexp::Common' => '0',
+        'File::Which'    => '0',
     },
 );
 

@@ -5,32 +5,28 @@ use warnings;
 use IO::Select;
 use File::Spec::Functions;
 use Time::HiRes qw( sleep );
-use File::Which qw( which where );
+use File::Which qw( where );
+use File::DosGlob qw( glob );
+use Env qw( @PATH $PROGRAMFILES );
 
 
 our $VERSION = '0.09';
 our $HOLD_PIPE_X;
+our $IS_WIN = ($^O =~ m/^(?:.*?win32|dos)$/i) ? 1 : 0;
 
 
 sub new {
     my ($class, %args) = @_;
-
-    ###### TEMPORARY HARDCODING THE LOCATION OF R ######
-    $args{r_bin} = 'C:\Program Files (x86)\R\bin\x64\R.exe';
-    #$args{r_bin} = 'R.exe';
-    ####################################################
-    
     my $this = {};
     bless $this, ref($class) || $class;
     $this->initialize( %args );
-    
     return $this;
 }
 
 
 sub bin {
     my $this = shift;
-    $this->{ R_BIN };
+    return $this->{ R_BIN };
 }
 
 
@@ -667,13 +663,34 @@ sub initialize {
         die "Error: Could not read or write the LOG_DIR directory ".$this->{LOG_DIR}."\n"
     }
     
-    # Find R directory and binary
-    $this->{ R_BIN }   = $args{ r_bin }   || $args{ R_bin } || '';
-    my $method = ( $^O =~ /^(?:.*?win32|dos)$/i ) ? 'Win32' : 'Linux';
-    $this->$method( %args );
+    # Find full path of R binary
+    if ( $args{ r_bin } || $args{ R_bin } ) {
+        # User-specified location
+        $this->{ R_BIN } =  $args{ r_bin } || $args{ R_bin };
+        if ( !-s $this->{ R_BIN } ) {
+            die "Error: Could not find the R binary at the specified location, ".
+                $this->{ R_BIN }."\n";
+        }
+    } else {
+        # Windows-specific PATH adjustement
+        win32_path_adjust() if $IS_WIN;
+        # Locate R in PATH using File::Which
+        my @paths = where('R');
+        if (scalar @paths == 0) {
+            die "Error: Could not find the R binary! Make sure it is in your ".
+                "PATH environment variable or specify its location using the ".
+                "r_bin option of the new() method.\n";
+        }
+        $this->{ R_BIN } = $paths[0];
+        #if (scalar @paths > 1) {
+        #    warn "Warning: Multiple binaries where found for R. Using the first".
+        #         " one... ".$this->{ R_BIN }."\n";  
+        #}
+    }
+    $this->{ R_BIN } = win32_space_quote( $this->{ R_BIN } ) if $IS_WIN;
     $this->{ START_CMD } = "$this->{R_BIN} --slave --vanilla ";
 
-    # Files necessary for the pipe to R...
+    # Files necessary for piping to and from R
     $this->{ START_R }    = catfile($this->{LOG_DIR}, 'start.r');
     $this->{ OUTPUT_R }   = catfile($this->{LOG_DIR}, 'output.log');
     $this->{ PROCESS_R }  = catfile($this->{LOG_DIR}, 'process.log');
@@ -682,90 +699,131 @@ sub initialize {
     $this->{ STARTING_R } = catfile($this->{LOG_DIR}, 'R.starting');
     $this->{ STOPING_R }  = catfile($this->{LOG_DIR}, 'R.stoping');
 
+    return 1;
 }
 
-sub Linux {
-    my( $this, %args ) = @_;
 
-    if ( !-s $this->{ R_BIN } ) {
-        my @files = qw(R R-project Rproject);
-        ## my @path = (split(":" , $ENV{PATH} || $ENV{Path} || $ENV{path} ) , '/usr/lib/R/bin' , '/usr/lib/R/bin' ) ;
-        # CHANGE MADE BY CTBROWN 2008-06-16
-        # RESPONSE TO RT BUG#23948: bug in Statistics::R
-        my @path = (
-            split( ":", $ENV{ PATH } || $ENV{ Path } || $ENV{ path } ),
-            '/usr/lib/R/bin'
-        );
-
-        my $bin;
-        while ( !$bin && @files ) {
-            $bin = $this->find_file( shift( @files ), @path );
-        }
-
-        if ( !$bin ) {
-            my $path = `which R`;
-            $path =~ s/^\s+//s;
-            $path =~ s/\s+$//s;
-            if ( -e $path && -x $path ) { $bin = $path; }
-        }
-
-        $this->{ R_BIN } = $bin;
-    }
-    if ( !-s $this->{ R_BIN } ) {
-        die "Error: Could not find the R binary!\n";
-    }
+sub win32_path_adjust {
+    # Find potential R directories in the Windows Program Files folder and add
+    # them to the PATH environment variable
     
-}
-
-
-sub Win32 {
-    my( $this, %args ) = @_;
-
-    # Get the R binary full path
-    if ( !-s $this->{ R_BIN } ) {
-        my $ver_dir = ( $this->cat_dir( catfile($ENV{ProgramFiles},'R') ) )[ 0 ];
-        my $bin = catfile($ver_dir, 'bin', 'Rterm.exe');
-        if ( !-e $bin || !-x $bin ) { $bin = undef; }
-        if ( !$bin ) {
-            my @dir = $this->cat_dir( catfile($ENV{ProgramFiles},'R'), undef, 1, 1 );
-            foreach my $dir_i ( @dir ) {
-                if ( $dir_i =~ /\/Rterm\.exe$/ ) { $bin = $dir_i; last; }
+    # Find potential R directories, e.g.  C:\Program Files (x86)\R-2.1\bin
+    #                                 or  C:\Program Files\R\bin\x64
+    my @r_dirs;
+    my @prog_file_dirs   = ($PROGRAMFILES);                # e.g. C:\Program Files (x86)
+    my ($programfiles_2) = ($PROGRAMFILES =~ m/^(.*) \(/); # e.g. C:\Program Files
+    push @prog_file_dirs, $programfiles_2 if not $programfiles_2 eq $PROGRAMFILES;
+    for my $prog_file_dir ( @prog_file_dirs ) {
+        next if not -d $prog_file_dir;
+        my @subdirs;
+        my @globs = ( catfile($prog_file_dir, 'R'), catfile($prog_file_dir, 'R-*') );
+        for my $glob ( @globs ) {
+            $glob = win32_space_escape( win32_double_bs( $glob ) );
+            push @subdirs, glob $glob; # DosGlob
+        }
+        for my $subdir (@subdirs) {
+            my $subdir2 = catfile($subdir, 'bin');
+            if ( -d $subdir2 ) {
+                my $subdir3 = catfile($subdir2, 'x64');
+                if ( -d $subdir3 ) {
+                    push @r_dirs, $subdir3;
+                }
+                push @r_dirs, $subdir2;
             }
+            push @r_dirs, $subdir;
         }
-        if ( !$bin ) {
-            my @files = qw(Rterm.exe);
-            my @path  = (
-                split( ";", $ENV{ PATH } || $ENV{ Path } || $ENV{ path } ) );
-            $bin = $this->find_file( \@files, @path );
-        }
-        $this->{ R_BIN } = $bin;
     }
-    if ( !-s $this->{ R_BIN } ) {
-        die "Error: Could not find the R binary!\n";
-    }
-    
-    #### Code does not work... probably because R is not in my path??
-    #my @paths = where('R');
-    #if (scalar @paths == 0) {
-    #    die "Error: Could not find the R binary!\n";
-    #} elsif (scalar @paths > 1) {
-    #    warn "Warning: Multiple binaries where found for R. Using the first one...\n";    
-    #}
-    #$this->{ R_BIN } = $paths[0];
-    ####
-    
-    $this->{ R_BIN } = '"'.$this->{ R_BIN }.'"' if $this->{ R_BIN } =~ /\s/;
 
+    # Append R directories to PATH (order is important for File::Which)
+    push @PATH, @r_dirs;
+    
+    return 1;
 }
+
+
+sub win32_space_quote {
+    # Quote a path if it contains whitespaces
+    my $path = shift;
+    $path = '"'.$path.'"' if $path =~ /\s/;
+    return $path;
+}
+
+
+sub win32_space_escape {
+    # Escape spaces with a single backslash
+    my $path = shift;
+    $path =~ s/ /\\ /g;
+    return $path;
+}
+
+
+sub win32_double_bs {
+    # Double the backslashes
+    my $path = shift;
+    $path =~ s/\\/\\\\/g;
+    return $path;
+}
+
+
+#sub Linux {
+#    # Find the full path of the R binary on non-Windows systems
+#    my( $this, %args ) = @_;
+#    if ( !-s $this->{ R_BIN } ) {
+#        my @files = qw(R R-project Rproject);
+#        ## my @path = (split(":" , $ENV{PATH} || $ENV{Path} || $ENV{path} ) , '/usr/lib/R/bin' , '/usr/lib/R/bin' ) ;
+#        # CHANGE MADE BY CTBROWN 2008-06-16
+#        # RESPONSE TO RT BUG#23948: bug in Statistics::R
+#        my @path = (
+#            split( ":", $ENV{ PATH } || $ENV{ Path } || $ENV{ path } ),
+#            '/usr/lib/R/bin'
+#        );
+#        my $bin;
+#        while ( !$bin && @files ) {
+#            $bin = $this->find_file( shift( @files ), @path );
+#        }
+#        if ( !$bin ) {
+#            my $path = `which R`;
+#            $path =~ s/^\s+//s;
+#            $path =~ s/\s+$//s;
+#            if ( -e $path && -x $path ) { $bin = $path; }
+#        }
+#        $this->{ R_BIN } = $bin;
+#    }  
+#}
+
+
+#sub Win32 {
+#    # Find the full path of the R binary on Windows systems
+#    my( $this, %args ) = @_;
+#    if ( !-s $this->{ R_BIN } ) {
+#        my $ver_dir = ( $this->cat_dir( catfile($ENV{ProgramFiles},'R') ) )[ 0 ];
+#        my $bin = catfile($ver_dir, 'bin', 'Rterm.exe');
+#        if ( !-e $bin || !-x $bin ) { $bin = undef; }
+#        if ( !$bin ) {
+#            my @dir = $this->cat_dir( catfile($ENV{ProgramFiles},'R'), undef, 1, 1 );
+#            foreach my $dir_i ( @dir ) {
+#                if ( $dir_i =~ /\/Rterm\.exe$/ ) { $bin = $dir_i; last; }
+#            }
+#        }
+#        if ( !$bin ) {
+#            my @files = qw(Rterm.exe);
+#            my @path  = (
+#                split( ";", $ENV{ PATH } || $ENV{ Path } || $ENV{ path } ) );
+#            $bin = $this->find_file( \@files, @path );
+#        }
+#        $this->{ R_BIN } = $bin;
+#    }
+#    if ( !-s $this->{ R_BIN } ) {
+#        die "Error: Could not find the R binary!\n";
+#    }
+#    $this->{ R_BIN } = '"'.$this->{ R_BIN }.'"' if $this->{ R_BIN } =~ /\s/;
+#}
 
 
 sub DESTROY {
     my $this = shift;
-
     $this->unlock;
-    
     $this->stop if !$this->{ START_SHARED };
-    
 }
 
 

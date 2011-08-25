@@ -366,9 +366,16 @@ Clean up the environment, removing all the objects.
 
 =head1 INSTALL
 
-To install this package you need to install R on your system first, since I<Statistics::R> need to find R path to work.
+To install this package you need to install R on your system first, since
+I<Statistics::R> need to find R path to work. If R is in your PATH environment
+variable, then it should be available from a terminal and be detected
+automatically by I<Statistics::R>. This means that you do not have to do anything
+on Linux systems to get I<Statistics::R> working. On Windows systems, in addition
+to the folders described in PATH, the usual suspects will be checked for the
+presence of the R binary, e.g. C:\Program Files\R. Your last recourse if
+I<Statistics::R> does not find R is to specify its full path when calling new():
 
-A standard installation of R on Win32 or Linux will work fine and be detected automatically by I<Statistics::R>.
+    my $R = Statistics::R->new( r_bin => $fullpath );
 
 Download page of R:
 L<http://cran.r-project.org/banner.shtml>
@@ -383,6 +390,8 @@ You also need to have the following CPAN Perl modules installed:
 =item Text::Balanced
 
 =item Regexp::Common
+
+=item File::Which
 
 =back
 
