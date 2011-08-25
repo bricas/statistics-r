@@ -308,9 +308,8 @@ temporary directory of the system>
 
 =item r_bin
 
-The path to the R binary.
-
-I<By default the path will be searched in the default installation path of R in the OS.>
+The path to the R binary. In most cases, you do not need to use this. See the
+I<INSTALLATION> section.
 
 =back
 
@@ -364,7 +363,7 @@ Clean up the environment, removing all the objects.
 
 =back
 
-=head1 INSTALL
+=head1 INSTALLATION
 
 To install this package you need to install R on your system first, since
 I<Statistics::R> need to find R path to work. If R is in your PATH environment
