@@ -671,7 +671,8 @@ sub initialize {
     $this->{ R_BIN }   = $args{ r_bin }   || $args{ R_bin } || '';
     my $method = ( $^O =~ /^(?:.*?win32|dos)$/i ) ? 'Win32' : 'Linux';
     $this->$method( %args );
-    
+    $this->{ START_CMD } = "$this->{R_BIN} --slave --vanilla ";
+
     # Files necessary for the pipe to R...
     $this->{ START_R }    = catfile($this->{LOG_DIR}, 'start.r');
     $this->{ OUTPUT_R }   = catfile($this->{LOG_DIR}, 'output.log');
@@ -714,9 +715,6 @@ sub Linux {
         die "Error: Could not find the R binary!\n";
     }
     
-    
-    $this->{ START_CMD } = "$this->{R_BIN} --slave --vanilla ";
-
 }
 
 
@@ -756,9 +754,7 @@ sub Win32 {
     #$this->{ R_BIN } = $paths[0];
     ####
     
-    my $exec = $this->{ R_BIN };
-    $exec = '"'.$exec.'"' if $exec =~ /\s/;
-    $this->{ START_CMD } = "$exec --slave --vanilla";
+    $this->{ R_BIN } = '"'.$this->{ R_BIN }.'"' if $this->{ R_BIN } =~ /\s/;
 
 }
 
