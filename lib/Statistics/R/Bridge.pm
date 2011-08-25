@@ -250,12 +250,12 @@ sub chmod_all {
 
     chmod( 0777,
         $this->{ LOG_DIR },
-        $this->{ OUTPUT_DIR },
         $this->{ START_R },
         $this->{ OUTPUT_R },
         $this->{ PROCESS_R },
         $this->{ LOCK_R },
         $this->{ PID_R } );
+        
 }
 
 
@@ -658,9 +658,6 @@ sub cat_dir {
 sub initialize {
     my ($this, %args) = @_;
     
-    $this->{ R_BIN }   = $args{ r_bin }   || $args{ R_bin } || '';
-    $this->{ R_DIR }   = $args{ r_dir }   || $args{ R_dir } || '';
-
     # Find and create log dir
     $this->{ LOG_DIR } = $args{ log_dir } || catfile( File::Spec->tmpdir(), 'Statistics-R');
     # Bug Fix by CTB:  Reponse to RT Bug #17956: Win32: log_dir is not in tmp_dir by default as advertised
@@ -671,16 +668,10 @@ sub initialize {
     {
         die "Error: Could not read or write the LOG_DIR directory ".$this->{LOG_DIR}."\n"
     }
-
-    # Find and create output dir
-    $this->{ OUTPUT_DIR } = catfile($this->{LOG_DIR}, 'output');
-    if ( !-d $this->{ OUTPUT_DIR } || !-e $this->{ OUTPUT_DIR } ) {
-        mkdir( $this->{ OUTPUT_DIR }, 0777 );
-    }
-    if ( !-r $this->{ OUTPUT_DIR } || !-w $this->{ OUTPUT_DIR } ) {
-        die "Error: Could not read or write the OUTPUT_DIR directory ".$this->{OUTPUT_DIR}."\n"
-    }
     
+    # Find R directory and binary
+    $this->{ R_BIN }   = $args{ r_bin }   || $args{ R_bin } || '';
+    $this->{ R_DIR }   = $args{ r_dir }   || $args{ R_dir } || '';
     my $method = ( $^O =~ /^(?:.*?win32|dos)$/i ) ? 'Win32' : 'Linux';
     $this->$method( %args );
     
