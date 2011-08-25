@@ -1,11 +1,9 @@
 use strict;
 use warnings;
-use File::Spec::Functions;
-
 use ExtUtils::MakeMaker;
 
 if ( -e 'MANIFEST.SKIP' ) {
-   generate_readme( catfile('lib','Statistics','R.pm'), 'README' ); 
+   generate_readme( 'lib/Statistics/R.pm', 'README' ); 
 }
 
 WriteMakefile(
