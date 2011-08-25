@@ -23,7 +23,7 @@ sub new {
 	
     if( !defined $this ) {
         $this = bless( {}, $class );
-		
+
         my $method = ( $^O =~ /^(?:.*?win32|dos)$/i ) ? 'Win32' : 'Linux';
         $this->$method( %args );
 		
@@ -37,8 +37,10 @@ sub new {
 sub pipe {
     my( $this, %args ) = @_;
 	
+	# Find and create log dir
+	$this->{ LOG_DIR } = $args{ log_dir } || catfile( $this->{TMP_DIR}, 'Statistics-R');
+    # Bug Fix by CTB:  Reponse to RT Bug #17956: Win32: log_dir is not in tmp_dir by default as advertised
     if ( !-e $this->{ LOG_DIR } ) { mkdir( $this->{ LOG_DIR }, 0777 ); }
-
     if (   !-d $this->{ LOG_DIR }
         || !-r $this->{ LOG_DIR }
         || !-w $this->{ LOG_DIR } )
@@ -46,12 +48,11 @@ sub pipe {
         die "Error: Could not read or write the LOG_DIR directory ".$this->{LOG_DIR}."\n"
     }
 
+	# Find and create output dir
     $this->{ OUTPUT_DIR } = catfile($this->{LOG_DIR}, 'output');
-
     if ( !-d $this->{ OUTPUT_DIR } || !-e $this->{ OUTPUT_DIR } ) {
         mkdir( $this->{ OUTPUT_DIR }, 0777 );
     }
-
     if ( !-r $this->{ OUTPUT_DIR } || !-w $this->{ OUTPUT_DIR } ) {
         die "Error: Could not read or write the OUTPUT_DIR directory ".$this->{OUTPUT_DIR}."\n"
     }
@@ -179,11 +180,14 @@ sub receive {
 
 sub clean_log_dir {
     my $this = shift;
-
+	
     my @dir = $this->cat_dir( $this->{ LOG_DIR }, 0, 0, 1 );
-    foreach my $dir_i ( @dir ) {
+
+    for my $dir_i ( @dir ) {
         ##print "RM>> $dir_i\n" ;
-        unlink $dir_i if $dir_i !~ /R\.(?:starting|stoping)$/;
+		if ($dir_i !~ /R\.(?:starting|stoping)$/) {
+            unlink $dir_i;
+		}
     }
 	
 }
@@ -742,8 +746,6 @@ sub Linux {
 
     $this->{ START_CMD } = "$this->{R_BIN} --slave --vanilla ";
 
-    $this->{ LOG_DIR } = $args{ log_dir } || catfile( $this->{TMP_DIR}, 'Statistics-R');
-
     $this->{ OS } = 'linux';
 
     $this->pipe( %args );
@@ -813,9 +815,6 @@ sub Win32 {
     $exec = '"'.$exec.'"' if $exec =~ /\s/;
     $this->{ START_CMD } = "$exec --slave --vanilla";
 
-    $this->{ LOG_DIR } = $args{ log_dir } || catfile( $this->{TMP_DIR}, 'Statistics-R');
-    # Bug Fix by CTB:  Reponse to RT Bug #17956: Win32: log_dir is not in tmp_dir by default as advertised
-	
     $this->{ OS } = 'win32';
 
     $this->pipe( %args );
