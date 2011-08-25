@@ -17,7 +17,7 @@ ok $R = Statistics::R->new();
 
 ok $R->start();
 
-is cwd, $initial_dir; # Bug RT #6724
+is cwd, $initial_dir; # Bug RT #6724 and #70307
 
 ok $R->restart();
 
@@ -31,4 +31,4 @@ ok $R->start( shared => 1);
 
 ok $R->stop();
 
-is cwd, $initial_dir; # Bug RT #6724
+is cwd, $initial_dir; # Bug RT #6724 and #70307
