@@ -717,9 +717,6 @@ sub Linux {
     
     $this->{ START_CMD } = "$this->{R_BIN} --slave --vanilla ";
 
-    
-    $this->{ OS } = 'linux';
-
 }
 
 
@@ -763,15 +760,11 @@ sub Win32 {
     $exec = '"'.$exec.'"' if $exec =~ /\s/;
     $this->{ START_CMD } = "$exec --slave --vanilla";
 
-    
-    $this->{ OS } = 'win32';
 }
 
 
 sub DESTROY {
     my $this = shift;
-
-    return unless $this->{ OS };
 
     $this->unlock;
     
