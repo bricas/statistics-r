@@ -68,9 +68,9 @@ sub send {
     
     my ( $x, $xx );
     while (
-            ( !$has_quit || $this->{ STOPING } == 1 )
+            ( !$has_quit || $this->{ STOPPING } == 1 )
             &&  -e $file
-            &&  $this->is_started( !$this->{ STOPING } )
+            &&  $this->is_started( !$this->{ STOPPING } )
           )
     {
         
@@ -94,7 +94,7 @@ sub send {
         }    ## xx > 5 = x > 50
     }
     
-    if ( $has_quit && !$this->{ STOPING } ) { $this->stop( 1 ); }
+    if ( $has_quit && !$this->{ STOPPING } ) { $this->stop( 1 ); }
 
     return $status;
 }
@@ -141,7 +141,7 @@ sub clean_log_dir {
 
     for my $dir_i ( @dir ) {
         ##print "RM>> $dir_i\n" ;
-        if ($dir_i !~ /R\.(?:starting|stoping)$/) {
+        if ($dir_i !~ /R\.(?:starting|stopping)$/) {
             unlink $dir_i;
         }
     }
@@ -163,7 +163,7 @@ sub is_started {
         $this->sleep_unsync;
 
         if ( $can_auto_start ) {
-            $this->wait_stoping;
+            $this->wait_stopping;
             if ( -e $this->{ PID_R } ) { $this->wait_starting; }
         }
 
@@ -350,11 +350,11 @@ sub wait_starting {
 }
 
 
-sub wait_stoping {
+sub wait_stopping {
     my $this = shift;
 
     my $c;
-    while ( -e $this->{ STOPING_R } ) {
+    while ( -e $this->{ STOPPING_R } ) {
         ++$c;
         sleep( 1 );
         if ( $c == 10 ) { return; }
@@ -377,7 +377,7 @@ sub start_shared {
     return if $this->is_started;
     $this->{ START_SHARED } = 1;
 
-    $this->wait_stoping;
+    $this->wait_stopping;
 
     $this->wait_starting;
 
@@ -390,7 +390,7 @@ sub start_shared {
 
         $this->update_pid;
         $this->{ OUTPUT_R_POS } = 0;
-        $this->{ STOPING }      = undef;
+        $this->{ STOPPING }      = undef;
 
         $this->chmod_all;
 
@@ -434,10 +434,10 @@ sub stop {
 
     my $started = $not_started ? undef : $this->is_started;
 
-    $this->{ STOPING } = $started ? 1 : 2;
+    $this->{ STOPPING } = $started ? 1 : 2;
     
     if ( !$no_stopping_file ) {
-        open( my $fh, '>', $this->{STOPING_R} ) or die "Error: Could not write file ".$this->{STOPING_R}."\n$!\n";
+        open( my $fh, '>', $this->{STOPPING_R} ) or die "Error: Could not write file ".$this->{STOPPING_R}."\n$!\n";
         close( $fh );
     }
 
@@ -470,11 +470,11 @@ sub stop {
 
     sleep( 1 ) if !$started;
 
-    unlink( $this->{ STOPING_R } );
+    unlink( $this->{ STOPPING_R } );
 
     $this->clean_log_dir;
 
-    $this->{ STOPING } = undef;
+    $this->{ STOPPING } = undef;
     
     #### delete the log_dir folder (Statistics-R) unless folder was specified by user
     #unlink $this->
@@ -701,7 +701,7 @@ sub initialize {
     $this->{ PID_R }      = catfile($this->{LOG_DIR}, 'R.pid');
     $this->{ LOCK_R }     = catfile($this->{LOG_DIR}, 'lock.pid');
     $this->{ STARTING_R } = catfile($this->{LOG_DIR}, 'R.starting');
-    $this->{ STOPING_R }  = catfile($this->{LOG_DIR}, 'R.stoping');
+    $this->{ STOPPING_R } = catfile($this->{LOG_DIR}, 'R.stopping');
 
     return 1;
 }
