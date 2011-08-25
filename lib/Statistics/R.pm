@@ -303,7 +303,7 @@ A temporary directory where the bridge between R and Perl will be created.
 B<R and Perl need to have read and write access to the directory and Perl will
  change to this directory!>
 
-I<By default this will be created in a folder called Statistics-R-XXXX in a
+I<By default this will be created in a folder called Statistics-R in a
 temporary directory of the system>
 
 =item r_bin
@@ -311,10 +311,6 @@ temporary directory of the system>
 The path to the R binary.
 
 I<By default the path will be searched in the default installation path of R in the OS.>
-
-=item r_dir
-
-The directory of R.
 
 =back
 

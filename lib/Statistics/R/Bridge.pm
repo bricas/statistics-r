@@ -668,7 +668,6 @@ sub initialize {
     
     # Find R directory and binary
     $this->{ R_BIN }   = $args{ r_bin }   || $args{ R_bin } || '';
-    $this->{ R_DIR }   = $args{ r_dir }   || $args{ R_dir } || '';
     my $method = ( $^O =~ /^(?:.*?win32|dos)$/i ) ? 'Win32' : 'Linux';
     $this->$method( %args );
     
@@ -713,17 +712,11 @@ sub Linux {
     if ( !-s $this->{ R_BIN } ) {
         die "Error: Could not find the R binary!\n";
     }
-
-    if ( !$this->{ R_DIR } && $this->{ R_BIN } ) {
-        ( $this->{ R_DIR } ) = ( $this->{ R_BIN } =~ /^(.*?)[\\\/]+[^\\\/]+$/s );
-        $this->{ R_DIR } =~ s/\/bin$//;
-    }
-    if ( !-d $this->{ R_DIR } ) {
-        die "Error: Could not find the R directory!\n";
-    }
+    
     
     $this->{ START_CMD } = "$this->{R_BIN} --slave --vanilla ";
 
+    
     $this->{ OS } = 'linux';
 
 }
@@ -760,20 +753,12 @@ sub Win32 {
         die "Error: Could not find the R binary!\n";
     }
     
-    # Get the R directory
-    if ( !$this->{ R_DIR } && $this->{ R_BIN } ) {
-        ( $this->{ R_DIR } )
-            = ( $this->{ R_BIN } =~ /^(.*?)[\\\/]+[^\\\/]+$/s );
-        $this->{ R_DIR } =~ s/\/bin$//;
-    }
-    if ( !-d $this->{ R_DIR } ) {
-        die "Error: Could not find the R directory!\n";
-    }
     
     my $exec = $this->{ R_BIN };
     $exec = '"'.$exec.'"' if $exec =~ /\s/;
     $this->{ START_CMD } = "$exec --slave --vanilla";
 
+    
     $this->{ OS } = 'win32';
 }
 
