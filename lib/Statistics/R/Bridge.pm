@@ -23,11 +23,7 @@ sub new {
 	
     if( !defined $this ) {
         $this = bless( {}, $class );
-
-        my $method = ( $^O =~ /^(?:.*?win32|dos)$/i ) ? 'Win32' : 'Linux';
-        $this->$method( %args );
-		
-        return unless $this->{ OS };
+        $this->initialize( %args );
     }
 	
     return $this;
@@ -693,12 +689,22 @@ sub cat_dir {
 }
 
 
-sub Linux {
-    my( $this, %args ) = @_;
-
+sub initialize {
+    my ($this, %args) = @_;
+	
     $this->{ R_BIN }   = $args{ r_bin }   || $args{ R_bin } || '';
     $this->{ R_DIR }   = $args{ r_dir }   || $args{ R_dir } || '';
     $this->{ TMP_DIR } = $args{ tmp_dir } || '';
+
+    my $method = ( $^O =~ /^(?:.*?win32|dos)$/i ) ? 'Win32' : 'Linux';
+    $this->$method( %args );
+	
+	$this->pipe( %args );
+
+}
+
+sub Linux {
+    my( $this, %args ) = @_;
 
     if ( !-s $this->{ R_BIN } ) {
         my @files = qw(R R-project Rproject);
@@ -724,40 +730,39 @@ sub Linux {
 
         $this->{ R_BIN } = $bin;
     }
-
-    if ( !$this->{ R_DIR } && $this->{ R_BIN } ) {
-        ( $this->{ R_DIR } )
-            = ( $this->{ R_BIN } =~ /^(.*?)[\\\/]+[^\\\/]+$/s );
-        $this->{ R_DIR } =~ s/\/bin$//;
-    }
-
-    if ( !$this->{ TMP_DIR } ) {
-        foreach my $dir ( qw(/tmp /usr/local/tmp) ) {
-            if ( -d $dir ) { $this->{ TMP_DIR } = $dir; last; }
-        }
-    }
-
     if ( !-s $this->{ R_BIN } ) {
         die "Error: Could not find the R binary!\n";
+    }
+
+    if ( !$this->{ R_DIR } && $this->{ R_BIN } ) {
+        ( $this->{ R_DIR } ) = ( $this->{ R_BIN } =~ /^(.*?)[\\\/]+[^\\\/]+$/s );
+        $this->{ R_DIR } =~ s/\/bin$//;
     }
     if ( !-d $this->{ R_DIR } ) {
         die "Error: Could not find the R directory!\n";
     }
+	
+    if ( !$this->{ TMP_DIR } ) {
+        for my $dir ( qw(/tmp /usr/local/tmp) ) {
+            if ( -d $dir ) {
+			    $this->{ TMP_DIR } = $dir;
+				last;
+			}
+        }
+    }
 
     $this->{ START_CMD } = "$this->{R_BIN} --slave --vanilla ";
-
+	if ( !-d $this->{ TMP_DIR } ) {
+        die "Error: Could not find a temporary directory!\n";
+    }
+	
     $this->{ OS } = 'linux';
 
-    $this->pipe( %args );
 }
 
 
 sub Win32 {
     my( $this, %args ) = @_;
-
-    $this->{ R_BIN }   = $args{ r_bin }   || $args{ R_bin } || '';
-    $this->{ R_DIR }   = $args{ r_dir }   || $args{ R_dir } || '';
-    $this->{ TMP_DIR } = $args{ tmp_dir } || '';
 
     # Get the R binary full path
     if ( !-s $this->{ R_BIN } ) {
@@ -816,8 +821,6 @@ sub Win32 {
     $this->{ START_CMD } = "$exec --slave --vanilla";
 
     $this->{ OS } = 'win32';
-
-    $this->pipe( %args );
 }
 
 
