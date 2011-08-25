@@ -16,25 +16,25 @@ my $this;
 sub new {
     my ($class, %args) = @_;
 
-	###### TEMPORARY HARDCODING THE LOCATION OF R ######
+    ###### TEMPORARY HARDCODING THE LOCATION OF R ######
     $args{r_dir} = 'C:\Program Files (x86)\R';
     $args{r_bin} = 'C:\Program Files (x86)\R\bin\x64\R.exe';
-	####################################################
-	
+    ####################################################
+    
     if( !defined $this ) {
         $this = bless( {}, $class );
         $this->initialize( %args );
     }
-	
+    
     return $this;
 }
 
 
 sub pipe {
     my( $this, %args ) = @_;
-	
-	# Find and create log dir
-	$this->{ LOG_DIR } = $args{ log_dir } || catfile( $this->{TMP_DIR}, 'Statistics-R');
+    
+    # Find and create log dir
+    $this->{ LOG_DIR } = $args{ log_dir } || catfile( $this->{TMP_DIR}, 'Statistics-R');
     # Bug Fix by CTB:  Reponse to RT Bug #17956: Win32: log_dir is not in tmp_dir by default as advertised
     if ( !-e $this->{ LOG_DIR } ) { mkdir( $this->{ LOG_DIR }, 0777 ); }
     if (   !-d $this->{ LOG_DIR }
@@ -44,7 +44,7 @@ sub pipe {
         die "Error: Could not read or write the LOG_DIR directory ".$this->{LOG_DIR}."\n"
     }
 
-	# Find and create output dir
+    # Find and create output dir
     $this->{ OUTPUT_DIR } = catfile($this->{LOG_DIR}, 'output');
     if ( !-d $this->{ OUTPUT_DIR } || !-e $this->{ OUTPUT_DIR } ) {
         mkdir( $this->{ OUTPUT_DIR }, 0777 );
@@ -76,64 +76,64 @@ sub send {
     $cmd =~ s/\r\n?/\n/gs;
     $cmd .= "\n" if $cmd !~ /\n$/;
     $cmd =~ s/\n/\r\n/gs;
-	
+    
     while ( $this->is_locked ) { sleep( 1 ); }
-	
+    
     my $n = $this->read_processR || 0;
     $n = 1 if $n eq '0' || $n eq '';
-	
-	# Increment file number until the first free slot
+    
+    # Increment file number until the first free slot
     my $file = catfile( $this->{LOG_DIR}, "input.$n.r" );
     while ( -e $file || -e "$file._" ) {
         ++$n;
         $file = catfile( $this->{LOG_DIR}, "input.$n.r" );
     }
-	
+    
     open( my $fh, '>', "$file._" ) or die "Error: Could not write file $file._\n$!\n";
     print $fh "$cmd\n";
     close( $fh );
-	
+    
     chmod( 0777, "$file._" );
 
     $this->{ OUTPUT_R_POS } = -s $this->{ OUTPUT_R };
 
     rename( "$file._", $file );
-	
+    
     my $has_quit = 1 if $cmd =~ /^\s*(?:q|quit)\s*\(.*?\)\s*$/s;
 
     ##print "CMD[$n]$has_quit>> $cmd\n" ;
 
     my $status = 1;
     my $delay  = 0.02;
-	
+    
     my ( $x, $xx );
     while (
             ( !$has_quit || $this->{ STOPING } == 1 )
             &&  -e $file
             &&  $this->is_started( !$this->{ STOPING } )
-		  )
+          )
     {
-		
+        
         ++$x;
         ##print "sleep $file\n" ;
         sleep( $delay );
         if ( $x == 20 ) {
             
-			my ( undef, $data ) = $this->read_processR;
-			
+            my ( undef, $data ) = $this->read_processR;
+            
             if ( $data =~ /\s$n\s+\.\.\.\s+\// ) { 
-			    last;
-		    }
+                last;
+            }
             $x = 0;
             ++$xx;
             $delay = 0.5;
         }
         if ( $xx || 0 > 5 ) {
-			
+            
             $status = undef;
-		}    ## xx > 5 = x > 50
+        }    ## xx > 5 = x > 50
     }
-	
+    
     if ( $has_quit && !$this->{ STOPING } ) { $this->stop( 1 ); }
 
     return $status;
@@ -176,16 +176,16 @@ sub receive {
 
 sub clean_log_dir {
     my $this = shift;
-	
+    
     my @dir = $this->cat_dir( $this->{ LOG_DIR }, 0, 0, 1 );
 
     for my $dir_i ( @dir ) {
         ##print "RM>> $dir_i\n" ;
-		if ($dir_i !~ /R\.(?:starting|stoping)$/) {
+        if ($dir_i !~ /R\.(?:starting|stoping)$/) {
             unlink $dir_i;
-		}
+        }
     }
-	
+    
 }
 
 
@@ -295,13 +295,13 @@ sub chmod_all {
 
 sub start {
     my $this = shift;
-	
+    
     return if $this->is_started;
 
     $this->stop( undef, undef, 1 );
-	
+    
     $this->clean_log_dir;
-	
+    
     $this->save_file_startR;
 
     my $fh;
@@ -312,26 +312,26 @@ sub start {
     close $fh;
     open($fh, '>', $this->{PROCESS_R})or die "Error: Could not write file ".$this->{PROCESS_R}."\n$!\n";
     close $fh;
-	
+    
     $this->chmod_all;
 
-	
+    
     #### WE WANT TO AVOID THIS
     chdir $this->{LOG_DIR};
     ##########################
-	
-	####
-	# Original
-	my $cmd = $this->{START_CMD}." <start.r >output.log";
-	# Attempt:
-	#my $cmd = $this->{START_CMD};
-	# This may be better?
-	#my $cmd = $this->{START_CMD}." <".$this->{START_R}." >".$this->{ OUTPUT_R };
-	#print "Running CMD = $cmd\n";
-	####
+    
+    ####
+    # Original
+    my $cmd = $this->{START_CMD}." <start.r >output.log";
+    # Attempt:
+    #my $cmd = $this->{START_CMD};
+    # This may be better?
+    #my $cmd = $this->{START_CMD}." <".$this->{START_R}." >".$this->{ OUTPUT_R };
+    #print "Running CMD = $cmd\n";
+    ####
 
-    my $pid = open( my $read, "| $cmd" ) or die "Error: Could not run the commmand\n$!\n";	
-	
+    my $pid = open( my $read, "| $cmd" ) or die "Error: Could not run the commmand\n$!\n";
+    
     $this->{ PIPE } = $read;
 
     $this->{ HOLD_PIPE_X } = ++$HOLD_PIPE_X;
@@ -343,21 +343,21 @@ sub start {
     $this->{ PID } = $pid;
 
     $this->chmod_all;
-	
+    
     # Wait
     while ( !-s $this->{ PID_R } ) {
-	    sleep( 0.05 );
-	}
-	
+        sleep( 0.05 );
+    }
+    
     $this->update_pid;
-	
+    
     # Wait
     while ( $this->read_processR() eq '' ) {
         sleep( 0.10 );
     }
-	
+    
     $this->chmod_all;
-	
+    
     return 1;
 }
 
@@ -475,7 +475,7 @@ sub stop {
     my $started = $not_started ? undef : $this->is_started;
 
     $this->{ STOPING } = $started ? 1 : 2;
-	
+    
     if ( !$no_stopping_file ) {
         open( my $fh, '>', $this->{STOPING_R} ) or die "Error: Could not write file ".$this->{STOPING_R}."\n$!\n";
         close( $fh );
@@ -556,11 +556,11 @@ sub save_file_startR {
     open( my $fh, '>', $this->{START_R} ) or die "Error: Could not write file ".$this->{START_R}."\n$!\n";
 
     my $process_r = $this->{ PROCESS_R };
-	
+    
     $process_r =~ s/\\/\\\\/g;
 
     my $pid_r = $this->{ PID_R };
-	
+    
     $pid_r =~ s/\\/\\\\/g;
 
     print $fh qq`
@@ -672,7 +672,7 @@ sub cat_dir {
         while ( my $filename = readdir $dh ) {
             next if $filename eq '.' or $filename eq '..';
             my $file = catfile($dir, $filename);
-			
+            
             if ( $r && -d $file ) {
                 push( @DIR, $file );
             }
@@ -691,15 +691,15 @@ sub cat_dir {
 
 sub initialize {
     my ($this, %args) = @_;
-	
+    
     $this->{ R_BIN }   = $args{ r_bin }   || $args{ R_bin } || '';
     $this->{ R_DIR }   = $args{ r_dir }   || $args{ R_dir } || '';
     $this->{ TMP_DIR } = $args{ tmp_dir } || '';
 
     my $method = ( $^O =~ /^(?:.*?win32|dos)$/i ) ? 'Win32' : 'Linux';
     $this->$method( %args );
-	
-	$this->pipe( %args );
+    
+    $this->pipe( %args );
 
 }
 
@@ -741,21 +741,21 @@ sub Linux {
     if ( !-d $this->{ R_DIR } ) {
         die "Error: Could not find the R directory!\n";
     }
-	
+    
     if ( !$this->{ TMP_DIR } ) {
         for my $dir ( qw(/tmp /usr/local/tmp) ) {
             if ( -d $dir ) {
-			    $this->{ TMP_DIR } = $dir;
-				last;
-			}
+                $this->{ TMP_DIR } = $dir;
+                last;
+            }
         }
     }
 
     $this->{ START_CMD } = "$this->{R_BIN} --slave --vanilla ";
-	if ( !-d $this->{ TMP_DIR } ) {
+    if ( !-d $this->{ TMP_DIR } ) {
         die "Error: Could not find a temporary directory!\n";
     }
-	
+    
     $this->{ OS } = 'linux';
 
 }
@@ -766,7 +766,7 @@ sub Win32 {
 
     # Get the R binary full path
     if ( !-s $this->{ R_BIN } ) {
-	
+    
         my $ver_dir = ( $this->cat_dir( catfile($ENV{ProgramFiles},'R') ) )[ 0 ];
 
         my $bin = catfile($ver_dir, 'bin', 'Rterm.exe');
@@ -788,31 +788,34 @@ sub Win32 {
 
         $this->{ R_BIN } = $bin;
     }
-	if ( !-s $this->{ R_BIN } ) {
+    if ( !-s $this->{ R_BIN } ) {
         die "Error: Could not find the R binary!\n";
     }
-	
-	# Get the R directory
+    
+    # Get the R directory
     if ( !$this->{ R_DIR } && $this->{ R_BIN } ) {
         ( $this->{ R_DIR } )
             = ( $this->{ R_BIN } =~ /^(.*?)[\\\/]+[^\\\/]+$/s );
         $this->{ R_DIR } =~ s/\/bin$//;
     }
-	if ( !-d $this->{ R_DIR } ) {
+    if ( !-d $this->{ R_DIR } ) {
         die "Error: Could not find the R directory!\n";
     }
-	
-	# Get a temp directory
+    
+    # Get a temp directory
     if ( !$this->{ TMP_DIR } ) {
         $this->{ TMP_DIR } = $ENV{ TMP } || $ENV{ TEMP };
         if ( !$this->{ TMP_DIR } ) {
             for my $dir ( qw(c:\tmp c:\temp c:\windows\tmp c:\windows\temp) )
             {
-                if ( -d $dir ) { $this->{ TMP_DIR } = $dir; last; }
+                if ( -d $dir ) {
+                    $this->{ TMP_DIR } = $dir;
+                    last;
+                }
             }
         }
     }
-	if ( !-d $this->{ TMP_DIR } ) {
+    if ( !-d $this->{ TMP_DIR } ) {
         die "Error: Could not find a temporary directory!\n";
     }
 
@@ -830,9 +833,9 @@ sub DESTROY {
     return unless $this->{ OS };
 
     $this->unlock;
-	
-	$this->stop if !$this->{ START_SHARED };
-	
+    
+    $this->stop if !$this->{ START_SHARED };
+    
 }
 
 
