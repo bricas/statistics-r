@@ -7,9 +7,9 @@ use File::Spec::Functions;
 use Time::HiRes qw( sleep );
 use File::Which qw( where );
 use Env qw( @PATH $PROGRAMFILES );
-use File::DosGlob qw( glob ); #### may need to use this module only on Windows platform
+use File::DosGlob qw( glob );
 
-our $VERSION = '0.09';
+
 our $HOLD_PIPE_X;
 our $IS_WIN = ($^O =~ m/^(?:.*?win32|dos)$/i) ? 1 : 0;
 

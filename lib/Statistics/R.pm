@@ -7,7 +7,7 @@ use Regexp::Common;
 use Text::Balanced qw ( extract_delimited extract_multiple );
 use Statistics::R::Bridge;
 
-our $VERSION = '0.09';
+our $VERSION = '0.10';
 
 
 sub new {

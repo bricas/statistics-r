@@ -3,6 +3,9 @@ use warnings;
 
 use inc::Module::Install;
 
+use lib 'lib';
+use Statistics::R::Bridge;
+
 
 name     'Statistics-R';
 all_from 'lib/Statistics/R.pm';
@@ -18,8 +21,10 @@ requires       'Text::Balanced'  => '0';
 requires       'Regexp::Common'  => '0';
 requires       'File::Which'     => '0';
 
-# load win file path
-# request R binary
+if ( $^O =~ m/^(?:.*?win32|dos)$/i ) {
+    Statistics::R::Bridge::win32_path_adjust();
+}
+requires_external_bin 'R';
 
 install_script 'script/statistics-r';
 
