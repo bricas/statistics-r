@@ -312,6 +312,26 @@ The path to the R binary. See I<INSTALLATION>.
 
 =back
 
+=item set()
+
+Set the value of an R variable, e.g.
+
+  $R->set( 'x', "apple" );
+
+or 
+
+  $R->set( 'y', [1, 2, 3] );
+
+
+=item get( $)
+ 
+Get the value of an R variable, e.g.
+
+  my $x = $R->get( 'x' );  # $y is an scalar
+
+or
+
+  my $y = $R->get( 'y' );  # $x is an arrayref
 
 =item start()
 
@@ -332,11 +352,13 @@ Return the path to the R binary (executable).
 
 =item send($CMD)
 
-Send some command to be executed inside R. Note that I<$CMD> will be loaded by R with I<source()>
+Send some command to be executed inside R. Note that I<$CMD> will be loaded by R
+with I<source()>. Prefer the run() command.
 
 =item receive($TIMEOUT)
 
 Get the output of R for the last group of commands sent to R by I<send()>.
+Prefer the run() command.
 
 =item lock()
 
@@ -412,7 +434,7 @@ From your script you need to use the I<start()> option in shared mode:
   
   $R->start( shared => 1 );
   
-  $R->send('x = 123');
+  $R->run('x = 123');
   
   exit;
 
