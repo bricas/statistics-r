@@ -1,5 +1,12 @@
 Revision history for Perl extension Statistics::R.
 
+0.xx  
+    - Refactoring to remove old code doing platform-specific operations
+    - Lots of code cleanup
+    - Removed the r_dir and tmp_dir of new()
+    - Fix for change of dir bug (RT #6724). Also fixes missing synopsis file (RT #70307)
+    - More subtle cleanup procedure (RT #70392)
+
 0.09  2011-08-23 
     - Changes in the new() method:
        * it automatically calls start()

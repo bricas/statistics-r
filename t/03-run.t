@@ -5,7 +5,7 @@ use warnings;
 use Test::More;
 use Statistics::R;
 
-plan tests => 8;
+plan tests => 9;
 
 
 my $R;
@@ -22,6 +22,8 @@ ok $R->run( qq`x = 123 \n print(x)` ) =~ /^\[\d+\]\s+123\s*$/;
 
 ok $R->send( qq`x = 456 \n print(x)` );
 ok $R->receive() =~ /^\[\d+\]\s+456\s*$/;
+
+ok $R->clean_up();
 
 ok $R->stopR();
 

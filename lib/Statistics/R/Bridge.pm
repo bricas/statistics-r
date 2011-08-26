@@ -493,10 +493,6 @@ sub stop {
     $this->clean_log_dir;
 
     $this->{ STOPPING } = undef;
-    
-    #### delete the log_dir folder (Statistics-R) unless folder was specified by user
-    #unlink $this->
-    ####
 
     return 1;
 }

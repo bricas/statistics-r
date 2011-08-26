@@ -235,7 +235,7 @@ sub receive {
 
 sub clean_up {
     my $this = shift;
-    $this->send( 'rm(list = ls(all = TRUE))' );
+    $this->{ BRIDGE }->clean_log_dir( @_ );
 }
 
 
