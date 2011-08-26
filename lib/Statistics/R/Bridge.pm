@@ -23,6 +23,64 @@ sub new {
 }
 
 
+sub initialize {
+    my ($this, %args) = @_;
+    
+    # Find and create log dir
+    $this->{ LOG_DIR } = $args{ log_dir } || catfile( File::Spec->tmpdir(), 'Statistics-R');
+    # Fix by CTB for RT Bug #17956: log_dir should be in tmp_dir by default
+    if ( !-e $this->{ LOG_DIR } ) { mkdir( $this->{ LOG_DIR }, 0777 ); }
+    if (   !-d $this->{ LOG_DIR }
+        || !-r $this->{ LOG_DIR }
+        || !-w $this->{ LOG_DIR } )
+    {
+        die "Error: Could not read or write the LOG_DIR directory ".$this->{LOG_DIR}."\n"
+    }
+    
+    # Find full path of R binary
+    if ( $args{ r_bin } || $args{ R_bin } ) {
+        # User-specified location
+        $this->{ R_BIN } =  $args{ r_bin } || $args{ R_bin };
+        if ( !-s $this->{ R_BIN } ) {
+            die "Error: Could not find the R binary at the specified location, ".
+                $this->{ R_BIN }."\n";
+        }
+    } else {
+        # Windows-specific PATH adjustement
+        win32_path_adjust() if $IS_WIN;
+        # Locate R in PATH using File::Which
+        my @paths = where('R');
+        if (scalar @paths == 0) {
+            die "Error: Could not find the R binary! Make sure it is in your ".
+                "PATH environment variable or specify its location using the ".
+                "r_bin option of the new() method.\n";
+        }
+        $this->{ R_BIN } = $paths[0];
+        #if (scalar @paths > 1) {
+        #    warn "Warning: Multiple binaries where found for R. Using the first".
+        #         " one... ".$this->{ R_BIN }."\n";  
+        #}
+    }
+    $this->{ R_BIN } = win32_space_quote( $this->{ R_BIN } ) if $IS_WIN;
+    $this->{ START_CMD } = "$this->{R_BIN} --slave --vanilla ";
+
+    # Files necessary for piping to and from R
+    $this->{ START_R }    = catfile($this->{LOG_DIR}, 'start.r');
+    $this->{ OUTPUT_R }   = catfile($this->{LOG_DIR}, 'output.log');
+    $this->{ PROCESS_R }  = catfile($this->{LOG_DIR}, 'process.log');
+    $this->{ PID_R }      = catfile($this->{LOG_DIR}, 'R.pid');
+    $this->{ STARTING_R } = catfile($this->{LOG_DIR}, 'R.starting');
+    $this->{ STOPPING_R } = catfile($this->{LOG_DIR}, 'R.stopping');
+    $this->{ LOCK_R }     = catfile($this->{LOG_DIR}, 'lock.pid');
+    
+    # The name of R input file will be something like input.1.r
+    $this->{ INPUT_R_PREFIX } = catfile($this->{LOG_DIR}, 'input.');
+    $this->{ INPUT_R_SUFFIX } = '.r';
+
+    return 1;
+}
+
+
 sub bin {
     my $this = shift;
     return $this->{ R_BIN };
@@ -129,32 +187,6 @@ sub receive {
     return join( "\n", @lines );
 }
 *read = \&receive;
-
-
-sub clean_log_dir {
-    my $this = shift;
-    
-    my @files = (
-        $this->{ START_R }   ,  # start.r
-        $this->{ OUTPUT_R }  ,  # output.log
-        $this->{ PROCESS_R } ,  # process.log
-        $this->{ PID_R }     ,  # R.pid
-        $this->{ LOCK_R }    ,  # lock.pid   
-        # These files are explicitly not deleted. Why?
-        #$this->{ STARTING_R },  # R.starting
-        #$this->{ STOPPING_R },  # R.stopping
-    );
-    
-    push @files, glob win32_space_escape( win32_double_bs( $this->{ INPUT_R_PREFIX }.'*'.$this->{ INPUT_R_SUFFIX } ) );
-
-    for my $file (@files) {
-        if (-e $file) {
-            unlink $file or warn "Error: Could not remove file $file\n$!\n";
-        }
-    }
-    
-    return 1;    
-}
 
 
 sub is_started {
@@ -590,6 +622,32 @@ sub save_file_startR {
 }
 
 
+sub clean_log_dir {
+    my $this = shift;
+    
+    my @files = (
+        $this->{ START_R }   ,  # start.r
+        $this->{ OUTPUT_R }  ,  # output.log
+        $this->{ PROCESS_R } ,  # process.log
+        $this->{ PID_R }     ,  # R.pid
+        $this->{ LOCK_R }    ,  # lock.pid   
+        # These files are explicitly not deleted. Why?
+        #$this->{ STARTING_R },  # R.starting
+        #$this->{ STOPPING_R },  # R.stopping
+    );
+    
+    push @files, glob win32_space_escape( win32_double_bs( $this->{ INPUT_R_PREFIX }.'*'.$this->{ INPUT_R_SUFFIX } ) );
+
+    for my $file (@files) {
+        if (-e $file) {
+            unlink $file or warn "Error: Could not remove file $file\n$!\n";
+        }
+    }
+    
+    return 1;    
+}
+
+
 sub read_file {
     # Read content from a file and return it
     my ($this, $file) = @_;
@@ -616,64 +674,6 @@ sub touch_file {
     my ($this, $file) = @_;
     open( my $fh, '>', $file ) or die "Error: Could not write file $file\n$!\n";
     close $fh;
-    return 1;
-}
-
-
-sub initialize {
-    my ($this, %args) = @_;
-    
-    # Find and create log dir
-    $this->{ LOG_DIR } = $args{ log_dir } || catfile( File::Spec->tmpdir(), 'Statistics-R');
-    # Fix by CTB for RT Bug #17956: log_dir should be in tmp_dir by default
-    if ( !-e $this->{ LOG_DIR } ) { mkdir( $this->{ LOG_DIR }, 0777 ); }
-    if (   !-d $this->{ LOG_DIR }
-        || !-r $this->{ LOG_DIR }
-        || !-w $this->{ LOG_DIR } )
-    {
-        die "Error: Could not read or write the LOG_DIR directory ".$this->{LOG_DIR}."\n"
-    }
-    
-    # Find full path of R binary
-    if ( $args{ r_bin } || $args{ R_bin } ) {
-        # User-specified location
-        $this->{ R_BIN } =  $args{ r_bin } || $args{ R_bin };
-        if ( !-s $this->{ R_BIN } ) {
-            die "Error: Could not find the R binary at the specified location, ".
-                $this->{ R_BIN }."\n";
-        }
-    } else {
-        # Windows-specific PATH adjustement
-        win32_path_adjust() if $IS_WIN;
-        # Locate R in PATH using File::Which
-        my @paths = where('R');
-        if (scalar @paths == 0) {
-            die "Error: Could not find the R binary! Make sure it is in your ".
-                "PATH environment variable or specify its location using the ".
-                "r_bin option of the new() method.\n";
-        }
-        $this->{ R_BIN } = $paths[0];
-        #if (scalar @paths > 1) {
-        #    warn "Warning: Multiple binaries where found for R. Using the first".
-        #         " one... ".$this->{ R_BIN }."\n";  
-        #}
-    }
-    $this->{ R_BIN } = win32_space_quote( $this->{ R_BIN } ) if $IS_WIN;
-    $this->{ START_CMD } = "$this->{R_BIN} --slave --vanilla ";
-
-    # Files necessary for piping to and from R
-    $this->{ START_R }    = catfile($this->{LOG_DIR}, 'start.r');
-    $this->{ OUTPUT_R }   = catfile($this->{LOG_DIR}, 'output.log');
-    $this->{ PROCESS_R }  = catfile($this->{LOG_DIR}, 'process.log');
-    $this->{ PID_R }      = catfile($this->{LOG_DIR}, 'R.pid');
-    $this->{ STARTING_R } = catfile($this->{LOG_DIR}, 'R.starting');
-    $this->{ STOPPING_R } = catfile($this->{LOG_DIR}, 'R.stopping');
-    $this->{ LOCK_R }     = catfile($this->{LOG_DIR}, 'lock.pid');
-    
-    # The name of R input file will be something like input.1.r
-    $this->{ INPUT_R_PREFIX } = catfile($this->{LOG_DIR}, 'input.');
-    $this->{ INPUT_R_SUFFIX } = '.r';
-
     return 1;
 }
 
