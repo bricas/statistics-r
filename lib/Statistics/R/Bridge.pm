@@ -6,9 +6,8 @@ use IO::Select;
 use File::Spec::Functions;
 use Time::HiRes qw( sleep );
 use File::Which qw( where );
-use File::DosGlob qw( glob );
 use Env qw( @PATH $PROGRAMFILES );
-
+use File::DosGlob qw( glob ); #### may need to use this module only on Windows platform
 
 our $VERSION = '0.09';
 our $HOLD_PIPE_X;
@@ -135,12 +134,22 @@ sub receive {
 sub clean_log_dir {
     my $this = shift;
     
-    my @dir = $this->cat_dir( $this->{ LOG_DIR }, 0, 0, 1 );
+    my @files = (
+        $this->{ START_R }   ,  # start.r
+        $this->{ OUTPUT_R }  ,  # output.log
+        $this->{ PROCESS_R } ,  # process.log
+        $this->{ PID_R }     ,  # R.pid
+        $this->{ LOCK_R }    ,  # lock.pid   
+        # These files are explicitly not deleted. Why?
+        #$this->{ STARTING_R },  # R.starting
+        #$this->{ STOPPING_R },  # R.stopping
+    );
+    
+    push @files, glob win32_space_escape( win32_double_bs( $this->{ INPUT_R_PREFIX }.'*'.$this->{ INPUT_R_SUFFIX } ) );
 
-    for my $dir_i ( @dir ) {
-        ##print "RM>> $dir_i\n" ;
-        if ($dir_i !~ /R\.(?:starting|stopping)$/) {
-            unlink $dir_i;
+    for my $file (@files) {
+        if (-e $file) {
+            unlink $file or warn "Error: Could not remove file $file\n$!\n";
         }
     }
     
@@ -578,52 +587,6 @@ sub save_file_startR {
     chmod( 0777, $this->{ START_R } );
     
     return 1;
-}
-
-
-sub find_file {
-    my $this  = shift;
-    my @files = ref $_[ 0 ] ? @{ shift() } : shift;
-    my @paths = @_;
-
-    for my $path ( @paths ) {
-        for my $file ( @files ) {
-            my $fn = catfile( $path, $file);
-            return $fn if -e $fn && -x $fn;
-        }
-    }
-}
-
-
-sub cat_dir {
-    my $this = shift;
-
-    my ( $dir, $cut, $r, $f ) = @_;
-
-    my @files;
-
-    my @DIR = $dir;
-    for my $dir ( @DIR ) {
-        
-        opendir( my $dh, $dir ) || die "Error: Could not read directory $dir\n$!\n";
-
-        while ( my $filename = readdir $dh ) {
-            next if $filename eq '.' or $filename eq '..';
-            my $file = catfile($dir, $filename);
-            
-            if ( $r && -d $file ) {
-                push( @DIR, $file );
-            }
-            elsif ( !$f || !-d $file ) {
-                $file =~ s/^\Q$dir\E\/?//s if $cut;
-                push( @files, $file );
-            }
-        }
-
-        closedir $dh;
-    }
-
-    return ( @files );
 }
 
 
