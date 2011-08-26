@@ -1,11 +1,11 @@
 package Statistics::R;
 
+use 5.006;
 use strict;
 use warnings;
 use Regexp::Common;
 use Text::Balanced qw ( extract_delimited extract_multiple );
 use Statistics::R::Bridge;
-
 
 our $VERSION = '0.09';
 
@@ -251,7 +251,7 @@ __END__
 
 =head1 NAME
 
-Statistics::R - Controls the R interpreter through Perl.
+Statistics::R - Perl interface to control the R statistical program
 
 =head1 DESCRIPTION
 

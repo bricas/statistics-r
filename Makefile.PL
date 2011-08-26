@@ -1,29 +1,34 @@
 use strict;
 use warnings;
-use ExtUtils::MakeMaker;
+
+use inc::Module::Install;
+
+
+name     'Statistics-R';
+all_from 'lib/Statistics/R.pm';
+
+resources
+   homepage   'http://search.cpan.org/search?query=statistics%3A%3AR&mode=dist';
+   bugtracker 'http://rt.cpan.org/Dist/Display.html?Name=Statistics-R';
+   repository 'git@github.com:bricas/statistics-r.git';
+
+build_requires 'Test::More'      => '0.47';
+
+requires       'Text::Balanced'  => '0';
+requires       'Regexp::Common'  => '0';
+requires       'File::Which'     => '0';
+
+# load win file path
+# request R binary
+
+install_script 'script/statistics-r';
+
+WriteAll;
 
 if ( -e 'MANIFEST.SKIP' ) {
    generate_readme( 'lib/Statistics/R.pm', 'README' ); 
 }
 
-WriteMakefile(
-    DISTNAME      => 'Statistics-R',
-    NAME          => 'Statistics::R',
-    AUTHOR        => 'Graciliano M. P. <gm@virtuasites.com.br>',
-    ABSTRACT_FROM => 'lib/Statistics/R.pm',
-    VERSION_FROM  => 'lib/Statistics/R.pm',
-    EXE_FILES     => [ qw(script/statistics-r.pl) ],
-    (   eval { ExtUtils::MakeMaker->VERSION( 6.21 ) }
-        ? ( LICENSE => 'perl' )
-        : ()
-    ),
-    PREREQ_PM => {
-        'Test::More'     => '0.47',
-        'Text::Balanced' => '0',
-        'Regexp::Common' => '0',
-        'File::Which'    => '0',
-    },
-);
 
 
 sub generate_readme {
