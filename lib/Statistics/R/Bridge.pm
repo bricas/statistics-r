@@ -212,10 +212,7 @@ sub is_locked {
         || !-e $this->{ LOCK_R }
         || !-s $this->{ LOCK_R } );
 
-    open( my $fh, $this->{ LOCK_R } );
-    my $pid = join '', <$fh>;
-    close( $fh );
-    $pid =~ s/\s//gs;
+    my $pid = $this->read_file( $this->{ LOCK_R } );
 
     return undef if $pid == $$;
 
@@ -232,6 +229,7 @@ sub update_pid {
     my $pid = join '', <$fh>;
     close( $fh );
     $pid =~ s/\s//gs;
+    
     return $this->{ PID } if $pid eq '';
     $this->{ PID } = $pid;
 }
@@ -348,6 +346,7 @@ sub sleep_unsync {
 
     my $n = "0." . int( rand( 100 ) );
     sleep( $n );
+    return 1;
 }
 
 
@@ -464,9 +463,9 @@ sub stop {
 
 sub restart {
     my $this = shift;
-
     $this->stop;
     $this->start;
+    return 1;
 }
 
 
@@ -577,6 +576,8 @@ sub save_file_startR {
     $this->write_file( $this->{START_R}, $bridge_code );
 
     chmod( 0777, $this->{ START_R } );
+    
+    return 1;
 }
 
 
@@ -623,6 +624,17 @@ sub cat_dir {
     }
 
     return ( @files );
+}
+
+
+sub read_file {
+    # Read content from a file and return it
+    my ($this, $file) = @_;
+    open( my $fh, '<', $file ) or die "Error: Could not read file $file\n$!\n";
+    my $content = join '', <$fh>;
+    $content =~ s/\s//gs;
+    close $fh;
+    return 1;   
 }
 
 
