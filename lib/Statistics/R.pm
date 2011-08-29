@@ -125,10 +125,15 @@ stop() and start() R.
 
 Return the path to the R binary (executable).
 
+=back
+
+=head1 LEGACY METHODS
+
+=over 4
+
 =item send($CMD)
 
-Send some command to be executed inside R. Note that I<$CMD> will be loaded by R
-with I<source()>. Prefer the run() command.
+Send some command to be executed inside R. Prefer the run() command instead.
 
 =item receive($TIMEOUT)
 
@@ -459,6 +464,7 @@ sub initialize {
    my ($self, %args) = @_;
 
    $self->{is_started} = 0;
+   $self->{is_shared}  = 0;
 
    # Path of R binary
    my $bin;
