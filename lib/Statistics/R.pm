@@ -422,9 +422,9 @@ listens to multiple Perl processes.
 
 Note that to do that R and Perl need to be running with the same user/group level.
 
-To start the I<Statistics::R> bridge, you can use the script I<statistics-r.pl>:
+To start the I<Statistics::R> bridge, you can use the script I<statistics-r>:
 
-  $> statistics-r.pl start
+  $> statistics-r start
 
 From your script you need to use the I<start()> option in shared mode:
 
