@@ -10,15 +10,13 @@ use Statistics::R::Legacy;
 use IPC::Run qw( harness start pump finish );
 use Text::Balanced qw ( extract_delimited extract_multiple );
 
+if ( $^O =~ m/^(?:.*?win32|dos)$/i ) {
+    require Statistics::R::Win32;
+}
+
 our $VERSION = '0.20-beta';
 our $PROG    = 'R';                  # executable we are after... R
 our $EOS     = 'Statistics::R::EOS'; # string to signal the R output stream end
-our $IS_WIN  = ($^O =~ m/^(?:.*?win32|dos)$/i) ? 1 : 0;
-
-if ($IS_WIN) {
-   require Statistics::R::Win32;
-}
-
 
 our ($SHARED_BRIDGE, $SHARED_STDIN, $SHARED_STDOUT, $SHARED_STDERR);
 
@@ -455,11 +453,6 @@ sub initialize {
    } else {
       $bin = $PROG; # IPC::Run will find the full path for the program later
    }
-
-   #### May not be needed
-   $bin = win32_space_quote( $bin ) if $IS_WIN;
-   ####
-
    $self->bin( $bin );
 
    # Using shared mode?

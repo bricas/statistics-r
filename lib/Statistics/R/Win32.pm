@@ -31,6 +31,12 @@ Statistics::R::Win32 - Helper functions for Statistics::R on MS Windows platform
 Helper functions to deal with environment variables and escape file paths on
 MS Windows platforms.
 
+=head1 SYNOPSIS
+
+   if ( $^O =~ m/^(?:.*?win32|dos)$/i ) {
+      require Statistics::R::Win32;
+   }
+
 =head1 METHODS
 
 =over 4
