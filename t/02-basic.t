@@ -5,7 +5,7 @@ use warnings;
 use Test::More;
 use Statistics::R;
 
-plan tests => 10;
+plan tests => 11;
 
 
 my $R;
@@ -32,3 +32,4 @@ ok $ret =~ /^\[\d+\]\s+456\s*$/;
 
 ok $R->stopR();
 
+is $R->error(), '';

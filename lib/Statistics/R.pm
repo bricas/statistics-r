@@ -5,11 +5,241 @@ package Statistics::R;
 # systems that can use shared memory and have semaphores, i.e. POSIX and windows
 # systems
 
-# TODO:
-#   method that returns whether R is running
-#   start on run()
-#   shared process
+=head1 NAME
 
+Statistics::R - Perl interface to control the R statistical program
+
+=head1 DESCRIPTION
+
+This module controls the R interpreter (R project for statistical computing:
+L<http://www.r-project.org/>). Multiple architectures and OS are supported and 
+a single instance of R can be accessed by several Perl processes.
+
+=head1 SYNOPSIS
+
+  use Statistics::R;
+  
+  # Create a communication bridge with R and start R
+  my $R = Statistics::R->new();
+  
+  # Run simple R commands
+  $R->run(q`postscript("file.ps" , horizontal=FALSE , width=500 , height=500 , pointsize=1)`);
+  $R->run(q`plot(c(1, 5, 10), type = "l")`);
+  $R->run(q`dev.off()`);
+
+  # Pass and retrieve data
+  my $input_value = 1;
+  $R->set('x', $input_value);
+  $R->run(q`y <- x^2`);
+  my $output_value = $R->get('y');
+  print "y = $output_value\n";
+
+  $R->stop();
+
+=head1 METHODS
+
+=over 4
+
+=item new()
+
+Create a Statistics::R bridge object between Perl and R and start() R. Available
+options are:
+
+
+=over 4
+
+=item shared
+
+Start a shared bridge. See start().
+
+=item log_dir
+
+A directory where temporary files necessary for the bridge between R and Perl
+will be stored.
+
+B<R and Perl need to have read and write access to the directory!>
+
+I<By default this will be a folder called Statistics-R and placed in a temporary
+directory of the system>
+
+=item r_bin
+
+The path to the R binary. See I<INSTALLATION>.
+
+=back
+
+=item set()
+
+Set the value of an R variable, e.g.
+
+  $R->set( 'x', "apple" );
+
+or 
+
+  $R->set( 'y', [1, 2, 3] );
+
+
+=item get( $)
+ 
+Get the value of an R variable, e.g.
+
+  my $x = $R->get( 'x' );  # $y is an scalar
+
+or
+
+  my $y = $R->get( 'y' );  # $x is an arrayref
+
+=item start()
+
+Start R and set the communication bridge between Perl and R. Pass the option
+shared => 1 to use an already running bridge.
+
+=item stop()
+
+Stop R and stop the bridge.
+
+=item restart()
+
+stop() and start() R.
+
+=item bin()
+
+Return the path to the R binary (executable).
+
+=item send($CMD)
+
+Send some command to be executed inside R. Note that I<$CMD> will be loaded by R
+with I<source()>. Prefer the run() command.
+
+=item receive($TIMEOUT)
+
+Get the output of R for the last group of commands sent to R by I<send()>.
+Prefer the run() command.
+
+=item lock()
+
+Lock the bridge for your PID.
+
+=item unlock()
+
+Unlock the bridge if your PID have locked it.
+
+=item is_locked()
+
+Return I<TRUE> if the bridge is locked for your PID.
+
+In other words, returns I<TRUE> if other process has I<lock()ed> the bridge.
+
+=item is_started()
+
+Return I<TRUE> if the R interpreter is started, or still started.
+
+=item clean_up()
+
+Clean up the environment, removing all the objects.
+
+=back
+
+=head1 INSTALLATION
+
+To install this package you need to install R on your system first, since
+I<Statistics::R> need to find R path to work. If R is in your PATH environment
+variable, then it should be available from a terminal and be detected
+automatically by I<Statistics::R>. This means that you do not have to do anything
+on Linux systems to get I<Statistics::R> working. On Windows systems, in addition
+to the folders described in PATH, the usual suspects will be checked for the
+presence of the R binary, e.g. C:\Program Files\R. Your last recourse if
+I<Statistics::R> does not find R is to specify its full path when calling new():
+
+    my $R = Statistics::R->new( r_bin => $fullpath );
+
+Download page of R:
+L<http://cran.r-project.org/banner.shtml>
+
+Or go to the R web site:
+L<http://www.r-project.org/>
+
+You also need to have the following CPAN Perl modules installed:
+
+=over 4
+
+=item Text::Balanced
+
+=item Regexp::Common
+
+=item File::Which
+
+=back
+
+=head1 EXECUTION FOR MULTIPLE PROCESSES
+
+The main purpose of I<Statistics::R> is to start a single R interpreter that
+listens to multiple Perl processes.
+
+Note that to do that R and Perl need to be running with the same user/group level.
+
+To start the I<Statistics::R> bridge, you can use the script I<statistics-r>:
+
+  $> statistics-r start
+
+From your script you need to use the I<start()> option in shared mode:
+
+  use Statistics::R;
+  
+  my $R = Statistics::R->new();
+  
+  $R->start( shared => 1 );
+  
+  $R->run('x = 123');
+  
+  exit;
+
+Note that in the example above the method I<stop()> wasn't called, since it will
+close the bridge.
+
+=head1 SEE ALSO
+
+=over 4
+
+=item * L<Statistics::R::Bridge>
+
+=item * The R-project web site: L<http://www.r-project.org/>
+
+=item * Statistics:: modules for Perl: L<http://search.cpan.org/search?query=Statistics&mode=module>
+
+=back
+
+=head1 AUTHOR
+
+Graciliano M. P. E<lt>gm@virtuasites.com.brE<gt>
+
+=head1 MAINTAINERS
+
+Brian Cassidy E<lt>bricas@cpan.orgE<gt>
+
+Florent Angly E<lt>florent.angly@gmail.comE<gt>
+
+=head1 COPYRIGHT & LICENSE
+
+This program is free software; you can redistribute it and/or
+modify it under the same terms as Perl itself.
+
+=head1 BUGS
+
+All complex software has bugs lurking in it, and this program is no exception.
+If you find a bug, please report it on the CPAN Tracker of Statistics::R:
+L<http://rt.cpan.org/Dist/Display.html?Name=Statistics-R>
+
+Bug reports, suggestions and patches are welcome. The Statistics::R code is
+developed on Github (L<http://github.com/bricas/statistics-r>) and is under Git
+revision control. To get the latest revision, run:
+
+   git clone git@github.com:bricas/statistics-r.git
+
+=cut
+
+
+use 5.006;
 use strict;
 use warnings;
 use File::Spec::Functions;
@@ -19,10 +249,10 @@ use IPC::Run qw( harness start pump finish );
 # require IPC::ShareLite for running R in shared mode
 
 
-our $IS_WIN = ($^O =~ m/^(?:.*?win32|dos)$/i) ? 1 : 0;
-
-our $prog = 'R';
-our $eos  = 'EOS'; # Arbitrary string to indicate the end of the R output stream
+our $IS_WIN  = ($^O =~ m/^(?:.*?win32|dos)$/i) ? 1 : 0;
+our $VERSION = '0.20-alpha';
+our $PROG    = 'R';
+our $EOS     = 'Statistics::R::EOS'; # Arbitrary string to indicate the end of the R output stream
 
 
 sub new {
@@ -52,7 +282,7 @@ sub initialize {
       # Windows-specific PATH adjustement
       win32_path_adjust() if $IS_WIN;
       # Let IPC::Run find the full path for the program
-      $bin = $prog;
+      $bin = $PROG;
    }
    $bin = win32_space_quote( $bin ) if $IS_WIN; #### May not be needed
 
@@ -134,24 +364,27 @@ sub is_shared {
 
 sub start {
    my ($self) = @_;
-   my $status = $self->bridge->start or die "Error starting $prog: $?\n";
+   my $status = $self->bridge->start or die "Error starting $PROG: $?\n";
    $self->{is_started} = 1;
    return $status;
 }
+*startR = \&start;
 
 
 sub stop {
    my ($self) = @_;
-   my $status = $self->bridge->finish or die "Error stopping $prog: $?\n";
+   my $status = $self->bridge->finish or die "Error stopping $PROG: $?\n";
    $self->{is_started} = 0;
    return $status;
 }
+*stopR = \&stop;
 
 
 sub restart {
    my ($self) = @_;
    return $self->stop && $self->start;
 }
+*restartR = \&restart;
 
 
 sub pid {
@@ -165,13 +398,14 @@ sub bin {
    # This is accessible only after the bridge has start()ed
    return shift->bridge->{KIDS}->[0]->{PATH};
 }
+*Rbin = \&bin;
 
 sub wrap_cmd {
    # Wrap a command to pass to R. Whether the command is successful or not, the
    # end of stream string will appear on stdout and indicate that R has finished
    # processing the data. Note that $cmd can be multiple R commands.
    my ($self, $cmd) = @_;
-   $cmd = qq`tryCatch( {$cmd} , finally = write("$eos",stdout()) )\n`;
+   $cmd = qq`tryCatch( {$cmd} , finally = write("$EOS",stdout()) )\n`;
    return $cmd;
 }
 
@@ -188,7 +422,7 @@ sub run {
 
    # Pass input to R and get its output
    my $bridge = $self->bridge;
-   $bridge->pump while $bridge->pumpable and $self->stdout !~ m/$eos\s?\z/mgc;
+   $bridge->pump while $bridge->pumpable and $self->stdout !~ m/$EOS\s?\z/mgc;
 
    # Report errors
    my $err = $self->stderr;
@@ -196,12 +430,13 @@ sub run {
 
    # Parse output, save it and reinitialize stdout
    my $out = $self->stdout;
-   $out =~ s/$eos\s?\z//mg;
+   $out =~ s/$EOS\s?\z//mg;
    $self->result($out);
    $self->stdout('');
 
    return $out;
 }
+
 
 
 sub send {
@@ -217,6 +452,12 @@ sub receive {
    return shift->result;
 }
 *read = \&receive;
+
+
+sub error {
+    # For backward compatibility. 
+    return '';
+}
 
 
 sub win32_path_adjust {
