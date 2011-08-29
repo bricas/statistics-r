@@ -6,12 +6,14 @@ use Test::More;
 use Statistics::R;
 use Time::HiRes qw ( time sleep );
 
-plan tests => 16;
+plan tests => 17;
 
 
 my $R;
 
 ok $R = Statistics::R->new( shared => 1 );
+
+ok $R->start;
 
 ok $R->is_started();
 

@@ -14,8 +14,6 @@ ok $R = Statistics::R->new();
 
 ok $R->startR();
 
-ok $R->Rbin() =~ /\S+/;
-
 ok $R->send(q`postscript("file.ps" , horizontal=FALSE , width=500 , height=500 , pointsize=1)`);
 
 ok $R->send( q`plot(c(1, 5, 10), type = "l")` );
@@ -29,6 +27,8 @@ ok $R->send( qq`x = 456 \n print(x)` );
 
 $ret = $R->read();
 ok $ret =~ /^\[\d+\]\s+456\s*$/;
+
+ok $R->Rbin() =~ /\S+/;
 
 ok $R->stopR();
 
