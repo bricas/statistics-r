@@ -5,8 +5,6 @@ use strict;
 use warnings;
 use IPC::ShareLite;
 
-our $SHARE;
-
 
 =head1 NAME
 
@@ -30,10 +28,18 @@ method that binds to a L<IPC::ShareLite> object.
    $var1 = 'Lorem ipsum dolor sit amet';
    print "var1 = $var1\n";
 
-   # Any other variable tied to the same share now has the same value
+
+   # Place another string in another share
+   my $share_name_2 = 'in';
    my $var2;
-   tie $var2, 'Statistics::R::SharedIO', $share_name;
+   tie $var2, 'Statistics::R::SharedIO', $share_name_2;
+   $var2 = "Share me...";
    print "var2 = $var2\n";
+
+   # Any other variable tied to an existing share
+   my $var3;
+   tie $var3, 'Statistics::R::SharedIO', $share_name;
+   print "var3 = $var3\n";
 
 
 =head1 METHODS
@@ -70,31 +76,25 @@ revision control. To get the latest revision, run:
 
 sub TIESCALAR {
    my ($class, $share_name) = @_;
-   $SHARE = IPC::ShareLite->new(
+   my $share = IPC::ShareLite->new(
       -key     => $share_name,
       -create  => 'yes',
       -destroy => 'no'
    ) or die "Error: Could not create an IPC::ShareLite object\n$!\n";
-   my $scalar = undef;
-   return bless \$scalar, $class;
+   my $self = \$share;
+   return bless $self, $class;
 }
 
 
 sub STORE {
    my ($self, $value) = @_;
-   $SHARE->store( $value );
+   ${$self}->store($value);
 }
 
 
 sub FETCH {
    my ($self) = @_;
-   return $SHARE->fetch();
-}
-
-
-sub DESTROY {
-   my ($self) = @_;
-   $SHARE = undef;
+   return ${$self}->fetch;
 }
 
 
