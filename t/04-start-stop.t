@@ -6,7 +6,7 @@ use Test::More;
 use Statistics::R;
 use Cwd;
 
-plan tests => 10;
+plan tests => 13;
 
 
 my $R;
@@ -14,6 +14,12 @@ my $R;
 my $initial_dir = cwd;
 
 ok $R = Statistics::R->new();
+
+ok $R->stop();
+
+ok $R->stop();
+
+ok $R->start();
 
 ok $R->start();
 

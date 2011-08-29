@@ -6,7 +6,7 @@ use Test::More;
 use Statistics::R;
 use File::Temp qw/ tempfile tempdir /;
 
-plan tests => 10;
+plan tests => 8;
 
 
 my $R;
@@ -21,14 +21,15 @@ ok $R = Statistics::R->new( log_dir => $tempdir );
 
 ok -e $tempdir;
 ok -e $tempfile;
-my $start_r_file = $R->{ BRIDGE }->{ START_R };
-ok -e $start_r_file;
+
+#my $start_r_file = $R->{ BRIDGE }->{ START_R };
+#ok -e $start_r_file;
 
 ok $R->stop();
 
 ok -e $tempdir;
 ok -e $tempfile;
-ok not -e $start_r_file;
+#ok not -e $start_r_file;
 
 
 
