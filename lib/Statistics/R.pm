@@ -56,8 +56,7 @@ a single instance of R can be accessed by several Perl processes.
 
 =item new()
 
-Create a Statistics::R bridge object between Perl and R and start() R. Available
-options are:
+Create a Statistics::R bridge object between Perl and R. Available options are:
 
 
 =over 4
@@ -81,6 +80,12 @@ directory of the system>
 The path to the R binary. See I<INSTALLATION>.
 
 =back
+
+
+=item run()
+
+Execute in R one or several commands passed as a string. Also, start() R if it
+was not yet started.
 
 =item set()
 
