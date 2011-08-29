@@ -7,19 +7,19 @@ use lib 'lib';
 use Statistics::R::Bridge;
 
 
-name     'Statistics-R';
-all_from 'lib/Statistics/R.pm';
+name           'Statistics-R';
+all_from       'lib/Statistics/R.pm';
 
 resources
-   homepage   'http://search.cpan.org/search?query=statistics%3A%3AR&mode=dist';
-   bugtracker 'http://rt.cpan.org/Dist/Display.html?Name=Statistics-R';
-   repository 'git@github.com:bricas/statistics-r.git';
+   homepage    'http://search.cpan.org/search?query=statistics%3A%3AR&mode=dist';
+   bugtracker  'http://rt.cpan.org/Dist/Display.html?Name=Statistics-R';
+   repository  'git@github.com:bricas/statistics-r.git';
 
 build_requires 'Test::More'      => '0.47';
 
 requires       'Text::Balanced'  => '0';
 requires       'Regexp::Common'  => '0';
-requires       'File::Which'     => '0';
+requires       'IPC::Run'        => '0';
 
 if ( $^O =~ m/^(?:.*?win32|dos)$/i ) {
     Statistics::R::Bridge::win32_path_adjust();

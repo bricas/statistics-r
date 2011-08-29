@@ -10,13 +10,14 @@ use File::DosGlob qw( glob );
 use Env qw( @PATH $PROGRAMFILES );
 use IPC::Run qw( harness start pump finish );
 use Text::Balanced qw ( extract_delimited extract_multiple );
-# require IPC::ShareLite for running R in shared mode
 
 
-our $IS_WIN  = ($^O =~ m/^(?:.*?win32|dos)$/i) ? 1 : 0;
 our $VERSION = '0.20-alpha';
 our $PROG    = 'R';
+our $IS_WIN  = ($^O =~ m/^(?:.*?win32|dos)$/i) ? 1 : 0;
 our $EOS     = 'Statistics::R::EOS'; # Arbitrary string to indicate the end of the R output stream
+
+our ($SHARED_BRIDGE, $SHARED_STDIN, $SHARED_STDOUT, $SHARED_STDERR);
 
 
 =head1 NAME
@@ -237,7 +238,7 @@ close the bridge.
 
 Graciliano M. P. E<lt>gm@virtuasites.com.brE<gt>
 
-Florent Angly E<lt>florent.angly@gmail.comE<gt> (rewrote Statistics::R in 2011)
+Florent Angly E<lt>florent.angly@gmail.comE<gt> (Statistics::R in 2011 rewrite)
 
 =head1 MAINTAINERS
 
@@ -288,14 +289,20 @@ no warnings 'redefine';
 sub start {
    my ($self, %args) = @_;
 
+   ####
    # If running in shared mode, put stdin, stdout and stderr in shared memory
-   if ( exists($args{shared}) && ($args{shared} == 1) ) {
-      $self->{is_shared} = 1;
-   }
-   $self->share_io() if$self->is_shared;
+   #if ( exists($args{shared}) && ($args{shared} == 1) ) {
+   #   $self->{is_shared} = 1;
+   #}
+   #$self->share_io() if$self->is_shared;
+   ####
 
-   # Now start R
-   my $status = $self->bridge->start or die "Error starting $PROG: $?\n";
+   # Now, start R
+   my $bridge = $self->bridge;
+   my $status = $bridge->start or die "Error starting $PROG: $?\n";
+   
+   ###$self->bin( $bridge->{KIDS}->[0]->{PATH} );
+
    $self->{is_started} = 1;
 
    return $status;
@@ -327,7 +334,7 @@ sub pid {
 
 
 sub bin {
-   # Get the full path to the R binary program to use
+   # Get / set the full path to the R binary program to use
    # This is accessible only after the bridge has start()ed
    return shift->bridge->{KIDS}->[0]->{PATH};
 }
@@ -343,9 +350,19 @@ sub run {
    # Wrap command for execution in R
    $self->stdin( $self->wrap_cmd($cmd) );
 
+   ####
+   print "stdin = ".$self->stdin;
+   ####
+
    # Pass input to R and get its output
    my $bridge = $self->bridge;
    $bridge->pump while $bridge->pumpable and $self->stdout !~ m/$EOS\s?\z/mgc;
+
+   ####
+   print "stdout = ".$self->stdout;
+   print "stderr = ".$self->stderr;
+   print "\n";
+   ####
 
    # Report errors
    my $err = $self->stderr;
@@ -401,6 +418,11 @@ sub get {
    # Get the value of an R variable
    my ($self, $varname) = @_;
    my $string = $self->run(qq`print($varname)`);
+
+
+   ####
+   print "var = '$string'\n";
+   ####
 
    # Parse R output
    my $value;
@@ -470,13 +492,6 @@ sub initialize {
 
    $self->{is_started} = 0;
 
-   # Need to share the R process?
-   if ( exists($args{shared}) && ($args{shared} == 1) ) {
-      $self->{is_shared} = 1;
-   } else {
-      $self->{is_shared} = 0;
-   }
-
    # Path of R binary
    my $bin;
    if ( $args{ r_bin } || $args{ R_bin } ) {
@@ -493,14 +508,32 @@ sub initialize {
    }
    $bin = win32_space_quote( $bin ) if $IS_WIN; #### May not be needed
 
-   # Setup R inputs and outputs
-   $self->{stdin } = '';
-   $self->{stdout} = '';
-   $self->{stderr} = '';
+   ####$self->build_bridge( %args );
 
-   # Start the communication bridge with R
+   # Build the communication bridge and setup IOs with R
    my $cmd = [ $bin, '--vanilla', '--slave' ];
-   $self->{bridge} = harness $cmd, \$self->{stdin}, \$self->{stdout}, \$self->{stderr};
+   
+   if ( exists($args{shared}) && ($args{shared} == 1) ) {
+      $self->{is_shared} = 1;
+   } else {
+      $self->{is_shared} = 0;
+   }
+   if (not $self->is_shared) {
+      my ($stdin, $stdout, $stderr) = ('', '', '');
+      $self->{stdin}  = \$stdin;
+      $self->{stdout} = \$stderr;
+      $self->{stderr} = \$stderr;
+      $self->{bridge} = harness $cmd, $self->{stdin}, $self->{stdout}, $self->{stderr};
+   } else {
+      $self->{stdin}  = \$SHARED_STDIN ;
+      $self->{stdout} = \$SHARED_STDOUT;
+      $self->{stderr} = \$SHARED_STDERR;
+      if (not defined $SHARED_BRIDGE) {
+         # first shared process to start
+         $SHARED_BRIDGE = harness $cmd, $self->{stdin}, $self->{stdout}, $self->{stderr};
+      }
+      $self->{bridge} = $SHARED_BRIDGE;
+   }
 
    return 1;
 }
@@ -516,9 +549,9 @@ sub stdin {
    # Get / set standard input string for R
    my ($self, $val) = @_;
    if (defined $val) {
-      $self->{stdin} = $val;
+      ${$self->{stdin}} = $val;
    }
-   return $self->{stdin};
+   return ${$self->{stdin}};
 }
 
 
@@ -526,19 +559,22 @@ sub stdout {
    # Get / set standard output string for R
    my ($self, $val) = @_;
    if (defined $val) {
-      $self->{stdout} = $val;
+      ${$self->{stdout}} = $val;
    }
-   return $self->{stdout};
+   return ${$self->{stdout}};
 }
 
 
 sub stderr {
    # Get / set standard error string for R
    my ($self, $val) = @_;
-   if (defined $val) {
-      $self->{stderr} = $val;
-   }
-   return $self->{stderr};
+   ####
+   #if (defined $val) {
+   #   ${$self->{stderr}} = $val;
+   #}
+   #return ${$self->{stderr}};
+   ####
+   return '';
 }
 
 
@@ -562,9 +598,16 @@ sub wrap_cmd {
 }
 
 
-sub share_io {
+sub clean_up {
    my ($self) = @_;
-   #### require Statistics::R::SharedIO;
+   ####
+   if ($self->is_shared) {
+      $self->stdin('');
+      $self->stdout('');
+      $self->stderr('');
+   }
+   ####
+   return 1;
 }
 
 
@@ -622,15 +665,6 @@ sub receive {
 sub error {
     # Get the error messages generated
     return '';
-}
-
-
-sub clean_up {
-   # Clean up the content of the log dir
-
-   ### may need to clean up the content of the shared memory
-
-   return 1;
 }
 
 
