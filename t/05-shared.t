@@ -9,24 +9,21 @@ use Time::HiRes qw ( time sleep );
 plan tests => 16;
 
 
-my $R;
+my ($R1, $R2, $R3, $R4);
 
-ok $R = Statistics::R->new( shared => 1 );
+ok $R1 = Statistics::R->new( shared => 1 );
+ok $R2 = Statistics::R->new( shared => 1 );
+ok $R3 = Statistics::R->new( shared => 1 );
+ok $R4 = Statistics::R->new( shared => 1 );
 
-$R->start;
+ok $R2->start;
+is $R1->is_shared, 1;
 
-is $R->is_shared(), 1;
+ok $R1->set( 'x', "string" );
+ok $R2->set( 'y', 3  );
+is $R2->run( q`print(x)` ), "string";
+ok $R3->set( 'z', 10 );
+ok $R4->run( q`a <- x * y / z` );
+is $R4->get( 'a' ), 13.5;
 
-ok $R->lock();
-
-for ( 0 .. 10 ) {
-    my $time = time;
-    my $ret = $R->run( qq`x = $time \n print(x)` );
-    ok $ret =~ m/\S+/;
-    #print "<< $ret >>\n";
-    sleep( 0.2 );
-}
-
-ok $R->unlock();
-
-ok $R->stop();
+ok $R3->stop();
