@@ -286,13 +286,18 @@ sub is_shared {
 {
 no warnings 'redefine';
 sub start {
-   my ($self, @args) = @_;
+   my ($self, %args) = @_;
 
+   # If running in shared mode, put stdin, stdout and stderr in shared memory
+   if ( exists($args{shared}) && ($args{shared} == 1) ) {
+      $self->{is_shared} = 1;
+   }
+   $self->share_io() if$self->is_shared;
 
-
-   #### need to do something shared if needed here...
+   # Now start R
    my $status = $self->bridge->start or die "Error starting $PROG: $?\n";
    $self->{is_started} = 1;
+
    return $status;
 }
 }
@@ -464,7 +469,13 @@ sub initialize {
    my ($self, %args) = @_;
 
    $self->{is_started} = 0;
-   $self->{is_shared}  = 0;
+
+   # Need to share the R process?
+   if ( exists($args{shared}) && ($args{shared} == 1) ) {
+      $self->{is_shared} = 1;
+   } else {
+      $self->{is_shared} = 0;
+   }
 
    # Path of R binary
    my $bin;
@@ -482,14 +493,7 @@ sub initialize {
    }
    $bin = win32_space_quote( $bin ) if $IS_WIN; #### May not be needed
 
-   ####
-   # If running in shared mode, deal with IPC::ShareLite
-   if ( (exists $args{ shared }) && ($args{ shared } == 1) ) {
-      $self->{is_shared} = 1;
-   }
-   ####
-
-   # Setup R shared inputs and outputs
+   # Setup R inputs and outputs
    $self->{stdin } = '';
    $self->{stdout} = '';
    $self->{stderr} = '';
@@ -558,6 +562,12 @@ sub wrap_cmd {
 }
 
 
+sub share_io {
+   my ($self) = @_;
+   #### require Statistics::R::SharedIO;
+}
+
+
 #---------- METHODS FOR BACKWARD COMPATIBILITY --------------------------------#
 
 
@@ -572,7 +582,6 @@ sub wrap_cmd {
    *read          = \&receive;
    *is_blocked    = \&is_locked;
 }
-
 
 
 sub start_shared {
