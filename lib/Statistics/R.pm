@@ -233,15 +233,15 @@ close the bridge.
 
 =back
 
-=head1 AUTHOR
+=head1 AUTHORS
 
 Graciliano M. P. E<lt>gm@virtuasites.com.brE<gt>
+
+Florent Angly E<lt>florent.angly@gmail.comE<gt> (rewrote Statistics::R in 2011)
 
 =head1 MAINTAINERS
 
 Brian Cassidy E<lt>bricas@cpan.orgE<gt>
-
-Florent Angly E<lt>florent.angly@gmail.comE<gt>
 
 =head1 COPYRIGHT & LICENSE
 
@@ -618,6 +618,9 @@ sub error {
 
 sub clean_up {
    # Clean up the content of the log dir
+
+   ### may need to clean up the content of the shared memory
+
    return 1;
 }
 
