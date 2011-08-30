@@ -364,12 +364,25 @@ sub run {
    # Need to start R now if it is not already running
    $self->start if not $self->is_started;
 
+   ####
+   print "Flag B: ".$self->wrap_cmd($cmd)."\n";
+   ####
+
    # Wrap command for execution in R
    $self->stdin( $self->wrap_cmd($cmd) );
 
    # Pass input to R and get its output
+
+   ####
+   print "Flag D\n";
+   ####
+
    my $bridge = $self->bridge;
    $bridge->pump while $bridge->pumpable and $self->stdout !~ m/$EOS\s?\z/mgc;
+
+   ####
+   print "Flag E\n";
+   ####
 
    # Report errors
    my $err = $self->stderr;
