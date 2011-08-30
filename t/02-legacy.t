@@ -5,7 +5,7 @@ use warnings;
 use Test::More;
 use Statistics::R;
 
-plan tests => 16;
+plan tests => 20;
 
 
 my $R;
@@ -38,6 +38,8 @@ ok $R->unlock;
 
 is $R->is_blocked, 0;
 
+is $R->is_locked, 0;
+
 ok $R->clean_up();
 
 ok $R->Rbin() =~ /\S+/;
@@ -45,5 +47,11 @@ ok $R->Rbin() =~ /\S+/;
 ok $R->stopR();
 
 is $R->error(), '';
+
+ok $R->start_shared();
+
+ok $R->start_sharedR();
+
+ok $R->stop();
 
 unlink $file;

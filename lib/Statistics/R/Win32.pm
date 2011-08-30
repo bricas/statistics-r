@@ -24,7 +24,7 @@ our $PROG = 'R';
 
 =head1 NAME
 
-Statistics::R::Win32 - Helper functions for MS Windows platforms
+Statistics::R::Win32 - Helper functions for Statistics::R on MS Windows platforms
 
 =head1 DESCRIPTION
 
@@ -72,6 +72,14 @@ Takes a path and return a path where each backslash was replaced by two backslas
 becomes
 
    C:\\Program Files\\R\\bin\\x64
+
+=back
+
+=head1 SEE ALSO
+
+=over 4
+
+=item * L<Statistics::R>
 
 =back
 

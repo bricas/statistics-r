@@ -5,7 +5,7 @@ use warnings;
 use Test::More;
 use Statistics::R;
 
-plan tests => 10;
+plan tests => 9;
 
 
 my $R;
@@ -24,8 +24,7 @@ ok -e $file; # RT bug #70307
 
 ok $R->run( qq`x = 123 \n print(x)` ) =~ /^\[\d+\]\s+123\s*$/;
 
-ok $R->send( qq`x = 456 ; write.table(x, file="", row.names=FALSE, col.names=FALSE) ` );
-ok $R->receive() =~ /^456$/; # RT bug #70314
+ok $R->run( qq`x = 456 ; write.table(x, file="", row.names=FALSE, col.names=FALSE) ` ) =~ /^456$/; # RT bug #70314
 
 ok $R->bin() =~ /\S+/;
 

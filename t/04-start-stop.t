@@ -6,7 +6,7 @@ use Test::More;
 use Statistics::R;
 use Cwd;
 
-plan tests => 19;
+plan tests => 16;
 
 
 my $R;
@@ -34,12 +34,6 @@ ok $R->start();
 is cwd, $initial_dir; # Bug RT #6724 and #70307
 
 ok $R->restart();
-
-ok $R->stop();
-
-ok $R->start_shared();
-
-is $R->is_shared, 1;
 
 ok $R->stop();
 

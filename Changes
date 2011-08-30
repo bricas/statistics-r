@@ -5,6 +5,7 @@ Revision history for Perl extension Statistics::R.
       data is now stored in memory and passed by pipes. This fixes bug RT #11309,
       #11918, #66190 and #70314
     - Refactored the communications in shared mode.
+    - Put platform-specific code and legacy code in separate modules
 
 0.10  2011-08-27  
     - Refactoring to remove old code doing platform-specific operations

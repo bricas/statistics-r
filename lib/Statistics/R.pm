@@ -6,6 +6,7 @@ use strict;
 use warnings;
 use Regexp::Common;
 use File::Spec::Functions;
+use Statistics::R::Legacy;
 use IPC::Run qw( harness start pump finish );
 use Text::Balanced qw ( extract_delimited extract_multiple );
 
@@ -31,8 +32,13 @@ Statistics::R - Perl interface to interact with the R statistical program
 I<Statistics::R> is a module to controls the R interpreter (R project for statistical
 computing: L<http://www.r-project.org/>). It lets you start R, pass commands to
 it and retrieve the output. A shared mode allow to have several instances of
-I<Statistics::R> talk to the same R process. This module works on GNU/Linux, MS
-Windows and probably many more systems.
+I<Statistics::R> talk to the same R process.
+
+The current I<Statistics::R> implementation uses pipes (for stdin, stdout and
+and stderr) to communicate with R. This implementation should be more efficient
+and reliable than that in previous version, which relied on reading and writing
+files. As before, this module works on GNU/Linux, MS Windows and probably many
+more systems.
 
 =head1 SYNOPSIS
 
@@ -150,61 +156,6 @@ Return the pid of the running R process
 
 =back
 
-=head1 LEGACY METHODS
-
-Do not use these methods in new code! They are provided solely so that code that
-use older versions of I<Statistics::R> does not crash. Some of these methods
-simply had their name changed, but some other methods do nothing anymore than
-return a value because it did not make sense to keep these methods anymore.
-
-=over 4
-
-=item startR()
-
-This is the same thing as start().
-
-=item stopR()
-
-This is the same thing as stop().
-
-=item restartR()
-
-This is the same thing as restart().
-
-=item Rbin()
-
-This is the same thing as bin().
-
-=item start_sharedR() / start_shared()
-
-Use the shared option of new() instead.
-
-=item send / read() / receive()
-
-Use run() instead.
-
-=item lock()
-
-Does nothing anymore.
-
-=item unlock()
-
-Does nothing anymore.
-
-=item is_blocked() / is_locked()
-
-Return 0.
-
-=item
-
-Return the empty string.
-
-=item clean_up()
-
-Does nothing anymore.
-
-=back
-
 =head1 INSTALLATION
 
 Since I<Statistics::R> relies on R to work, you need to install R first. See this
@@ -236,6 +187,8 @@ You also need to have the following CPAN Perl modules installed:
 =over 4
 
 =item * L<Statistics::R::Win32>
+
+=item * L<Statistics::R::Legacy>
 
 =item * The R-project web site: L<http://www.r-project.org/>
 
@@ -596,62 +549,6 @@ sub wrap_cmd {
    my ($self, $cmd) = @_;
    $cmd = qq`tryCatch( {$cmd} ); write("$EOS",stdout())\n`;
    return $cmd;
-}
-
-
-#---------- LEGACY METHODS ----------------------------------------------------#
-
-
-{
-   # Prevent "Name XXX used only once" warnings in this block
-   no warnings 'once';
-   *startR        = \&start;
-   *stopR         = \&stop;
-   *restartR      = \&restart;
-   *Rbin          = \&bin;
-   *start_sharedR = \&start_shared;
-   *read          = \&receive;
-   *is_blocked    = \&is_locked;
-   *receive       = \&result;
-}
-
-
-sub start_shared {
-    my $self = shift;
-    $self->start( shared => 1 );
-}
-
-
-sub lock {
-    return 1;
-}
-
-
-sub unlock {
-    return 1;
-}
-
-
-sub is_locked {
-    return 0;
-}
-
-
-sub send {
-   # Send a command to R
-   my ($self, $cmd) = @_;
-   $self->run($cmd);
-   return 1;
-}
-
-
-sub error {
-    return '';
-}
-
-
-sub clean_up {
-   return 1;
 }
 
 
