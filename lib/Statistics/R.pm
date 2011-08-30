@@ -601,7 +601,7 @@ sub result {
    if (defined $val) {
       $self->{result} = $val;
    }
-   return $self->{result};   
+   return $self->{result};
 }
 
 
@@ -615,7 +615,7 @@ sub wrap_cmd {
 }
 
 
-#---------- METHODS FOR BACKWARD COMPATIBILITY --------------------------------#
+#---------- LEGACY METHODS ----------------------------------------------------#
 
 
 {
@@ -649,7 +649,7 @@ sub unlock {
 
 
 sub is_locked {
-    return 1;
+    return 0;
 }
 
 

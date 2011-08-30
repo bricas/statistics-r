@@ -5,7 +5,7 @@ use warnings;
 use Test::More;
 use Statistics::R;
 
-plan tests => 11;
+plan tests => 15;
 
 
 my $R;
@@ -13,6 +13,8 @@ my $R;
 ok $R = Statistics::R->new();
 
 ok $R->startR();
+
+ok $R->restartR();
 
 ok $R->send(q`postscript("file.ps" , horizontal=FALSE , width=500 , height=500 , pointsize=1)`);
 
@@ -28,8 +30,15 @@ ok $R->send( qq`x = 456 \n print(x)` );
 $ret = $R->read();
 ok $ret =~ /^\[\d+\]\s+456\s*$/;
 
+ok $R->lock;
+
+ok $R->unlock;
+
+is $R->is_blocked, 0;
+
 ok $R->Rbin() =~ /\S+/;
 
 ok $R->stopR();
 
 is $R->error(), '';
+
