@@ -25,8 +25,6 @@ requires       'IPC::Run'        => '0';
 
 requires_external_bin 'R';
 
-install_script 'script/statistics-r';
-
 WriteAll;
 
 if ( -e 'MANIFEST.SKIP' ) {
