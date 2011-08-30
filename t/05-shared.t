@@ -23,7 +23,7 @@ ok $R1->set( 'x', "string" );
 ok $R2->set( 'y', 3  );
 is $R2->get( 'x' ), "string";
 ok $R3->set( 'z', 10 );
-ok $R4->run( q`a <- x * y / z` );
-is $R4->get( 'a' ), 13.5;
+ok $R4->run( q`a <- y / z` );
+is $R4->get( 'a' ), 0.3;
 
 ok $R3->stop();
