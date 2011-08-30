@@ -18,9 +18,7 @@ is $R->run( qq`postscript("$file" , horizontal=FALSE , width=500 , height=500 , 
 
 is $R->run( q`plot(c(1, 5, 10), type = "l")` ), '';
 
-#is $R->run( q`dev.off()` ), '';
-my $out = $R->run( q`dev.off()` );
-print "out = $out\n";
+ok $R->run( q`dev.off()` );
 
 ok -e $file; # RT bug #70307
 
