@@ -6,16 +6,18 @@ use strict;
 use warnings;
 use Regexp::Common;
 use File::Spec::Functions;
-use File::DosGlob qw( glob );
-use Env qw( @PATH $PROGRAMFILES );
 use IPC::Run qw( harness start pump finish );
 use Text::Balanced qw ( extract_delimited extract_multiple );
 
-
 our $VERSION = '0.20-beta';
-our $PROG    = 'R';
-our $IS_WIN  = ($^O =~ m/^(?:.*?win32|dos)$/i) ? 1 : 0;
+our $PROG    = 'R';                  # executable we are after... R
 our $EOS     = 'Statistics::R::EOS'; # string to signal the R output stream end
+our $IS_WIN  = ($^O =~ m/^(?:.*?win32|dos)$/i) ? 1 : 0;
+
+if ($IS_WIN) {
+   require Statistics::R::Win32;
+}
+
 
 our ($SHARED_BRIDGE, $SHARED_STDIN, $SHARED_STDOUT, $SHARED_STDERR);
 
@@ -495,10 +497,13 @@ sub initialize {
    if ( $args{ r_bin } || $args{ R_bin } ) {
       $bin = $args{ r_bin } || $args{ R_bin };
    } else {
-      win32_path_adjust() if $IS_WIN; # Windows-specific PATH adjustement
       $bin = $PROG; # IPC::Run will find the full path for the program later
    }
-   $bin = win32_space_quote( $bin ) if $IS_WIN; #### May not be needed
+
+   #### May not be needed
+   $bin = win32_space_quote( $bin ) if $IS_WIN;
+   ####
+
    $self->bin( $bin );
 
    # Using shared mode?
@@ -644,74 +649,6 @@ sub error {
 
 sub clean_up {
    return 1;
-}
-
-
-#---------- WINDOWS-SPECIFIC METHODS ------------------------------------------#
-
-
-sub win32_path_adjust {
-   # Find potential R directories in the Windows Program Files folder and add
-   # them to the PATH environment variable
-    
-   # Find potential R directories, e.g.  C:\Program Files (x86)\R-2.1\bin
-   #                                 or  C:\Program Files\R\bin\x64
-   my @r_dirs;
-   my @prog_file_dirs;
-   if (defined $PROGRAMFILES) {
-      push @prog_file_dirs, $PROGRAMFILES;                   # e.g. C:\Program Files (x86)
-      my ($programfiles_2) = ($PROGRAMFILES =~ m/^(.*) \(/); # e.g. C:\Program Files
-      push @prog_file_dirs, $programfiles_2 if not $programfiles_2 eq $PROGRAMFILES;
-   }
-   for my $prog_file_dir ( @prog_file_dirs ) {
-      next if not -d $prog_file_dir;
-      my @subdirs;
-      my @globs = ( catfile($prog_file_dir, 'R'), catfile($prog_file_dir, 'R-*') );
-      for my $glob ( @globs ) {
-         $glob = win32_space_escape( win32_double_bs( $glob ) );
-         push @subdirs, glob $glob; # DosGlob
-      }
-      for my $subdir (@subdirs) {
-         my $subdir2 = catfile($subdir, 'bin');
-         if ( -d $subdir2 ) {
-            my $subdir3 = catfile($subdir2, 'x64');
-            if ( -d $subdir3 ) {
-               push @r_dirs, $subdir3;
-            }
-            push @r_dirs, $subdir2;
-         }
-         push @r_dirs, $subdir;
-      }
-   }
-
-   # Append R directories to PATH (order is important for File::Which)
-   push @PATH, @r_dirs;
-    
-   return 1;
-}
-
-
-sub win32_space_quote {
-   # Quote a path if it contains whitespaces
-   my $path = shift;
-   $path = '"'.$path.'"' if $path =~ /\s/;
-   return $path;
-}
-
-
-sub win32_space_escape {
-   # Escape spaces with a single backslash
-   my $path = shift;
-   $path =~ s/ /\\ /g;
-   return $path;
-}
-
-
-sub win32_double_bs {
-   # Double the backslashes
-   my $path = shift;
-   $path =~ s/\\/\\\\/g;
-   return $path;
 }
 
 
