@@ -300,22 +300,20 @@ no warnings 'redefine';
 sub start {
    my ($self, %args) = @_;
 
-   ####
-   # If running in shared mode, put stdin, stdout and stderr in shared memory
-   #if ( exists($args{shared}) && ($args{shared} == 1) ) {
-   #   $self->is_shared( 1 );
-   #}
-   #$self->share_io() if $self->is_shared;
-   ####
+   # If shared mode option of start() requested, rebuild the bridge in shared
+   # mode. Don't use this option though. It is only here to cater for the legacy
+   # method start_shared()
+   if ( exists($args{shared}) && ($args{shared} == 1) ) {
+      $self->is_shared( 1 );
+      $self->bridge( 1 );
+   }
 
    # Now, start R
    my $bridge = $self->bridge;
    my $status = $bridge->start or die "Error starting $PROG: $?\n";
-   
+   $self->is_started( 1 );
    $self->bin( $bridge->{KIDS}->[0]->{PATH} );
    $self->pid( $bridge->{KIDS}->[0]->{PID}  );
-
-   $self->is_started( 1 );
 
    return $status;
 }
