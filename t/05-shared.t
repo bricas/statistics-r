@@ -5,12 +5,12 @@ use warnings;
 use Test::More;
 use Statistics::R;
 
-plan tests => 30;
+plan tests => 31;
 
 
 my ($R1, $R2, $R3, $R4);
 
-ok $R1 = Statistics::R->new( shared => 1 );
+ok $R1 = Statistics::R->new( shared => 1 ), 'Starting in shared mode';
 ok $R2 = Statistics::R->new( shared => 1 );
 ok $R3 = Statistics::R->new( shared => 1 );
 ok $R4 = Statistics::R->new( shared => 1 );
@@ -30,19 +30,12 @@ is $R2->is_started, 1;
 is $R3->is_started, 1;
 is $R4->is_started, 1;
 
-print "R1 PID = ".$R1->pid."\n";
-print "R2 PID = ".$R2->pid."\n";
-print "R3 PID = ".$R3->pid."\n";
-print "R4 PID = ".$R4->pid."\n";
-
+ok $R1 =~ m/\d+/, 'PIDs';
 is $R1->pid, $R2->pid;
 is $R1->pid, $R3->pid;
 is $R1->pid, $R4->pid;
 
-###
-exit;
-
-ok $R1->set( 'x', "string" );
+ok $R1->set( 'x', "string" ), 'Sharing data';
 
 ok $R2->set( 'y', 3  );
 
@@ -50,7 +43,7 @@ is $R2->get( 'x' ), "string";
 
 ok $R3->set( 'z', 10 );
 
-ok $R4->run( q`a <- y / z` );
+is $R4->run( q`a <- y / z` ), '';
 
 is $R4->get( 'a' ), 0.3;
 

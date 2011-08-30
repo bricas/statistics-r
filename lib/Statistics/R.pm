@@ -12,10 +12,10 @@ use IPC::Run qw( harness start pump finish );
 use Text::Balanced qw ( extract_delimited extract_multiple );
 
 
-our $VERSION = '0.20-alpha';
+our $VERSION = '0.20-beta';
 our $PROG    = 'R';
 our $IS_WIN  = ($^O =~ m/^(?:.*?win32|dos)$/i) ? 1 : 0;
-our $EOS     = 'Statistics::R::EOS'; # Arbitrary string to indicate the end of the R output stream
+our $EOS     = 'Statistics::R::EOS'; # string to signal the R output stream end
 
 our ($SHARED_BRIDGE, $SHARED_STDIN, $SHARED_STDOUT, $SHARED_STDERR);
 
@@ -305,7 +305,6 @@ sub start {
       my $bridge = $self->bridge;
       $status = $bridge->start or die "Error starting $PROG: $?\n";
       $self->bin( $bridge->{KIDS}->[0]->{PATH} );
-      $self->pid( $bridge->{KIDS}->[0]->{PID}  );
    }
 
    return $status;
@@ -338,11 +337,7 @@ sub is_started {
 sub pid {
    # Get (/ set) the PID of the running R process. It is accessible only after
    # the bridge has start()ed
-   my ($self, $val) = @_;
-   if (defined $val) {
-      $self->{pid} = $val;
-   }
-   return $self->{pid};
+   return shift->bridge->{KIDS}->[0]->{PID};
 }
 
 
