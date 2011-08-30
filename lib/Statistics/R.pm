@@ -38,11 +38,12 @@ a single instance of R can be accessed by several Perl processes.
   my $R = Statistics::R->new();
   
   # Run simple R commands
-  $R->run(q`postscript("file.ps" , horizontal=FALSE , width=500 , height=500 , pointsize=1)`);
+  my $output_file = "file.ps";
+  $R->run(qq`postscript("$output_file" , horizontal=FALSE , width=500 , height=500 , pointsize=1)`);
   $R->run(q`plot(c(1, 5, 10), type = "l")`);
   $R->run(q`dev.off()`);
 
-  # Pass and retrieve data
+  # Pass and retrieve data (scalars or arrays)
   my $input_value = 1;
   $R->set('x', $input_value);
   $R->run(q`y <- x^2`);
