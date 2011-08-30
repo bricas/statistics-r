@@ -5,7 +5,7 @@ use warnings;
 use Test::More;
 use Statistics::R;
 
-plan tests => 15;
+plan tests => 16;
 
 
 my $R;
@@ -37,6 +37,8 @@ ok $R->lock;
 ok $R->unlock;
 
 is $R->is_blocked, 0;
+
+ok $R->clean_up();
 
 ok $R->Rbin() =~ /\S+/;
 

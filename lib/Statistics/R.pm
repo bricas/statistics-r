@@ -65,7 +65,7 @@ Create a Statistics::R bridge object between Perl and R. Available options are:
 
 =item shared
 
-Start a shared bridge. See start().
+Start a shared bridge. See start(). MAKE SURE YOU START ALL THE PROCESSES MANUALLY!
 
 =item r_bin
 
@@ -116,6 +116,17 @@ stop() and start() R.
 =item bin()
 
 Return the path to the R binary (executable).
+
+=item is_started()
+
+Is R running?
+
+=item pid()
+
+What is the pid of the running R process
+
+
+=item is_shared()
 
 =back
 
@@ -265,17 +276,6 @@ sub new {
 }
 
 
-sub is_started {
-   # Get (/ set) the whether or not R is currently running, i.e. whether the
-   # bridge has been start()ed
-   my ($self, $val) = @_;
-   if (defined $val) {
-      $self->{is_started} = $val;
-   }
-   return $self->{is_started};
-}
-
-
 sub is_shared {
    # Get (/ set) the whether or not Statistics::R is setup to run in shared mode
    my ($self, $val) = @_;
@@ -290,21 +290,23 @@ sub is_shared {
 no warnings 'redefine';
 sub start {
    my ($self, %args) = @_;
+   my $status = 1;
+   if (not $self->is_started) {
 
-   # If shared mode option of start() requested, rebuild the bridge in shared
-   # mode. Don't use this option though. It is only here to cater for the legacy
-   # method start_shared()
-   if ( exists($args{shared}) && ($args{shared} == 1) ) {
-      $self->is_shared( 1 );
-      $self->bridge( 1 );
+      # If shared mode option of start() requested, rebuild the bridge in shared
+      # mode. Don't use this option though. It is only here to cater for the legacy
+      # method start_shared()
+      if ( exists($args{shared}) && ($args{shared} == 1) ) {
+         $self->is_shared( 1 );
+         $self->bridge( 1 );
+      }
+
+      # Now, start R
+      my $bridge = $self->bridge;
+      $status = $bridge->start or die "Error starting $PROG: $?\n";
+      $self->bin( $bridge->{KIDS}->[0]->{PATH} );
+      $self->pid( $bridge->{KIDS}->[0]->{PID}  );
    }
-
-   # Now, start R
-   my $bridge = $self->bridge;
-   my $status = $bridge->start or die "Error starting $PROG: $?\n";
-   $self->is_started( 1 );
-   $self->bin( $bridge->{KIDS}->[0]->{PATH} );
-   $self->pid( $bridge->{KIDS}->[0]->{PID}  );
 
    return $status;
 }
@@ -316,7 +318,6 @@ sub stop {
    my $status = 1;
    if ($self->is_started) {
       $status = $self->bridge->finish or die "Error stopping $PROG: $?\n";
-      $self->is_started( 0 );
    }
    return $status;
 }
@@ -325,6 +326,12 @@ sub stop {
 sub restart {
    my ($self) = @_;
    return $self->stop && $self->start;
+}
+
+
+sub is_started {
+   # Query whether or not R is currently running
+   return shift->bridge->{STATE} eq IPC::Run::_started ? 1 : 0;
 }
 
 
@@ -360,23 +367,13 @@ sub run {
    # Wrap command for execution in R
    $self->stdin( $self->wrap_cmd($cmd) );
 
-   ####
-   print "stdin = '".$self->stdin."'\n";
-   ####
-
    # Pass input to R and get its output
    my $bridge = $self->bridge;
    $bridge->pump while $bridge->pumpable and $self->stdout !~ m/$EOS\s?\z/mgc;
 
-   ####
-   print "stdout = '".$self->stdout."'\n";
-   print "stderr = '".$self->stderr."'\n";
-   print "\n\n";
-   ####
-
    # Report errors
    my $err = $self->stderr;
-   die "Error: $err\n" if $err;
+   die "Problem running an R command: $err\n" if $err;
 
    # Parse output, save it and reinitialize stdout
    my $out = $self->stdout;
@@ -429,11 +426,6 @@ sub get {
    my ($self, $varname) = @_;
    my $string = $self->run(qq`print($varname)`);
 
-
-   ####
-   print "var = '$string'\n";
-   ####
-
    # Parse R output
    my $value;
    if ($string eq 'NULL') {
@@ -483,11 +475,6 @@ sub get {
       }
    }
 
-   ####
-   #use Data::Dumper;
-   #print Dumper(\@arr);
-   ####
-
    # Return either a scalar of an arrayref
    my $ret_val;
    if (scalar @arr == 1) {
@@ -505,8 +492,6 @@ sub get {
 
 sub initialize {
    my ($self, %args) = @_;
-
-   $self->is_started( 0 );
 
    # Path of R binary
    my $bin;
