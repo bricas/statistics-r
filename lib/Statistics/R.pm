@@ -510,29 +510,26 @@ sub initialize {
    my ($self, %args) = @_;
 
    $self->is_started( 0 );
-   $self->is_shared( 0 );
 
    # Path of R binary
    my $bin;
    if ( $args{ r_bin } || $args{ R_bin } ) {
-      # User-specified location
       $bin = $args{ r_bin } || $args{ R_bin };
-      if ( !-s $self->{bin} ) {
-         die "Error: Could not find the R binary at the specified location, $bin\n";
-      }
    } else {
-      # Windows-specific PATH adjustement
-      win32_path_adjust() if $IS_WIN;
-      # Let IPC::Run find the full path for the program
-      $bin = $PROG;
+      win32_path_adjust() if $IS_WIN; # Windows-specific PATH adjustement
+      $bin = $PROG; # IPC::Run will find the full path for the program later
    }
    $bin = win32_space_quote( $bin ) if $IS_WIN; #### May not be needed
    $self->bin( $bin );
 
+   # Using shared mode?
    if ( exists($args{shared}) && ($args{shared} == 1) ) {
       $self->is_shared( 1 );
+   } else {
+      $self->is_shared( 0 );
    }
 
+   # Build the bridge
    $self->bridge( 1 );
 
    return 1;
