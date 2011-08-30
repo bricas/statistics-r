@@ -633,6 +633,7 @@ sub wrap_cmd {
    *start_sharedR = \&start_shared;
    *read          = \&receive;
    *is_blocked    = \&is_locked;
+   *receive       = \&result;
 }
 
 
@@ -662,12 +663,6 @@ sub send {
    my ($self, $cmd) = @_;
    $self->run($cmd);
    return 1;
-}
-
-
-sub receive {
-   # Receive the result of an R command
-   return shift->result;
 }
 
 
