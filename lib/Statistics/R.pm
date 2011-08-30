@@ -275,12 +275,23 @@ sub new {
 
 
 sub is_started {
-   return shift->{is_started};
+   # Get (/ set) the whether or not R is currently running, i.e. whether the
+   # bridge has been start()ed
+   my ($self, $val) = @_;
+   if (defined $val) {
+      $self->{is_started} = $val;
+   }
+   return $self->{is_started};
 }
 
 
 sub is_shared {
-   return shift->{is_shared};
+   # Get (/ set) the whether or not Statistics::R is setup to run in shared mode
+   my ($self, $val) = @_;
+   if (defined $val) {
+      $self->{is_shared} = $val;
+   }
+   return $self->{is_shared};
 }
 
 
@@ -292,18 +303,19 @@ sub start {
    ####
    # If running in shared mode, put stdin, stdout and stderr in shared memory
    #if ( exists($args{shared}) && ($args{shared} == 1) ) {
-   #   $self->{is_shared} = 1;
+   #   $self->is_shared( 1 );
    #}
-   #$self->share_io() if$self->is_shared;
+   #$self->share_io() if $self->is_shared;
    ####
 
    # Now, start R
    my $bridge = $self->bridge;
    my $status = $bridge->start or die "Error starting $PROG: $?\n";
    
-   ###$self->bin( $bridge->{KIDS}->[0]->{PATH} );
+   $self->bin( $bridge->{KIDS}->[0]->{PATH} );
+   $self->pid( $bridge->{KIDS}->[0]->{PID}  );
 
-   $self->{is_started} = 1;
+   $self->is_started( 1 );
 
    return $status;
 }
@@ -315,7 +327,7 @@ sub stop {
    my $status = 1;
    if ($self->is_started) {
       $status = $self->bridge->finish or die "Error stopping $PROG: $?\n";
-      $self->{is_started} = 0;
+      $self->is_started( 0 );
    }
    return $status;
 }
@@ -328,15 +340,24 @@ sub restart {
 
 
 sub pid {
-   # Get the PID of the running R process
-   return shift->bridge->{KIDS}->[0]->{PID};
+   # Get (/ set) the PID of the running R process. It is accessible only after
+   # the bridge has start()ed
+   my ($self, $val) = @_;
+   if (defined $val) {
+      $self->{pid} = $val;
+   }
+   return $self->{pid};
 }
 
 
 sub bin {
-   # Get / set the full path to the R binary program to use
-   # This is accessible only after the bridge has start()ed
-   return shift->bridge->{KIDS}->[0]->{PATH};
+   # Get / set the full path to the R binary program to use. Unless you have set
+   # the path yourself, it is accessible only after the bridge has start()ed
+   my ($self, $val) = @_;
+   if (defined $val) {
+      $self->{bin} = $val;
+   }
+   return $self->{bin};
 }
 
 
@@ -490,7 +511,8 @@ sub get {
 sub initialize {
    my ($self, %args) = @_;
 
-   $self->{is_started} = 0;
+   $self->is_started( 0 );
+   $self->is_shared( 0 );
 
    # Path of R binary
    my $bin;
@@ -514,9 +536,7 @@ sub initialize {
    my $cmd = [ $bin, '--vanilla', '--slave' ];
    
    if ( exists($args{shared}) && ($args{shared} == 1) ) {
-      $self->{is_shared} = 1;
-   } else {
-      $self->{is_shared} = 0;
+      $self->is_shared( 1 );
    }
    if (not $self->is_shared) {
       my ($stdin, $stdout, $stderr) = ('', '', '');
