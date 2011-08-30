@@ -22,13 +22,15 @@ our ($SHARED_BRIDGE, $SHARED_STDIN, $SHARED_STDOUT, $SHARED_STDERR);
 
 =head1 NAME
 
-Statistics::R - Perl interface to control the R statistical program
+Statistics::R - Perl interface to interact with the R statistical program
 
 =head1 DESCRIPTION
 
-This module controls the R interpreter (R project for statistical computing:
-L<http://www.r-project.org/>). Multiple architectures and OS are supported and 
-a single instance of R can be accessed by several Perl processes.
+Statistics::R is a module to controls the R interpreter (R project for statistical
+computing: L<http://www.r-project.org/>). It lets you start R, pass commands to
+it and retrieve the output. A shared mode allow to have several instances of
+Statistics::R talk to the same R process. This module works on GNU/Linux, MS
+Windows and probably many more systems.
 
 =head1 SYNOPSIS
 
@@ -65,7 +67,7 @@ Create a Statistics::R bridge object between Perl and R. Available options are:
 
 =item shared
 
-Start a shared bridge. See start(). MAKE SURE YOU START ALL THE PROCESSES MANUALLY!
+Start a shared bridge. See start(). 
 
 =item r_bin
 

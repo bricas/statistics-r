@@ -5,7 +5,7 @@ use warnings;
 use Test::More;
 use Statistics::R;
 
-plan tests => 31;
+plan tests => 29;
 
 
 my ($R1, $R2, $R3, $R4);
@@ -22,8 +22,6 @@ is $R4->is_shared, 1;
 
 ok $R2->start;
 ok $R4->start;
-ok $R3->start;
-ok $R1->start;
 
 is $R1->is_started, 1;
 is $R2->is_started, 1;
