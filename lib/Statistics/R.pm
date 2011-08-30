@@ -66,16 +66,6 @@ Create a Statistics::R bridge object between Perl and R. Available options are:
 
 Start a shared bridge. See start().
 
-=item log_dir
-
-A directory where temporary files necessary for the bridge between R and Perl
-will be stored.
-
-B<R and Perl need to have read and write access to the directory!>
-
-I<By default this will be a folder called Statistics-R and placed in a temporary
-directory of the system>
-
 =item r_bin
 
 The path to the R binary. See I<INSTALLATION>.

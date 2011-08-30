@@ -10,13 +10,15 @@ plan tests => 15;
 
 my $R;
 
+my $file = "file.ps";
+
 ok $R = Statistics::R->new();
 
 ok $R->startR();
 
 ok $R->restartR();
 
-ok $R->send(q`postscript("file.ps" , horizontal=FALSE , width=500 , height=500 , pointsize=1)`);
+ok $R->send(qq`postscript("$file" , horizontal=FALSE , width=500 , height=500 , pointsize=1)`);
 
 ok $R->send( q`plot(c(1, 5, 10), type = "l")` );
 
@@ -42,3 +44,4 @@ ok $R->stopR();
 
 is $R->error(), '';
 
+unlink $file;

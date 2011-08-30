@@ -10,9 +10,11 @@ plan tests => 9;
 
 my $R;
 
+my $file = "file.ps";
+
 ok $R = Statistics::R->new();
 
-is $R->run(q`postscript("file.ps" , horizontal=FALSE , width=500 , height=500 , pointsize=1)`), '';
+is $R->run(qq`postscript("$file" , horizontal=FALSE , width=500 , height=500 , pointsize=1)`), '';
 
 is $R->run( q`plot(c(1, 5, 10), type = "l")` ), '';
 
@@ -26,5 +28,7 @@ ok $R->bin() =~ /\S+/;
 ok $R->clean_up();
 
 ok $R->stopR();
+
+unlink $file;
 
 
