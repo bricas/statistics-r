@@ -28,10 +28,10 @@ Statistics::R - Perl interface to interact with the R statistical program
 
 =head1 DESCRIPTION
 
-Statistics::R is a module to controls the R interpreter (R project for statistical
+I<Statistics::R> is a module to controls the R interpreter (R project for statistical
 computing: L<http://www.r-project.org/>). It lets you start R, pass commands to
 it and retrieve the output. A shared mode allow to have several instances of
-Statistics::R talk to the same R process. This module works on GNU/Linux, MS
+I<Statistics::R> talk to the same R process. This module works on GNU/Linux, MS
 Windows and probably many more systems.
 
 =head1 SYNOPSIS
@@ -62,41 +62,56 @@ Windows and probably many more systems.
 
 =item new()
 
-Create a Statistics::R bridge object between Perl and R. Available options are:
+Build a I<Statistics::R> bridge object between Perl and R. Available options are:
 
 
 =over 4
 
-=item shared
-
-Start a shared bridge. See start(). 
-
 =item r_bin
 
-The path to the R binary. See I<INSTALLATION>.
+Specify the full path to R if it is not automatically found. See L<INSTALLATION>.
+
+=item shared
+
+Start a shared bridge. When using a shared bridge, several instances of 
+Statistics::R can communicate with the same unique R instance. Example:
+
+   use Statistics::R;
+
+   my $R1 = Statistics::R->new( shared => 1);
+   my $R2 = Statistics::R->new( shared => 1);
+
+   $R1->set( 'x', 'pear' );
+   my $x = $R2->get( 'x' );
+   print "x = $x\n";
+
+Do not call the I<stop()> method is you still have processes that need to interact
+with R.
 
 =back
 
 
 =item run()
 
-Execute in R one or several commands passed as a string. Also, start() R if it
-was not yet started.
+Execute one or several commands passed as a string to R and return the output as
+a string. Before that, start() R if it is not yet running. Example:
+
+   my $out = $R->run( q`print( 1 + 2 )` );
 
 =item set()
 
-Set the value of an R variable, e.g.
+Set the value of an R variable (scalar or arrayref). Example:
 
-  $R->set( 'x', "apple" );
+  $R->set( 'x', 'pear' );
 
 or 
 
   $R->set( 'y', [1, 2, 3] );
 
 
-=item get( $)
+=item get()
  
-Get the value of an R variable, e.g.
+Get the value of an R variable (scalar or arrayref). Example:
 
   my $x = $R->get( 'x' );  # $y is an scalar
 
@@ -106,12 +121,12 @@ or
 
 =item start()
 
-Start R and set the communication bridge between Perl and R. Pass the option
-shared => 1 to use an already running bridge.
+Explicitly start R. Most times, you do not need to do that because the first
+execution of run() or set() will automatically call start().
 
 =item stop()
 
-Stop R and stop the bridge.
+Stop a running instance of R.
 
 =item restart()
 
@@ -119,7 +134,11 @@ stop() and start() R.
 
 =item bin()
 
-Return the path to the R binary (executable).
+Get or set the path to the R executable.
+
+=item is_shared()
+
+Was R started in shared mode?
 
 =item is_started()
 
@@ -127,68 +146,78 @@ Is R running?
 
 =item pid()
 
-What is the pid of the running R process
-
-
-=item is_shared()
+Return the pid of the running R process
 
 =back
 
 =head1 LEGACY METHODS
 
+Do not use these methods in new code! They are provided solely so that code that
+use older versions of I<Statistics::R> does not crash. Some of these methods
+simply had their name changed, but some other methods do nothing anymore than
+return a value because it did not make sense to keep these methods anymore.
+
 =over 4
 
-=item send($CMD)
+=item startR()
 
-Send some command to be executed inside R. Prefer the run() command instead.
+This is the same thing as start().
 
-=item receive($TIMEOUT)
+=item stopR()
 
-Get the output of R for the last group of commands sent to R by I<send()>.
-Prefer the run() command.
+This is the same thing as stop().
+
+=item restartR()
+
+This is the same thing as restart().
+
+=item Rbin()
+
+This is the same thing as bin().
+
+=item start_sharedR() / start_shared()
+
+Use the shared option of new() instead.
+
+=item send / read() / receive()
+
+Use run() instead.
 
 =item lock()
 
-Lock the bridge for your PID.
+Does nothing anymore.
 
 =item unlock()
 
-Unlock the bridge if your PID have locked it.
+Does nothing anymore.
 
-=item is_locked()
+=item is_blocked() / is_locked()
 
-Return I<TRUE> if the bridge is locked for your PID.
+Return 0.
 
-In other words, returns I<TRUE> if other process has I<lock()ed> the bridge.
+=item
 
-=item is_started()
-
-Return I<TRUE> if the R interpreter is started, or still started.
+Return the empty string.
 
 =item clean_up()
 
-Clean up the environment, removing all the objects.
+Does nothing anymore.
 
 =back
 
 =head1 INSTALLATION
 
-To install this package you need to install R on your system first, since
-I<Statistics::R> need to find R path to work. If R is in your PATH environment
+Since I<Statistics::R> relies on R to work, you need to install R first. See this
+page for downloads, L<http://www.r-project.org/>. If R is in your PATH environment
 variable, then it should be available from a terminal and be detected
-automatically by I<Statistics::R>. This means that you do not have to do anything
+automatically by I<Statistics::R>. This means that you don't have to do anything
 on Linux systems to get I<Statistics::R> working. On Windows systems, in addition
 to the folders described in PATH, the usual suspects will be checked for the
-presence of the R binary, e.g. C:\Program Files\R. Your last recourse if
-I<Statistics::R> does not find R is to specify its full path when calling new():
+presence of the R binary, e.g. C:\Program Files\R. If I<Statistics::R> does not
+find R installation, your last recourse is to specify its full path when calling
+new():
 
     my $R = Statistics::R->new( r_bin => $fullpath );
-
-Download page of R:
-L<http://cran.r-project.org/banner.shtml>
-
-Or go to the R web site:
-L<http://www.r-project.org/>
 
 You also need to have the following CPAN Perl modules installed:
 
@@ -202,37 +231,11 @@ You also need to have the following CPAN Perl modules installed:
 
 =back
 
-=head1 EXECUTION FOR MULTIPLE PROCESSES
-
-The main purpose of I<Statistics::R> is to start a single R interpreter that
-listens to multiple Perl processes.
-
-Note that to do that R and Perl need to be running with the same user/group level.
-
-To start the I<Statistics::R> bridge, you can use the script I<statistics-r>:
-
-  $> statistics-r start
-
-From your script you need to use the I<start()> option in shared mode:
-
-  use Statistics::R;
-  
-  my $R = Statistics::R->new();
-  
-  $R->start( shared => 1 );
-  
-  $R->run('x = 123');
-  
-  exit;
-
-Note that in the example above the method I<stop()> wasn't called, since it will
-close the bridge.
-
 =head1 SEE ALSO
 
 =over 4
 
-=item * L<Statistics::R::Bridge>
+=item * L<Statistics::R::Win32>
 
 =item * The R-project web site: L<http://www.r-project.org/>
 
