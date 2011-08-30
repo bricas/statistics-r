@@ -360,7 +360,7 @@ sub run {
    $self->stdin( $self->wrap_cmd($cmd) );
 
    ####
-   print "stdin = ".$self->stdin;
+   print "stdin = '".$self->stdin."'\n";
    ####
 
    # Pass input to R and get its output
@@ -368,9 +368,9 @@ sub run {
    $bridge->pump while $bridge->pumpable and $self->stdout !~ m/$EOS\s?\z/mgc;
 
    ####
-   print "stdout = ".$self->stdout;
-   print "stderr = ".$self->stderr;
-   print "\n";
+   print "stdout = '".$self->stdout."'\n";
+   print "stderr = '".$self->stderr."'\n";
+   print "\n\n";
    ####
 
    # Report errors
@@ -455,7 +455,8 @@ sub get {
          $value = $lines[1];
          $value =~ s/^\s*(\S+)\s*$/$1/;
       } else {
-         die "Error: Don't know how to handle this R output\n$string\n";
+         #die "Error: Don't know how to handle this R output\n$string\n";
+         $value = $string;
       }
    }
 
@@ -480,6 +481,11 @@ sub get {
          }
       }
    }
+
+   ####
+   #use Data::Dumper;
+   #print Dumper(\@arr);
+   ####
 
    # Return either a scalar of an arrayref
    my $ret_val;
@@ -534,7 +540,7 @@ sub bridge {
       if (not $self->is_shared) {
          my ($stdin, $stdout, $stderr);
          $self->{stdin}  = \$stdin;
-         $self->{stdout} = \$stderr;
+         $self->{stdout} = \$stdout;
          $self->{stderr} = \$stderr;
          $self->{bridge} = harness $cmd, $self->{stdin}, $self->{stdout}, $self->{stderr};
       } else {
@@ -575,13 +581,10 @@ sub stdout {
 sub stderr {
    # Get / set standard error string for R
    my ($self, $val) = @_;
-   ####
-   #if (defined $val) {
-   #   ${$self->{stderr}} = $val;
-   #}
-   #return ${$self->{stderr}};
-   ####
-   return '';
+   if (defined $val) {
+      ${$self->{stderr}} = $val;
+   }
+   return ${$self->{stderr}};
 }
 
 
