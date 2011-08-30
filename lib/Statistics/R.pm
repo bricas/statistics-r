@@ -529,39 +529,41 @@ sub initialize {
       $bin = $PROG;
    }
    $bin = win32_space_quote( $bin ) if $IS_WIN; #### May not be needed
+   $self->bin( $bin );
 
-   ####$self->build_bridge( %args );
-
-   # Build the communication bridge and setup IOs with R
-   my $cmd = [ $bin, '--vanilla', '--slave' ];
-   
    if ( exists($args{shared}) && ($args{shared} == 1) ) {
       $self->is_shared( 1 );
    }
-   if (not $self->is_shared) {
-      my ($stdin, $stdout, $stderr) = ('', '', '');
-      $self->{stdin}  = \$stdin;
-      $self->{stdout} = \$stderr;
-      $self->{stderr} = \$stderr;
-      $self->{bridge} = harness $cmd, $self->{stdin}, $self->{stdout}, $self->{stderr};
-   } else {
-      $self->{stdin}  = \$SHARED_STDIN ;
-      $self->{stdout} = \$SHARED_STDOUT;
-      $self->{stderr} = \$SHARED_STDERR;
-      if (not defined $SHARED_BRIDGE) {
-         # first shared process to start
-         $SHARED_BRIDGE = harness $cmd, $self->{stdin}, $self->{stdout}, $self->{stderr};
-      }
-      $self->{bridge} = $SHARED_BRIDGE;
-   }
+
+   $self->bridge( 1 );
 
    return 1;
 }
 
 
 sub bridge {
-   # Get / set the communication bridge
-   return shift->{bridge};
+   # Get or build the communication bridge and IOs with R
+   my ($self, $build) = @_;
+   if ($build) {
+      my $cmd = [ $self->bin, '--vanilla', '--slave' ];
+      if (not $self->is_shared) {
+         my ($stdin, $stdout, $stderr);
+         $self->{stdin}  = \$stdin;
+         $self->{stdout} = \$stderr;
+         $self->{stderr} = \$stderr;
+         $self->{bridge} = harness $cmd, $self->{stdin}, $self->{stdout}, $self->{stderr};
+      } else {
+         $self->{stdin}  = \$SHARED_STDIN ;
+         $self->{stdout} = \$SHARED_STDOUT;
+         $self->{stderr} = \$SHARED_STDERR;
+         if (not defined $SHARED_BRIDGE) {
+            # The first Statics::R instance builds the bridge
+            $SHARED_BRIDGE = harness $cmd, $self->{stdin}, $self->{stdout}, $self->{stderr};
+         }
+         $self->{bridge} = $SHARED_BRIDGE;
+      }
+   }
+   return $self->{bridge};
 }
 
 
@@ -618,19 +620,6 @@ sub wrap_cmd {
 }
 
 
-sub clean_up {
-   my ($self) = @_;
-   ####
-   if ($self->is_shared) {
-      $self->stdin('');
-      $self->stdout('');
-      $self->stderr('');
-   }
-   ####
-   return 1;
-}
-
-
 #---------- METHODS FOR BACKWARD COMPATIBILITY --------------------------------#
 
 
@@ -683,8 +672,12 @@ sub receive {
 
 
 sub error {
-    # Get the error messages generated
     return '';
+}
+
+
+sub clean_up {
+   return 1;
 }
 
 
