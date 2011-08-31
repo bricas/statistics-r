@@ -14,7 +14,7 @@ if ( $^O =~ m/^(?:.*?win32|dos)$/i ) {
     require Statistics::R::Win32;
 }
 
-our $VERSION = '0.20-beta';
+our $VERSION = '0.20';
 our $PROG    = 'R';                  # executable we are after... R
 our $EOS     = 'Statistics::R::EOS'; # string to signal the R output stream end
 
@@ -23,7 +23,7 @@ our ($SHARED_BRIDGE, $SHARED_STDIN, $SHARED_STDOUT, $SHARED_STDERR);
 
 =head1 NAME
 
-Statistics::R - Perl interface to interact with the R statistical program
+Statistics::R - Perl interface with the R statistical program
 
 =head1 DESCRIPTION
 
@@ -196,11 +196,11 @@ You also need to have the following CPAN Perl modules installed:
 
 =head1 AUTHORS
 
-Graciliano M. P. E<lt>gm@virtuasites.com.brE<gt>
+Florent Angly E<lt>florent.angly@gmail.comE<gt> (2011 rewrite)
 
-Florent Angly E<lt>florent.angly@gmail.comE<gt> (Statistics::R in 2011 rewrite)
+Graciliano M. P. E<lt>gm@virtuasites.com.brE<gt> (original code)
 
-=head1 MAINTAINERS
+=head1 MAINTAINER
 
 Brian Cassidy E<lt>bricas@cpan.orgE<gt>
 

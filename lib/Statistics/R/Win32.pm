@@ -91,11 +91,11 @@ becomes
 
 =head1 AUTHORS
 
-Graciliano M. P. E<lt>gm@virtuasites.com.brE<gt>
+Florent Angly E<lt>florent.angly@gmail.comE<gt> (2011 rewrite)
 
-Florent Angly E<lt>florent.angly@gmail.comE<gt> (Statistics::R in 2011 rewrite)
+Graciliano M. P. E<lt>gm@virtuasites.com.brE<gt> (original code)
 
-=head1 MAINTAINERS
+=head1 MAINTAINER
 
 Brian Cassidy E<lt>bricas@cpan.orgE<gt>
 

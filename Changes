@@ -1,14 +1,14 @@
 Revision history for Perl extension Statistics::R.
 
-0.20  XXXX-XX-XX
-    - Refactored the entire R bridge to avoid writing and reading files. All
-      data is now stored in memory and passed by pipes. This fixes bug RT #11309,
-      #11918, #66190 and #70314
-    - Refactored the communications in shared mode.
+0.20  2011-08-31
+    - Refactored the entire R communication bridge to avoid writing and reading
+      files. All data is now stored in memory and passed by pipes. This fixes
+      bug RT #11309, #11918, #66190 and #70314
+    - Refactored the communications in shared mode
     - Put platform-specific code and legacy code in separate modules
 
 0.10  2011-08-27  
-    - Refactoring to remove old code doing platform-specific operations
+    - Refactoring to remove old code doing platform-specific operations.
     - Lots of code cleanup
     - Removed the now useless r_dir and tmp_dir options of new()
     - Fix for change of dir bug (RT #6724). Also fixes missing synopsis file (RT #70307)
