@@ -1,6 +1,6 @@
 Revision history for Perl extension Statistics::R.
 
-0.xx
+0.21  2011-09-04
     - Tweaked the regular expressions that parse the R output stream for added
       speed and robustness
 
