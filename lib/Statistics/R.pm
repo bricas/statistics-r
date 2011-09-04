@@ -17,6 +17,7 @@ if ( $^O =~ m/^(?:.*?win32|dos)$/i ) {
 our $VERSION = '0.20';
 our $PROG    = 'R';                  # executable we are after... R
 our $EOS     = 'Statistics::R::EOS'; # string to signal the R output stream end
+our $EOS_RE  = qr/$EOS$/;            # regexp to match end of R stream
 
 our ($SHARED_BRIDGE, $SHARED_STDIN, $SHARED_STDOUT, $SHARED_STDERR);
 
@@ -322,7 +323,9 @@ sub run {
 
    # Pass input to R and get its output
    my $bridge = $self->bridge;
-   $bridge->pump while $bridge->pumpable and $self->stdout !~ m/$EOS\s?\z/mgc;
+   while ( $self->stdout !~ m/$EOS_RE/gc  &&  $bridge->pumpable ) {
+      $bridge->pump;
+   }
 
    # Report errors
    my $err = $self->stderr;
