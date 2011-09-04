@@ -1,5 +1,9 @@
 Revision history for Perl extension Statistics::R.
 
+0.xx
+    - Tweaked the regular expressions that parse the R output stream for added
+      speed and robustness
+
 0.20  2011-08-31
     - Refactored the entire R communication bridge to avoid writing and reading
       files. All data is now stored in memory and passed by pipes. This fixes
