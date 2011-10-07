@@ -33,5 +33,5 @@ unlink $file;
 eval {
    $R->run( q`print(ASDF)` );
 };
-ok $@ =~ m/error/i; # Catch an R error
+ok $@; # Cannot match a specific string because locale may vary
 
