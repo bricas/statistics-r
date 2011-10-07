@@ -327,18 +327,22 @@ sub run {
       $bridge->pump;
    }
 
-   # Report errors
-   my $err = $self->stderr;
-   die "Problem running an R command: $err\n" if $err;
-
-   # Parse output, save it and reinitialize stdout
+   # Parse outputs, detect errors, save results and reinitialize
    my $out = $self->stdout;
    $out =~ s/$eos_re//g;
    chomp $out;
-   $self->result($out);
+   my $err = $self->stderr;
+   chomp $err;
+   if ($out =~ m/<simpleError.*?:(.*)>/g) {
+      my $err_msg = $1."\n".$err;
+      die "Error running an R command: $err_msg\n";
+   }
    $self->stdout('');
-
-   return $out;
+   $self->stderr('');
+   my $results = $err.$out;
+   $self->result($results);
+   
+   return $results;
 }
 
 
@@ -543,7 +547,7 @@ sub wrap_cmd {
    # end of stream string will appear on stdout and indicate that R has finished
    # processing the data. Note that $cmd can be multiple R commands.
    my ($self, $cmd) = @_;
-   $cmd = qq`tryCatch( {$cmd} ); write("$eos",stdout())\n`;
+   $cmd = qq`tryCatch( {$cmd}, error = function(e) { print(e) }); write("$eos",stdout())\n`;
    return $cmd;
 }
 

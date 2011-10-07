@@ -5,7 +5,7 @@ use warnings;
 use Test::More;
 use Statistics::R;
 
-plan tests => 9;
+plan tests => 11;
 
 
 my $R;
@@ -27,6 +27,10 @@ ok $R->run( qq`x = 123 \n print(x)` ) =~ /^\[\d+\]\s+123\s*$/;
 ok $R->run( qq`x = 456 ; write.table(x, file="", row.names=FALSE, col.names=FALSE) ` ) =~ /^456$/; # RT bug #70314
 
 ok $R->bin() =~ /\S+/;
+
+ok $R->run( q`write("Some innocuous message on stderr", stderr())` );
+
+ok $R->run( q`write("Some innocuous message on stderr", stderr())` );
 
 unlink $file;
 
