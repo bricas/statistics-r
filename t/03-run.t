@@ -26,7 +26,7 @@ ok $R->run( q`for (j in 1:3) { cat("loop iteration: "); print(j); }` );
 
 ok $R->run( q`write("Some innocuous message on stderr", stderr())` ), 'IO';
 
-ok $R->run( q`write("Some innocuous message on stderr", stderr())` );
+ok $R->run( q`write("Some innocuous message on stdout", stdout())` );
 
 ok $R->run( qq`x <- 123 \n print(x)` ) =~ /^\[\d+\]\s+123\s*$/, 'Multi-line';
 

@@ -98,10 +98,22 @@ with R.
 
 =item run()
 
-Execute one or several commands passed as a string to R and return the output as
-a string. Before that, start() R if it is not yet running. Example:
+start() R if it is not yet running. Then, execute one or several commands passed
+as a string to R and return the output as a string. Example:
 
    my $out = $R->run( q`print( 1 + 2 )` );
+
+If you intend on runnning many R commands, it may be convenient to put them in an
+here-doc:
+
+   my $cmds = <<EOF;
+   a <- 2
+   b <- 5
+   c <- a * b
+   print('ok')
+   EOF
+
+   my $out = $R->run($cmds);
 
 =item set()
 
