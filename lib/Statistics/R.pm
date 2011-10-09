@@ -98,9 +98,9 @@ with R.
 
 =item run()
 
-start() R if it is not yet running. Then, execute R commands passed as a string
-and return the output as a string. If your command fails to run in R, an error
-message will be displayed.
+First, start() R if it is not yet running. Then, execute R commands passed as a
+string and return the output as a string. If your command fails to run in R, an
+error message will be displayed.
 
 Example:
 
@@ -109,10 +109,15 @@ Example:
 If you intend on runnning many R commands, it may be convenient to pass an array
 of commands or put multiple commands in an here-doc:
 
-   # Array of R commands
-   my $out1 = $R->run( 'a <- 2', 'b <- 5', 'c <- a * b', 'print("ok")' );
+   # Array of R commands:
+   my $out1 = $R->run(
+      q`a <- 2`,
+      q`b <- 5`,
+      q`c <- a * b`,
+      q`print("ok")`
+   );
 
-   # Here-doc with multiple R commands
+   # Here-doc with multiple R commands:
    my $cmds = <<EOF;
    a <- 2
    b <- 5
@@ -120,6 +125,16 @@ of commands or put multiple commands in an here-doc:
    print('ok')
    EOF
    my $out2 = $R->run($cmds);
+
+If the commands you want to run are in a file, use the source() R command to
+execute them:
+
+   my $out = $R->run( 'source("my_script.R")' );
+
+=item run_from_file()
+
+Similar to run() but reads the R commands from the specified file. Internally,
+this method uses the R source() command to read the file.
 
 =item set()
 
@@ -374,6 +389,12 @@ sub run {
    return $results;
 }
 
+
+sub run_from_file {
+   my ($self, $file) = @_;
+   my $results = $self->run( qq`source('$file')` );
+   return $results;
+}
 
 
 sub set {

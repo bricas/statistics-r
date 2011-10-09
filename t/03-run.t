@@ -5,7 +5,7 @@ use warnings;
 use Test::More;
 use Statistics::R;
 
-plan tests => 15;
+plan tests => 16;
 
 
 my ($R, $expected);
@@ -65,6 +65,19 @@ $expected =
 '456
 [1] "ok"';
 is $R->run( $cmd1, $cmd2 ), $expected, 'Multiple commands';
+
+$expected =
+'Some innocuous message on stderr
+loop iteration: [1] 1
+loop iteration: [1] 2
+loop iteration: [1] 3
+Some innocuous message on stdout
+
+[1] 123
+456
+[1] "ok"';
+is $R->run_from_file( './t/data/script.R' ), $expected, 'Commands from file';
+
 
 eval {
    $R->run( q`print(ASDF)` );
