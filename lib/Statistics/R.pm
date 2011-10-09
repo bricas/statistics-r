@@ -98,22 +98,28 @@ with R.
 
 =item run()
 
-start() R if it is not yet running. Then, execute one or several commands passed
-as a string to R and return the output as a string. Example:
+start() R if it is not yet running. Then, execute R commands passed as a string
+and return the output as a string. If your command fails to run in R, an error
+message will be displayed.
+
+Example:
 
    my $out = $R->run( q`print( 1 + 2 )` );
 
-If you intend on runnning many R commands, it may be convenient to put them in an
-here-doc:
+If you intend on runnning many R commands, it may be convenient to pass an array
+of commands or put multiple commands in an here-doc:
 
+   # Array of R commands
+   my $out1 = $R->run( 'a <- 2', 'b <- 5', 'c <- a * b', 'print("ok")' );
+
+   # Here-doc with multiple R commands
    my $cmds = <<EOF;
    a <- 2
    b <- 5
    c <- a * b
    print('ok')
    EOF
-
-   my $out = $R->run($cmds);
+   my $out2 = $R->run($cmds);
 
 =item set()
 
@@ -325,35 +331,46 @@ sub bin {
 
 sub run {
    # Pass the input and get the output
-   my ($self, $cmd) = @_;
+   my ($self, @cmds) = @_;
 
    # Need to start R now if it is not already running
    $self->start if not $self->is_started;
 
-   # Wrap command for execution in R
-   $self->stdin( $self->wrap_cmd($cmd) );
 
-   # Pass input to R and get its output
-   my $bridge = $self->bridge;
-   while (  $self->stdout !~ m/$eos_re/gc  &&  $bridge->pumpable  ) {
-      $bridge->pump;
+   # Process each command
+   my $results = '';
+   for my $cmd (@cmds) {
+
+      # Wrap command for execution in R
+      $self->stdin( $self->wrap_cmd($cmd) );
+
+      # Pass input to R and get its output
+      my $bridge = $self->bridge;
+      while (  $self->stdout !~ m/$eos_re/gc  &&  $bridge->pumpable  ) {
+         $bridge->pump;
+      }
+
+      # Parse outputs, detect errors
+      my $out = $self->stdout;
+      $out =~ s/$eos_re//g;
+      chomp $out;
+      my $err = $self->stderr;
+      chomp $err;
+      if ($out =~ m/<simpleError.*?:(.*)>/g) {
+         my $err_msg = $1."\n".$err;
+         die "Error running an R command: $err_msg\n";
+      }
+
+      # Save results and reinitialize
+      $results .= "\n" if $results;
+      $results .= $err.$out;
+      $self->stdout('');
+      $self->stderr('');
+
    }
 
-   # Parse outputs, detect errors, save results and reinitialize
-   my $out = $self->stdout;
-   $out =~ s/$eos_re//g;
-   chomp $out;
-   my $err = $self->stderr;
-   chomp $err;
-   if ($out =~ m/<simpleError.*?:(.*)>/g) {
-      my $err_msg = $1."\n".$err;
-      die "Error running an R command: $err_msg\n";
-   }
-   $self->stdout('');
-   $self->stderr('');
-   my $results = $err.$out;
    $self->result($results);
-   
+
    return $results;
 }
 

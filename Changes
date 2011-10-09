@@ -5,6 +5,7 @@ Revision history for Perl extension Statistics::R.
     - Tests more robust to different locales (reported by Knut Behrends)
     - Tests for heredocs and for loops
     - Tests expecting a specific output
+    - The run() method now accepts an array of strings as input
 
 0.21  2011-09-04
     - Tweaked the regular expressions that parse the R output stream for added
