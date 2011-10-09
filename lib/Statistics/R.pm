@@ -126,10 +126,15 @@ of commands or put multiple commands in an here-doc:
    EOF
    my $out2 = $R->run($cmds);
 
-If the commands you want to run are in a file, use the source() R command to
-execute them:
+To run commands from a file, see the run_from_file() method.
 
-   my $out = $R->run( 'source("my_script.R")' );
+The output you get from run() is the combination of what R would display on the
+standard output and the standard error, but the order may differ. When loading
+modules, some may write numerous messages on standard error. You can disable
+this behavior using the following R command:
+
+   suppressPackageStartupMessages(library(library_to_load))
+
 
 =item run_from_file()
 
