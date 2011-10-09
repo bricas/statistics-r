@@ -4,6 +4,8 @@ plot(c(1, 5, 10), type = "l")
 
 dev.off()
 
+unlink("file2.ps")
+
 for (j in 1:3) { cat("loop iteration: "); print(j); }
 
 write("Some innocuous message on stdout\n", stdout())
