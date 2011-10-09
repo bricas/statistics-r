@@ -371,11 +371,12 @@ sub run {
       chomp $out;
       my $err = $self->stderr;
       chomp $err;
-      if ($out =~ m/<simpleError.*?:(.*)>/g) {
+      if ($out =~ m/<simpleError.*?:(.*)>/sg) {
+         # Parse (multi-line) error message
          my $err_msg = $1."\n".$err;
-         die "Error running an R command: $err_msg\n";
+         die "Problem running the R command:\n$cmd\n\nGot the error:\n$err_msg\n";
       }
-
+   
       # Save results and reinitialize
       $results .= "\n" if $results;
       $results .= $err.$out;
@@ -597,7 +598,13 @@ sub wrap_cmd {
    # end of stream string will appear on stdout and indicate that R has finished
    # processing the data. Note that $cmd can be multiple R commands.
    my ($self, $cmd) = @_;
-   $cmd = qq`tryCatch( {$cmd}, error = function(e) { print(e) }); write("$eos",stdout())\n`;
+
+   # Escape double-quotes
+   $cmd =~ s/"/\\"/g;
+
+   # Evaluate command (and catch syntax and runtime errors)
+   $cmd = qq`tryCatch( eval(parse(text="$cmd")) , error = function(e){print(e)} ); write("$eos",stdout())\n`;
+
    return $cmd;
 }
 

@@ -5,7 +5,7 @@ use warnings;
 use Test::More;
 use Statistics::R;
 
-plan tests => 16;
+plan tests => 15;
 
 
 my ($R, $expected);
@@ -77,11 +77,4 @@ Some innocuous message on stdout
 456
 [1] "ok"';
 is $R->run_from_file( './t/data/script.R' ), $expected, 'Commands from file';
-
-
-eval {
-   $R->run( q`print(ASDF)` );
-};
-ok $@, 'Error handling'; # Cannot match a specific string because locale may vary
-
 
