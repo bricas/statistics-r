@@ -8,29 +8,42 @@ use Statistics::R;
 plan tests => 13;
 
 
-my $R;
+my ($R, $expected);
 
 my $file = 'file.ps';
 
 ok $R = Statistics::R->new();
 
-is $R->run( qq`postscript("$file" , horizontal=FALSE , width=500 , height=500 , pointsize=1)`), '', 'Basic';
+$expected = '';
+is $R->run( qq`postscript("$file" , horizontal=FALSE , width=500 , height=500 , pointsize=1)`), $expected, 'Basic';
 
-is $R->run( q`plot(c(1, 5, 10), type = "l")` ), '';
+$expected = '';
+is $R->run( q`plot(c(1, 5, 10), type = "l")` ), $expected;
 
-ok $R->run( q`dev.off()` ); # RT bug #66190
+$expected = 
+'null device 
+          1 ';
+is $R->run( q`dev.off()` ), $expected; # RT bug #66190
 
 ok -e $file; # RT bug #70307
 
-ok $R->run( q`for (j in 1:3) { cat("loop iteration: "); print(j); }` );
+$expected =
+'loop iteration 1
+loop iteration 2
+loop iteration 3';
+is $R->run( q`for (j in 1:3) { cat("loop iteration "); cat(j); cat("\n") }` ), $expected;
 
-ok $R->run( q`write("Some innocuous message on stderr", stderr())` ), 'IO';
+$expected = 'Some innocuous message on stderr';
+is $R->run( q`write("Some innocuous message on stderr", stderr())` ), $expected, 'IO';
 
-ok $R->run( q`write("Some innocuous message on stdout", stdout())` );
+$expected = 'Some innocuous message on stdout';
+is $R->run( q`write("Some innocuous message on stdout", stdout())` ), $expected;
 
-ok $R->run( qq`x <- 123 \n print(x)` ) =~ /^\[\d+\]\s+123\s*$/, 'Multi-line';
+$expected = '[1] 123';
+is $R->run( qq`x <- 123 \n print(x)` ), $expected, 'Multi-line';
 
-ok $R->run( qq`x <- 456 ; write.table(x, file="", row.names=FALSE, col.names=FALSE) ` ) =~ /^456$/; # RT bug #70314
+$expected = '456';
+is $R->run( qq`x <- 456 ; write.table(x, file="", row.names=FALSE, col.names=FALSE) ` ), $expected; # RT bug #70314
 
 my $cmds = <<EOF;
 a <- 2
@@ -38,8 +51,8 @@ b <- 5
 c <- a * b
 print('ok')
 EOF
-
-ok $R->run($cmds), 'Heredocs';
+$expected = '[1] "ok"';
+is $R->run($cmds), $expected, 'Heredocs';
 
 ok $R->bin() =~ /\S+/;
 
