@@ -5,7 +5,7 @@ use warnings;
 use Test::More;
 use Statistics::R;
 
-plan tests => 77;
+plan tests => 86;
 
 
 my ($R, $input, $output);
@@ -48,6 +48,13 @@ is ref($output), '';
 is $output, "a string";
 
 
+$input = 'gi|57116681|ref|NC_000962.2|';
+ok $R->set('x', $input), 'number-containing string';
+ok $output = $R->get('x');
+is ref($output), '';
+is $output, 'gi|57116681|ref|NC_000962.2|';
+
+
 # Mixed arrays are considered as string arrays by R, thus there is no digit limit
 $input = [123, "a string", 'two strings', 0.93945768644];
 ok $R->set('x', $input), 'mixed array';
@@ -61,7 +68,12 @@ is $$output[3], 0.93945768644;
 
 # RT bug #71988
 $input = [ q{statistics-r-0.22}, "abc 123 xyz", 'gi|57116681|ref|NC_000962.2|'];
-ok $R->set('x', $input), 'array with number-containing strings';
+ok $R->set('x', $input), 'array of number-containing strings';
+ok $output = $R->get('x');
+is ref($output), 'ARRAY';
+is $$output[0], q{statistics-r-0.22};
+is $$output[1], "abc 123 xyz";
+is $$output[2], 'gi|57116681|ref|NC_000962.2|';
 
 
 $input = [123,142,147,153,145,151,165,129,133,150,142,154,131,146,151,136,147,156,141,155,147,165,168,146,148,146,142,145,161,157,154,137,130,161,130,156,140,145,154];
@@ -71,6 +83,7 @@ is ref($output), 'ARRAY';
 for (my $i = 0; $i < scalar @$input; $i++) {
     is $$output[$i], $$input[$i];
 }
+
 
 $input = [1, 2, 3];
 ok $R->set('x', $input), 'data frame';

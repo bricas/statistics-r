@@ -1,7 +1,8 @@
 Revision history for Perl extension Statistics::R.
 
 0.xx  
-    - Fixed RT bug #71988 (patch by dheiman)
+    - Arrays of number-containing strings are now handled properly (RT bug 
+      #71988, patch by dheiman)
 
 0.22  2011-10-09
     - The run() method now accepts an array of strings as input

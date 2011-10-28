@@ -441,6 +441,11 @@ sub get {
    # Get the value of an R variable
    my ($self, $varname) = @_;
    my $string = $self->run(qq`print($varname)`);
+
+   ###
+   print "string: $string\n";
+   ###
+
    # Parse R output
    my $value;
    if ($string eq 'NULL') {
@@ -475,6 +480,11 @@ sub get {
    } else {
       # Split string into an array, paying attention to strings containing spaces
       @arr = extract_multiple( $value, [sub { extract_delimited($_[0],q{ '"}) },] );
+
+      ###
+      use Data::Dumper; print Dumper(\@arr);
+      ###
+
       for (my $i = 0; $i < scalar @arr; $i++) {
          my $elem = $arr[$i];
          if ($elem =~ m/^\s*$/) {
@@ -482,12 +492,23 @@ sub get {
             splice @arr, $i, 1;
             $i--;
          } else {
+
+
+            ####
+            print "here...\n";
+            ####
+
             # Trim whitespaces
             $arr[$i] =~ s/^\s*(.*?)\s*$/$1/;
             # Remove double-quotes
             $arr[$i] =~ s/^"(.*)"$/$1/; 
          }
       }
+
+      ###
+      use Data::Dumper; print Dumper(\@arr);
+      ###
+
    }
 
    # Return either a scalar of an arrayref
