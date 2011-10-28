@@ -1,5 +1,8 @@
 Revision history for Perl extension Statistics::R.
 
+0.xx  
+    - Fixed RT bug #71988 (patch by dheiman)
+
 0.22  2011-10-09
     - The run() method now accepts an array of strings as input
     - New run_from_file() method to read and execute commands from an R file

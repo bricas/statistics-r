@@ -5,7 +5,7 @@ use warnings;
 use Test::More;
 use Statistics::R;
 
-plan tests => 76;
+plan tests => 77;
 
 
 my ($R, $input, $output);
@@ -59,6 +59,11 @@ is $$output[2], "two strings";
 is $$output[3], 0.93945768644;
 
 
+# RT bug #71988
+$input = [ q{statistics-r-0.22}, "abc 123 xyz", 'gi|57116681|ref|NC_000962.2|'];
+ok $R->set('x', $input), 'array with number-containing strings';
+
+
 $input = [123,142,147,153,145,151,165,129,133,150,142,154,131,146,151,136,147,156,141,155,147,165,168,146,148,146,142,145,161,157,154,137,130,161,130,156,140,145,154];
 ok $R->set('x', $input), 'large array of integers';
 ok $output = $R->get('x');
@@ -66,7 +71,6 @@ is ref($output), 'ARRAY';
 for (my $i = 0; $i < scalar @$input; $i++) {
     is $$output[$i], $$input[$i];
 }
-
 
 $input = [1, 2, 3];
 ok $R->set('x', $input), 'data frame';

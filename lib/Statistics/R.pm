@@ -422,7 +422,7 @@ sub set {
    # Quote strings and nullify undef variables
    for (my $i = 0; $i < scalar @$arr; $i++) {
       if (defined $$arr[$i]) {
-         if ( $$arr[$i] !~ /$RE{num}{real}/ ) {
+         if ( $$arr[$i] !~ /^$RE{num}{real}$/ ) {
             $$arr[$i] = '"'.$$arr[$i].'"';
          }
       } else {
@@ -441,7 +441,6 @@ sub get {
    # Get the value of an R variable
    my ($self, $varname) = @_;
    my $string = $self->run(qq`print($varname)`);
-
    # Parse R output
    my $value;
    if ($string eq 'NULL') {
