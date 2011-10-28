@@ -1,6 +1,6 @@
 Revision history for Perl extension Statistics::R.
 
-0.xx  
+0.23  2011-10-28
     - Arrays of number-containing strings are now handled properly (RT bug 
       #71988, patch by dheiman)
 
