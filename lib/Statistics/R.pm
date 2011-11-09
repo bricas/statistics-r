@@ -211,7 +211,7 @@ You also need to have the following CPAN Perl modules installed:
 
 =over 4
 
-=item Text::Balanced
+=item Text::Balanced (>= 1.97)
 
 =item Regexp::Common
 

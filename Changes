@@ -1,5 +1,8 @@
 Revision history for Perl extension Statistics::R.
 
+0.xx  
+    - Require Text::Balanced >= 0.97 to prevent bad surprises (reported by Ryan Golhar)
+
 0.23  2011-10-28
     - Arrays of number-containing strings are now handled properly (RT bug 
       #71988, patch by dheiman)
