@@ -1,6 +1,6 @@
 Revision history for Perl extension Statistics::R.
 
-0.xx  
+0.24  2011-11-09
     - Require Text::Balanced >= 0.97 to prevent bad surprises (reported by Ryan Golhar)
 
 0.23  2011-10-28
