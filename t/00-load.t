@@ -2,7 +2,7 @@
 
 use strict;
 use warnings;
-use Test::More tests => 1;
+use Test::More;
 
 
 BEGIN {
@@ -10,3 +10,5 @@ BEGIN {
 }
 
 diag( "Testing Statistics::R $Statistics::R::VERSION, Perl $], $^X" );
+
+done_testing;

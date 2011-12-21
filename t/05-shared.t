@@ -5,9 +5,6 @@ use warnings;
 use Test::More;
 use Statistics::R;
 
-plan tests => 29;
-
-
 my ($R1, $R2, $R3, $R4);
 
 ok $R1 = Statistics::R->new( shared => 1 ), 'Starting in shared mode';
@@ -51,3 +48,5 @@ is $R1->is_started, 0;
 is $R2->is_started, 0;
 is $R3->is_started, 0;
 is $R4->is_started, 0;
+
+done_testing;

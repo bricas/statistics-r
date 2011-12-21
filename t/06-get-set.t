@@ -5,9 +5,6 @@ use warnings;
 use Test::More;
 use Statistics::R;
 
-plan tests => 92;
-
-
 my ($R, $input, $output);
 
 
@@ -106,3 +103,4 @@ is $$output[3], 4;
 
 ok $R->stop();
 
+done_testing;

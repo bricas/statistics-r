@@ -6,9 +6,6 @@ use Test::More;
 use Statistics::R;
 use Cwd;
 
-plan tests => 16;
-
-
 my $R;
 
 my $initial_dir = cwd;
@@ -44,3 +41,5 @@ is $R->is_shared, 1;
 ok $R->stop();
 
 is cwd, $initial_dir; # Bug RT #6724 and #70307
+
+done_testing;

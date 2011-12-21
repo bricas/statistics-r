@@ -5,8 +5,6 @@ use warnings;
 use Test::More;
 use Statistics::R;
 
-plan tests => 3;
-
 my $R;
 
 ok $R = Statistics::R->new();
@@ -24,3 +22,4 @@ eval {
 };
 ok $@, 'Runtime error';
 
+done_testing;

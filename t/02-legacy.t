@@ -5,9 +5,6 @@ use warnings;
 use Test::More;
 use Statistics::R;
 
-plan tests => 20;
-
-
 my $R;
 
 my $file = "file.ps";
@@ -55,3 +52,5 @@ ok $R->start_sharedR();
 ok $R->stop();
 
 unlink $file;
+
+done_testing;

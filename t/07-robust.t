@@ -5,12 +5,9 @@ use warnings;
 use Test::More;
 use Statistics::R;
 
-plan tests => 10003;
-
-
 # Test that the IOs are well-oiled. In Statistics::R version 0.20, a slight
 # imprecision in the regular expression to parse the output stream caused a
-# problem was apparent only once every few thousands times
+# problem that was apparent only once every few thousands times
 
 my ($R, $input);
 
@@ -23,3 +20,5 @@ for my $i (1 .. 10000) {
 }
 
 ok $R->stop();
+
+done_testing;

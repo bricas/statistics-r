@@ -5,9 +5,6 @@ use warnings;
 use Test::More;
 use Statistics::R;
 
-plan tests => 15;
-
-
 my ($R, $expected);
 
 my $file = 'file.ps';
@@ -78,3 +75,4 @@ Some innocuous message on stdout
 [1] "ok"';
 is $R->run_from_file( './t/data/script.R' ), $expected, 'Commands from file';
 
+done_testing;
