@@ -95,5 +95,14 @@ is $$output[1], 2;
 is $$output[2], 3;
 
 
+# Bug reported by Manuel A. Alonso Tarajano
+ok $R->run(q`mydat = seq(1:4)`);
+ok $output = $R->get('mydat');
+is $$output[0], 1;
+is $$output[1], 2;
+is $$output[2], 3;
+is $$output[3], 4;
+
+
 ok $R->stop();
 
