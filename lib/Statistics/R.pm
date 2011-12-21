@@ -473,20 +473,28 @@ sub get {
    if (not defined $value) {
       @arr = ( undef );
    } else {
-      # Split string into an array, paying attention to strings containing spaces
-      @arr = extract_multiple( $value, [sub { extract_delimited($_[0],q{ '"}) },] );
-      for (my $i = 0; $i < scalar @arr; $i++) {
-         my $elem = $arr[$i];
-         if ($elem =~ m/^\s*$/) {
-            # Remove elements that are simply whitespaces
-            splice @arr, $i, 1;
-            $i--;
-         } else {
-            # Trim whitespaces
-            $arr[$i] =~ s/^\s*(.*?)\s*$/$1/;
-            # Remove double-quotes
-            $arr[$i] =~ s/^"(.*)"$/$1/; 
+      # Split string into an array, paying attention to strings containing spaces:
+      # extract_delim should be enough but we use extract_delim + split because
+      # of Text::Balanced bug #73416
+      if ($value =~ m{['"]}) {
+         @arr = extract_multiple( $value, [sub { extract_delimited($_[0],q{'"}) },] );
+         for (my $i = 0; $i < scalar @arr; $i++) {
+            my $elem = $arr[$i];
+            if ($elem =~ m/^\s*$/) {
+               # Remove elements that are simply whitespaces
+               splice @arr, $i, 1;
+               $i--;
+            } else {
+               # Trim whitespaces
+               $arr[$i] =~ s/^\s*(.*?)\s*$/$1/;
+               # Remove double-quotes
+               $arr[$i] =~ s/^"(.*)"$/$1/; 
+            }
          }
+      } else {
+         $value =~ s{^\s+}{};
+         $value =~ s{\s+$}{};
+         @arr = split( /\s+/, $value );
       }
    }
 
