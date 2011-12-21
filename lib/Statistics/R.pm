@@ -147,16 +147,15 @@ Set the value of an R variable (scalar or arrayref). Example:
 
   $R->set( 'x', 'pear' );
 
-or 
+or
 
   $R->set( 'y', [1, 2, 3] );
-
 
 =item get()
  
 Get the value of an R variable (scalar or arrayref). Example:
 
-  my $x = $R->get( 'x' );  # $y is an scalar
+  my $x = $R->get( 'x' );  # $y is a scalar
 
 or
 
