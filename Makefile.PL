@@ -1,7 +1,4 @@
-use strict;
-use warnings;
-
-use inc::Module::Install;
+use inc::Module::Install 1.04;
 
 use lib 'lib';
 if ( $^O =~ m/^(?:.*?win32|dos)$/i ) {
