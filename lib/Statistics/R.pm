@@ -14,7 +14,7 @@ if ( $^O =~ m/^(?:.*?win32|dos)$/i ) {
     require Statistics::R::Win32;
 }
 
-our $VERSION = '0.25';
+our $VERSION = '0.26';
 
 our ($SHARED_BRIDGE, $SHARED_STDIN, $SHARED_STDOUT, $SHARED_STDERR);
 
