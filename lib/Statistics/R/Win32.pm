@@ -1,14 +1,12 @@
 package Statistics::R::Win32;
 
-
 use strict;
 use warnings;
-use File::Spec::Functions;
-use File::DosGlob qw( glob );
+use File::Spec    ();
+use File::DosGlob ();
 use Env qw( @PATH $PROGRAMFILES );
 
 use vars qw{@ISA @EXPORT};
-
 BEGIN {
    @ISA     = 'Exporter';
    @EXPORT  = qw{
@@ -123,43 +121,39 @@ revision control. To get the latest revision, run:
 win32_path_adjust();
 
 
+# Find potential R directories in the Windows Program Files folder and
+# add them to the PATH environment variable.
 sub win32_path_adjust {
-   # Find potential R directories in the Windows Program Files folder and add
-   # them to the PATH environment variable
-    
+
    # Find potential R directories, e.g.  C:\Program Files (x86)\R-2.1\bin
    #                                 or  C:\Program Files\R\bin\x64
-   my @r_dirs;
    my @prog_file_dirs;
    if (defined $PROGRAMFILES) {
       push @prog_file_dirs, $PROGRAMFILES;                   # e.g. C:\Program Files (x86)
       my ($programfiles_2) = ($PROGRAMFILES =~ m/^(.*) \(/); # e.g. C:\Program Files
-      push @prog_file_dirs, $programfiles_2 if not $programfiles_2 eq $PROGRAMFILES;
-   }
-   for my $prog_file_dir ( @prog_file_dirs ) {
-      next if not -d $prog_file_dir;
-      my @subdirs;
-      my @globs = ( catfile($prog_file_dir, $PROG), catfile($prog_file_dir, $PROG.'-*') );
-      for my $glob ( @globs ) {
-         $glob = win32_space_escape( win32_double_bs( $glob ) );
-         push @subdirs, glob $glob; # DosGlob
-      }
-      for my $subdir (@subdirs) {
-         my $subdir2 = catfile($subdir, 'bin');
-         if ( -d $subdir2 ) {
-            my $subdir3 = catfile($subdir2, 'x64');
-            if ( -d $subdir3 ) {
-               push @r_dirs, $subdir3;
-            }
-            push @r_dirs, $subdir2;
-         }
-         push @r_dirs, $subdir;
+      if ( defined $programfiles_2 and $programfiles_2 ne $PROGRAMFILES ) {
+         push @prog_file_dirs, $programfiles_2;
       }
    }
 
-   # Append R directories to PATH (order is important)
-   push @PATH, @r_dirs;
-    
+   # Append R directories to PATH 
+   push @PATH, grep {
+         -d $_
+      } map {
+         # Order is important
+         File::Spec->catdir( $_, 'bin', 'x64' ),
+         File::Spec->catdir( $_, 'bin' ),
+         $_,
+      } map {
+         File::DosGlob::glob( win32_space_escape( win32_double_bs($_) ) )
+      } map {
+         File::Spec->catdir( $_, $PROG, "$PROG-*" ),
+         File::Spec->catdir( $_, "$PROG-*" ),
+         File::Spec->catdir( $_, $PROG ),
+      } grep {
+         -d $_
+      } @prog_file_dirs;
+
    return 1;
 }
 
