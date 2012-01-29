@@ -257,7 +257,7 @@ Bug reports, suggestions and patches are welcome. The Statistics::R code is
 developed on Github (L<http://github.com/bricas/statistics-r>) and is under Git
 revision control. To get the latest revision, run:
 
-   git clone git@github.com:bricas/statistics-r.git
+   git clone git://github.com/bricas/statistics-r.git
 
 =cut
 
