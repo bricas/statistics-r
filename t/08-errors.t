@@ -7,19 +7,33 @@ use Statistics::R;
 
 my $R;
 
+
 ok $R = Statistics::R->new();
-
-
 eval {
    $R->run( q`print "ASDF"` );
 };
+#diag "Diagnostic: \n".$@."\n";
 ok $@, 'Syntax error';
 # Actual error message vary depending on locale
 
 
+ok $R = Statistics::R->new();
 eval {
    $R->run( q`print(ASDF)` );
 };
+#diag "Diagnostic: \n".$@."\n";
 ok $@, 'Runtime error';
 
+
+use_ok 't::FlawedStatisticsR';
+ok $R = t::FlawedStatisticsR->new();
+eval {
+   $R->run( q`colors<-c("red")` );
+};
+#diag "Diagnostic: \n".$@."\n";
+ok $@, 'Internal error';
+
+
 done_testing;
+
+

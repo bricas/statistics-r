@@ -4,6 +4,7 @@ use strict;
 use warnings;
 use Test::More;
 use Statistics::R;
+use File::Spec::Functions;
 
 my ($R, $expected);
 
@@ -73,6 +74,6 @@ Some innocuous message on stdout
 [1] 123
 456
 [1] "ok"';
-is $R->run_from_file( './t/data/script.R' ), $expected, 'Commands from file';
+is $R->run_from_file( catfile('t', 'data', 'script.R') ), $expected, 'Commands from file';
 
 done_testing;

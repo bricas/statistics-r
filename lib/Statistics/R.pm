@@ -20,6 +20,9 @@ our ($SHARED_BRIDGE, $SHARED_STDIN, $SHARED_STDOUT, $SHARED_STDERR);
 
 my $prog    = 'R';                  # executable we are after... R
 my $eos     = 'Statistics::R::EOS'; # string to signal the R output stream end
+
+### how about using \0 or \1 ??
+
 my $eos_re  = qr/$eos\n$/;          # regexp to match end of R stream
 
 =head1 NAME
@@ -375,10 +378,12 @@ sub run {
       chomp $out;
       my $err = $self->stderr;
       chomp $err;
-      if ($out =~ m/<simpleError.*?:(.*)>/sg) {
-         # Parse (multi-line) error message
-         my $err_msg = $1."\n".$err;
-         die "Problem running the R command:\n$cmd\n\nGot the error:\n$err_msg\n";
+      if ( $out =~ m/<simpleError.*?:\s*(.*)>/sg) {
+         # User-space (multi-line) error message
+         die "Problem running this R command:\n$cmd\n\nGot the error:\n$1\n$err\n";
+      } elsif ($err =~ m/^Error:\s*(.*)/sg) {
+         # Internal error
+         die "Internal problem while running this R command:\n$cmd\n\nGot the error:\n$1\n";
       }
    
       # Save results and reinitialize
@@ -419,7 +424,7 @@ sub set {
    }
 
    # Quote strings and nullify undef variables
-   for (my $i = 0; $i < scalar @$arr; $i++) {
+   for my $i (0 .. scalar @$arr - 1) {
       if (defined $$arr[$i]) {
          if ( $$arr[$i] !~ /^$RE{num}{real}$/ ) {
             $$arr[$i] = '"'.$$arr[$i].'"';
@@ -542,6 +547,7 @@ sub initialize {
 sub bridge {
    # Get or build the communication bridge and IOs with R
    my ($self, $build) = @_;
+   my %params = ( debug => 0 );
    if ($build) {
       my $cmd = [ $self->bin, '--vanilla', '--slave' ];
       if (not $self->is_shared) {
@@ -549,14 +555,14 @@ sub bridge {
          $self->{stdin}  = \$stdin;
          $self->{stdout} = \$stdout;
          $self->{stderr} = \$stderr;
-         $self->{bridge} = harness $cmd, $self->{stdin}, $self->{stdout}, $self->{stderr};
+         $self->{bridge} = harness $cmd, $self->{stdin}, $self->{stdout}, $self->{stderr}, %params;
       } else {
          $self->{stdin}  = \$SHARED_STDIN ;
          $self->{stdout} = \$SHARED_STDOUT;
          $self->{stderr} = \$SHARED_STDERR;
          if (not defined $SHARED_BRIDGE) {
             # The first Statics::R instance builds the bridge
-            $SHARED_BRIDGE = harness $cmd, $self->{stdin}, $self->{stdout}, $self->{stderr};
+            $SHARED_BRIDGE = harness $cmd, $self->{stdin}, $self->{stdout}, $self->{stderr}, %params;
          }
          $self->{bridge} = $SHARED_BRIDGE;
       }

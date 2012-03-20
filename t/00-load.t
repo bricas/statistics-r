@@ -6,7 +6,7 @@ use Test::More;
 
 
 BEGIN {
-   use_ok( 'Statistics::R' );
+   use_ok 'Statistics::R';
 }
 
 diag( "Testing Statistics::R $Statistics::R::VERSION, Perl $], $^X" );
