@@ -18,6 +18,7 @@ our $VERSION = '0.26';
 
 our ($SHARED_BRIDGE, $SHARED_STDIN, $SHARED_STDOUT, $SHARED_STDERR);
 
+
 use constant PROG       => 'R';                           # executable name... R
 
 use constant EOS        => '\\1';                         # indicate the end of R output with \1
@@ -146,6 +147,15 @@ this behavior using the following R command:
 
    suppressPackageStartupMessages(library(library_to_load))
 
+Note that R imposes an upper limit on how many characters can be contained on a
+line: about 4076 bytes maximum. You will be warned if this occurs. Commands
+containing lines exceeding the limit may fail with an error message stating:
+
+  '\�' is an unrecognized escape in character string starting "...
+
+If possible, break down your R code into several smaller, more manageable
+statements. Alternatively, adding newline characters "\n" at strategic places in
+the R statements will work around the issue.
 
 =item run_from_file()
 
@@ -391,7 +401,13 @@ sub run {
          die "Problem running this R command:\n$cmd\n\nGot the error:\n$1\n$err\n";
       } elsif ($err =~ INT_ERR_RE) {
          # Internal error
-         die "Internal problem while running this R command:\n$cmd\n\nGot the error:\n$1\n";
+         my $err_msg = $1;
+         if ( $err_msg =~ /unrecognized escape in character string/ ) {
+            $err_msg .= "\nMost likely, your R command contained lines exceeding ".
+               " 4076 bytes...";
+         }
+         die "Internal problem while running this R command:\n$cmd\n\nGot the error:\n$err_msg\n";
+
       }
    
       # Save results and reinitialize
@@ -399,7 +415,6 @@ sub run {
       $results .= $err.$out;
       $self->stdout('');
       $self->stderr('');
-
    }
 
    $self->result($results);
@@ -442,9 +457,10 @@ sub set {
       }
    }
 
-   # Build a string and run it to import data
-   my $cmd = $varname.' <- c('.join(', ',@$arr).')';
-   $self->run($cmd);
+   # Build a variable assignment string command. Sprinkle it with "\n" to avoid
+   # running into R max line limits. Then run it!
+   $self->run( $varname.'<-c('.join(",\n",@$arr).')' );
+
    return 1;
 }
 
@@ -623,7 +639,8 @@ sub wrap_cmd {
    my ($self, $cmd) = @_;
 
    # Evaluate command (and catch syntax and runtime errors)
-   $cmd = qq`tryCatch( eval(parse(text=`._quote($cmd).qq`)), error = function(e){print(e)} ); `.
+   $cmd = _quote($cmd);
+   $cmd = qq`tryCatch( eval(parse(text=$cmd)), error = function(e){print(e)} ); `.
           qq`write("`.EOS.qq`",stdout())\n`;
 
    return $cmd;

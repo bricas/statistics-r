@@ -1,6 +1,7 @@
 Revision history for Perl extension Statistics::R.
 
 0.xx  
+    - Better handling of R line length limits
     - Better quoting of strings passed to R
     - Optimizations
     
