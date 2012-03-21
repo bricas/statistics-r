@@ -19,29 +19,18 @@ our $VERSION = '0.26';
 our ($SHARED_BRIDGE, $SHARED_STDIN, $SHARED_STDOUT, $SHARED_STDERR);
 
 use constant PROG       => 'R';                           # executable name... R
-use constant EOS        => 'Statistics::R::EOS';          # indicates the end of R output
-use constant EOS_RE     => qr/${\(EOS)}\n$/;              # regexp to match end of R stream
+
+use constant EOS        => '\\1';                         # indicate the end of R output with \1
+use constant EOS_RE     => qr/[${\(EOS)}]\n$/;            # regexp to match end of R stream
+
+#use constant EOS        => 'Statistics::R::EOS';          # indicate the end of R output
+#use constant EOS_RE     => qr/${\(EOS)}\n$/;              # regexp to match end of R stream
+
 use constant NUMBER_RE  => qr/^$RE{num}{real}$/;          # regexp matching numbers
 use constant BLANK_RE   => qr/^\s*$/;                     # regexp matching whitespaces
 use constant ILINE_RE   => qr/^\s*\[\d+\] /;              # regexp matching indexed line
 use constant USR_ERR_RE => qr/<simpleError.*?:\s*(.*)>/s; # regexp for user error
 use constant INT_ERR_RE => qr/^Error:\s*(.*)/s;           # regexp for internal error
-
-####
-#use constant EOS        => '\\\1'; # \\1
-#print "EOS   : ".EOS   ."\n";
-#use constant EOS_RE     => qr/${\(EOS)}\n$/; # (?^:\\1\n)
-#print "EOS_RE: ".EOS_RE."\n";
-####
-
-####
-#use constant EOS        => '\\1'; # \1
-#print "EOS   : ".EOS   ."\n";
-#use constant EOS_RE     => qr/\\1\n$/;
-#print "EOS_RE: ".EOS_RE."\n";
-####
-
-### how about using \1 ??
 
 
 =head1 NAME
@@ -389,11 +378,6 @@ sub run {
       my $bridge = $self->bridge;
       while (  $self->stdout !~ EOS_RE  &&  $bridge->pumpable  ) {
          $bridge->pump;
-
-         ####
-         #print "stdout: '".$self->stdout."'\n";
-         ####
- 
       }
 
       # Parse outputs, detect errors
@@ -641,10 +625,6 @@ sub wrap_cmd {
    # Evaluate command (and catch syntax and runtime errors)
    $cmd = qq`tryCatch( eval(parse(text=`._quote($cmd).qq`)), error = function(e){print(e)} ); `.
           qq`write("`.EOS.qq`",stdout())\n`;
-
-   ####
-   print "cmd: $cmd\n";
-   ####
 
    return $cmd;
 }
