@@ -18,14 +18,15 @@ our $VERSION = '0.26';
 
 our ($SHARED_BRIDGE, $SHARED_STDIN, $SHARED_STDOUT, $SHARED_STDERR);
 
-my $prog   = 'R';                  # executable we are after... R
-my $eos    = 'Statistics::R::EOS'; # string to signal the R output stream end
-my $eos_re = $eos."\n";            # regexp to match end of R stream
- 
+use constant PROG      => 'R';                  # executable we are after... R
+use constant EOS       => 'Statistics::R::EOS'; # indicates the end of R output
+use constant EOS_RE    => qr/${\(EOS)}\n/;      # regexp to match end of R stream
+use constant NUMBER_RE => qr/^$RE{num}{real}$/; # regexp that matches numbers
+use constant BLANK_RE  => qr/^\s*$/;            # regexp that matches whitespaces
+
+
 ### how about using \1 ??
 
-use constant NUMBER_RE => qr/^$RE{num}{real}$/;
-use constant BLANK_RE  => qr/^\s*$/;
 
 =head1 NAME
 
@@ -304,7 +305,7 @@ sub start {
 
       # Now, start R
       my $bridge = $self->bridge;
-      $status = $bridge->start or die "Error starting $prog: $?\n";
+      $status = $bridge->start or die "Error starting ".PROG.": $?\n";
       $self->bin( $bridge->{KIDS}->[0]->{PATH} );
    }
 
@@ -317,7 +318,7 @@ sub stop {
    my ($self) = @_;
    my $status = 1;
    if ($self->is_started) {
-      $status = $self->bridge->finish or die "Error stopping $prog: $?\n";
+      $status = $self->bridge->finish or die "Error stopping ".PROG.": $?\n";
    }
    return $status;
 }
@@ -370,13 +371,13 @@ sub run {
 
       # Pass input to R and get its output
       my $bridge = $self->bridge;
-      while (  $self->stdout !~ m/$eos_re/  &&  $bridge->pumpable  ) {
+      while (  $self->stdout !~ EOS_RE  &&  $bridge->pumpable  ) {
          $bridge->pump;
       }
 
       # Parse outputs, detect errors
       my $out = $self->stdout;
-      $out =~ s/$eos_re//;
+      $out =~ s/${\(EOS_RE)}//;
       chomp $out;
       my $err = $self->stderr;
       chomp $err;
@@ -525,7 +526,7 @@ sub initialize {
    if ( $args{ r_bin } || $args{ R_bin } ) {
       $bin = $args{ r_bin } || $args{ R_bin };
    } else {
-      $bin = $prog; # IPC::Run will find the full path for the program later
+      $bin = PROG; # IPC::Run will find the full path for the program later
    }
    $self->bin( $bin );
 
@@ -617,11 +618,13 @@ sub wrap_cmd {
    my ($self, $cmd) = @_;
 
    # Evaluate command (and catch syntax and runtime errors)
-   $cmd = _quote( $cmd );
-   $cmd = qq`tryCatch( eval(parse(text=$cmd)) , error = function(e){print(e)} ); write("$eos",stdout())\n`;
+   $cmd = qq`tryCatch( eval(parse(text=`._quote($cmd).qq`)) , error = function(e){print(e)} ); write("`.EOS.qq`",stdout())\n`;
 
    return $cmd;
 }
+
+
+#---------- HELPER SUBS -------------------------------------------------------#
 
 
 sub _trim {

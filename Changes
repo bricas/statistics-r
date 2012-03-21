@@ -1,5 +1,10 @@
 Revision history for Perl extension Statistics::R.
 
+0.xx  
+    - Better quoting of strings passed to R
+    - Optimizations
+    
+
 0.26  2012-01-28
     - Support more R installation paths in Windows (patch by Adam Kennedy)
 
