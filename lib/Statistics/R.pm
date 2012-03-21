@@ -650,7 +650,7 @@ sub _unquote {
    $str =~ s/^"(.*)"$/$1/sgx;
 
    # Interpolate (de-escape) \\\" to \" , \" to " , ...
-   $str =~ s/ ((?:\\\\)*) \\ " / '\\' x (length($1||'')*0.5) . '"' /esgx;
+   $str =~ s/ ((?:\\\\)*) \\ " / '\\' x (length($1||'')*0.5) . '"' /egx;
 
    return $str;
 }
