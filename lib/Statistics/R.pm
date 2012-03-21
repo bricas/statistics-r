@@ -18,12 +18,14 @@ our $VERSION = '0.26';
 
 our ($SHARED_BRIDGE, $SHARED_STDIN, $SHARED_STDOUT, $SHARED_STDERR);
 
-my $prog    = 'R';                  # executable we are after... R
-my $eos     = 'Statistics::R::EOS'; # string to signal the R output stream end
+my $prog   = 'R';                  # executable we are after... R
+my $eos    = 'Statistics::R::EOS'; # string to signal the R output stream end
+my $eos_re = $eos."\n";            # regexp to match end of R stream
+ 
+### how about using \1 ??
 
-### how about using \0 or \1 ??
-
-my $eos_re  = qr/$eos\n$/;          # regexp to match end of R stream
+use constant NUMBER_RE => qr/^$RE{num}{real}$/;
+use constant BLANK_RE  => qr/^\s*$/;
 
 =head1 NAME
 
@@ -368,13 +370,13 @@ sub run {
 
       # Pass input to R and get its output
       my $bridge = $self->bridge;
-      while (  $self->stdout !~ m/$eos_re/gc  &&  $bridge->pumpable  ) {
+      while (  $self->stdout !~ m/$eos_re/  &&  $bridge->pumpable  ) {
          $bridge->pump;
       }
 
       # Parse outputs, detect errors
       my $out = $self->stdout;
-      $out =~ s/$eos_re//g;
+      $out =~ s/$eos_re//;
       chomp $out;
       my $err = $self->stderr;
       chomp $err;
@@ -426,7 +428,7 @@ sub set {
    # Quote strings and nullify undef variables
    for my $i (0 .. scalar @$arr - 1) {
       if (defined $$arr[$i]) {
-         if ( $$arr[$i] !~ /^$RE{num}{real}$/ ) {
+         if ( $$arr[$i] !~ NUMBER_RE ) {
             $$arr[$i] = _quote( $$arr[$i] );
          }
       } else {
@@ -455,7 +457,7 @@ sub get {
       # ' [1]  6.4 13.3  4.1  1.3 14.1 10.6  9.9  9.6 15.3
       #  [16]  5.2 10.9 14.4'
       my @lines = split /\n/, $string;
-      for (my $i = 0; $i < scalar @lines; $i++) {
+      for my $i (0 .. scalar @lines - 1) {
          $lines[$i] =~ s/^\s*\[\d+\] //;
       }
       $value = join ' ', @lines;
@@ -465,10 +467,8 @@ sub get {
          # String looks like: '    mean 
          # 10.41111 '
          # Extract value from second line
-         $value = $lines[1];
-         $value =~ s/^\s*(\S+)\s*$/$1/;
+         $value = _trim( $lines[1] );
       } else {
-         #die "Error: Don't know how to handle this R output\n$string\n";
          $value = $string;
       }
    }
@@ -483,24 +483,22 @@ sub get {
       # of Text::Balanced bug #73416
       if ($value =~ m{['"]}) {
          @arr = extract_multiple( $value, [sub { extract_delimited($_[0],q{'"}) },] );
-         for (my $i = 0; $i < scalar @arr; $i++) {
+         my $nof_empty = 0;
+         for my $i (0 .. scalar @arr - 1) {
             my $elem = $arr[$i];
-            if ($elem =~ m/^\s*$/) {
-               # Remove elements that are simply whitespaces
-               splice @arr, $i, 1;
-               $i--;
+            if ($arr[$i] =~ BLANK_RE) {
+               # Remove elements that are simply whitespaces later, in a single operation
+               $nof_empty++;
             } else {
-               # Trim whitespaces
-               $arr[$i] =~ s/^\s*(.*?)\s*$/$1/;
-
-               # Remove double-quotes
-               $arr[$i] = _unquote($1);
+               # Trim and unquote
+               $arr[$i-$nof_empty] = _unquote( _trim($elem) );
             }
          }
+         if ($nof_empty > 0) {
+            splice @arr, -$nof_empty, $nof_empty;
+         }
       } else {
-         $value =~ s{^\s+}{};
-         $value =~ s{\s+$}{};
-         @arr = split( /\s+/, $value );
+         @arr = split( /\s+/, _trim($value) );
       }
    }
 
@@ -623,6 +621,15 @@ sub wrap_cmd {
    $cmd = qq`tryCatch( eval(parse(text=$cmd)) , error = function(e){print(e)} ); write("$eos",stdout())\n`;
 
    return $cmd;
+}
+
+
+sub _trim {
+   # Remove flanking whitespaces
+   my ($str) = @_;
+   $str =~ s{^\s+}{};
+   $str =~ s{\s+$}{};
+   return $str;
 }
 
 
