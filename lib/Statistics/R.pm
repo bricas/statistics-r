@@ -18,12 +18,14 @@ our $VERSION = '0.26';
 
 our ($SHARED_BRIDGE, $SHARED_STDIN, $SHARED_STDOUT, $SHARED_STDERR);
 
-use constant PROG      => 'R';                  # executable we are after... R
-use constant EOS       => 'Statistics::R::EOS'; # indicates the end of R output
-use constant EOS_RE    => qr/${\(EOS)}\n/;      # regexp to match end of R stream
-use constant NUMBER_RE => qr/^$RE{num}{real}$/; # regexp that matches numbers
-use constant BLANK_RE  => qr/^\s*$/;            # regexp that matches whitespaces
-
+use constant PROG       => 'R';                           # executable name... R
+use constant EOS        => 'Statistics::R::EOS';          # indicates the end of R output
+use constant EOS_RE     => qr/${\(EOS)}\n/;               # regexp to match end of R stream
+use constant NUMBER_RE  => qr/^$RE{num}{real}$/;          # regexp matching numbers
+use constant BLANK_RE   => qr/^\s*$/;                     # regexp matching whitespaces
+use constant ILINE_RE   => qr/^\s*\[\d+\] /;              # regexp matching indexed line
+use constant USR_ERR_RE => qr/<simpleError.*?:\s*(.*)>/s; # regexp for user error
+use constant INT_ERR_RE => qr/^Error:\s*(.*)/s;           # regexp for internal error
 
 ### how about using \1 ??
 
@@ -381,10 +383,10 @@ sub run {
       chomp $out;
       my $err = $self->stderr;
       chomp $err;
-      if ( $out =~ m/<simpleError.*?:\s*(.*)>/sg) {
+      if ( $out =~ USR_ERR_RE ) {
          # User-space (multi-line) error message
          die "Problem running this R command:\n$cmd\n\nGot the error:\n$1\n$err\n";
-      } elsif ($err =~ m/^Error:\s*(.*)/sg) {
+      } elsif ($err =~ INT_ERR_RE) {
          # Internal error
          die "Internal problem while running this R command:\n$cmd\n\nGot the error:\n$1\n";
       }
@@ -453,13 +455,13 @@ sub get {
    my $value;
    if ($string eq 'NULL') {
       $value = undef;
-   } elsif ($string =~ m/^\s*\[\d+\]/) {
+   } elsif ($string =~ ILINE_RE) {
       # Vector: its string look like:
       # ' [1]  6.4 13.3  4.1  1.3 14.1 10.6  9.9  9.6 15.3
       #  [16]  5.2 10.9 14.4'
       my @lines = split /\n/, $string;
       for my $i (0 .. scalar @lines - 1) {
-         $lines[$i] =~ s/^\s*\[\d+\] //;
+         $lines[$i] =~ s/${\(ILINE_RE)}//;
       }
       $value = join ' ', @lines;
    } else {
@@ -657,10 +659,11 @@ sub _unquote {
    my ($str) = @_;
 
    # Remove surrounding "
-   $str =~ s/^"(.*)"$/$1/sgx;
+   $str =~ s{^"}{};
+   $str =~ s{"$}{};
 
    # Interpolate (de-escape) \\\" to \" , \" to " , ...
-   $str =~ s/ ((?:\\\\)*) \\ " / '\\' x (length($1||'')*0.5) . '"' /egx;
+   $str =~ s/ ((?:\\\\)*) \\ " / '\\' x (length($1)*0.5) . '"' /egx;
 
    return $str;
 }
