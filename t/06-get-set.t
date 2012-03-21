@@ -101,6 +101,23 @@ is $$output[2], 3;
 is $$output[3], 4;
 
 
+# Strings containing quotes and escaped quotes
+$input = q{He said: "Let's go \"home\" now!\n"};
+ok $R->set('x', $input), 'string';
+ok $output = $R->get('x');
+is ref($output), '';
+is $output, q{He said: "Let's go \"home\" now!\n"};
+
+
+$input = q{He said: "Let's go \\\\\\\\\\\\\"home\\\\\\\\\\\\\" now!\n"};
+# because \ is a special char that needs to be escaped, this string really is:
+#          He said: "Let's go \\\\\\\"home\\\\\\\" now!\n
+ok $R->set('x', $input), 'string';
+ok $output = $R->get('x');
+is ref($output), '';
+is $output, q{He said: "Let's go \\\\\\\\\\\\\"home\\\\\\\\\\\\\" now!\n"};
+
+
 ok $R->stop();
 
 done_testing;

@@ -213,11 +213,11 @@ You also need to have the following CPAN Perl modules installed:
 
 =over 4
 
-=item Text::Balanced (>= 1.97)
+=item IPC::Run
 
 =item Regexp::Common
 
-=item IPC::Run
+=item Text::Balanced (>= 1.97)
 
 =back
 
@@ -427,7 +427,7 @@ sub set {
    for my $i (0 .. scalar @$arr - 1) {
       if (defined $$arr[$i]) {
          if ( $$arr[$i] !~ /^$RE{num}{real}$/ ) {
-            $$arr[$i] = '"'.$$arr[$i].'"';
+            $$arr[$i] = _quote( $$arr[$i] );
          }
       } else {
          $$arr[$i] = 'NULL';
@@ -492,8 +492,9 @@ sub get {
             } else {
                # Trim whitespaces
                $arr[$i] =~ s/^\s*(.*?)\s*$/$1/;
+
                # Remove double-quotes
-               $arr[$i] =~ s/^"(.*)"$/$1/; 
+               $arr[$i] = _unquote($1);
             }
          }
       } else {
@@ -617,14 +618,41 @@ sub wrap_cmd {
    # processing the data. Note that $cmd can be multiple R commands.
    my ($self, $cmd) = @_;
 
-   # Escape double-quotes
-   $cmd =~ s/"/\\"/g;
-
    # Evaluate command (and catch syntax and runtime errors)
-   $cmd = qq`tryCatch( eval(parse(text="$cmd")) , error = function(e){print(e)} ); write("$eos",stdout())\n`;
+   $cmd = _quote( $cmd );
+   $cmd = qq`tryCatch( eval(parse(text=$cmd)) , error = function(e){print(e)} ); write("$eos",stdout())\n`;
 
    return $cmd;
 }
 
+
+sub _quote {
+   # Quote a string for use in R. We use double-quotes because the documentation
+   # Quotes {base} R documentation states that this is preferred over single-
+   # quotes. Double-quotes inside the string are escaped.
+   my ($str) = @_;
+
+   # Escape " by \" , \" by \\\" , ...
+   $str =~ s/ (\\*) " / '\\' x (2*length($1)+1) . '"' /egx;
+
+   # Surround by "
+   $str = qq("$str");
+
+   return $str;
+}
+
+
+sub _unquote {
+   # Opposite of _quote
+   my ($str) = @_;
+
+   # Remove surrounding "
+   $str =~ s/^"(.*)"$/$1/sgx;
+
+   # Interpolate (de-escape) \\\" to \" , \" to " , ...
+   $str =~ s/ ((?:\\\\)*) \\ " / '\\' x (length($1||'')*0.5) . '"' /esgx;
+
+   return $str;
+}
 
 1;
