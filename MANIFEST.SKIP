@@ -28,4 +28,6 @@
 \.DS_Store$
 
 # No tarballs!
+\.tar$
 \.gz$
+\.tgz$
