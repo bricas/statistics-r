@@ -10,27 +10,27 @@ my $R;
 
 ok $R = Statistics::R->new();
 eval {
-   $R->run( q`print "ASDF"` );
+   $R->run( qq`print("Hello");\nprint "ASDF"` );
 };
-#diag "Diagnostic: \n".$@."\n";
+diag "Diagnostic: \n".$@."\n";
 ok $@, 'Syntax error';
 # Actual error message vary depending on locale
 
 
 ok $R = Statistics::R->new();
 eval {
-   $R->run( q`print(ASDF)` );
+   $R->run( qq`print("Hello");\nprint(ASDF)` );
 };
-#diag "Diagnostic: \n".$@."\n";
+diag "Diagnostic: \n".$@."\n";
 ok $@, 'Runtime error';
 
 
 use_ok 't::FlawedStatisticsR';
 ok $R = t::FlawedStatisticsR->new();
 eval {
-   $R->run( q`colors<-c("red")` );
+   $R->run( qq`print("Hello");\ncolors<-c("red")` );
 };
-#diag "Diagnostic: \n".$@."\n";
+diag "Diagnostic: \n".$@."\n";
 ok $@, 'Internal error';
 
 

@@ -37,7 +37,7 @@ use constant INT_ERR_RE => qr/^Error:\s*(.*)/s;           # regexp for internal 
 ####
 #use constant EOS        => '\\1'; # \1
 #print "EOS   : ".EOS   ."\n";
-#use constant EOS_RE     => qr/${\(EOS)}\n$/;
+#use constant EOS_RE     => qr/\\1\n$/;
 #print "EOS_RE: ".EOS_RE."\n";
 ####
 
@@ -389,6 +389,11 @@ sub run {
       my $bridge = $self->bridge;
       while (  $self->stdout !~ EOS_RE  &&  $bridge->pumpable  ) {
          $bridge->pump;
+
+         ####
+         #print "stdout: '".$self->stdout."'\n";
+         ####
+ 
       }
 
       # Parse outputs, detect errors
@@ -634,10 +639,11 @@ sub wrap_cmd {
    my ($self, $cmd) = @_;
 
    # Evaluate command (and catch syntax and runtime errors)
-   $cmd = qq`tryCatch( eval(parse(text=`._quote($cmd).qq`)) , error = function(e){print(e)} ); write("`.EOS.qq`",stdout())\n`;
+   $cmd = qq`tryCatch( eval(parse(text=`._quote($cmd).qq`)), error = function(e){print(e)} ); `.
+          qq`write("`.EOS.qq`",stdout())\n`;
 
    ####
-   #print "cmd: $cmd\n";
+   print "cmd: $cmd\n";
    ####
 
    return $cmd;
