@@ -164,7 +164,7 @@ this method uses the R source() command to read the file.
 
 =item set()
 
-Set the value of an R variable (scalar or list). Example:
+Set the value of an R variable (scalar or vector). Example:
 
   # Create an R scalar
   $R->set( 'x', 'pear' );
@@ -176,7 +176,7 @@ or
 
 =item get()
  
-Get the value of an R variable (scalar or list). Example:
+Get the value of an R variable (scalar or vector). Example:
 
   # Retrieve an R scalar. $x is a Perl scalar.
   my $x = $R->get( 'x' );
