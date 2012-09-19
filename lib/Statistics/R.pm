@@ -164,23 +164,27 @@ this method uses the R source() command to read the file.
 
 =item set()
 
-Set the value of an R variable (scalar or arrayref). Example:
+Set the value of an R variable (scalar or list). Example:
 
+  # Create an R scalar
   $R->set( 'x', 'pear' );
 
 or
 
+  # Create an R list
   $R->set( 'y', [1, 2, 3] );
 
 =item get()
  
-Get the value of an R variable (scalar or arrayref). Example:
+Get the value of an R variable (scalar or list). Example:
 
-  my $x = $R->get( 'x' );  # $y is a scalar
+  # Retrieve an R scalar. $x is a Perl scalar.
+  my $x = $R->get( 'x' );
 
 or
 
-  my $y = $R->get( 'y' );  # $x is an arrayref
+  # Retrieve an R list. $x is a Perl arrayref.
+  my $y = $R->get( 'y' );
 
 =item start()
 
