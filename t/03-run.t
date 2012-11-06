@@ -74,6 +74,8 @@ Some innocuous message on stdout
 [1] 123
 456
 [1] "ok"';
-is $R->run_from_file( catfile('t', 'data', 'script.R') ), $expected, 'Commands from file';
+$file = catfile('t', 'data', 'script.R');
+is $R->run( qq`source('$file')` ), $expected, 'Commands from file';
+is $R->run_from_file( $file ), $expected; # as above, but with specific function
 
 done_testing;
