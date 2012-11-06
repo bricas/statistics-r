@@ -1,6 +1,10 @@
 Revision history for Perl extension Statistics::R.
 
-0.27  2012-03-22  
+0.xx
+    - Fixed packaging issue by repackaging with Module::Install version 1.06
+    - Fixed character causing failure of POD test
+
+0.27  2012-03-22
     - Better handling of R line length limits
     - Better quoting of strings passed to R
     - Optimizations

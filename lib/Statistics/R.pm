@@ -151,7 +151,7 @@ Note that R imposes an upper limit on how many characters can be contained on a
 line: about 4076 bytes maximum. You will be warned if this occurs. Commands
 containing lines exceeding the limit may fail with an error message stating:
 
-  '\�' is an unrecognized escape in character string starting "...
+  '\0' is an unrecognized escape in character string starting "...
 
 If possible, break down your R code into several smaller, more manageable
 statements. Alternatively, adding newline characters "\n" at strategic places in
