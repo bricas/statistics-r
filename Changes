@@ -1,6 +1,6 @@
 Revision history for Perl extension Statistics::R.
 
-0.xx
+0.28  2012-11-06
     - Fixed packaging issue by repackaging with Module::Install version 1.06
     - Fixed character causing failure of POD test
 
