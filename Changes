@@ -1,6 +1,6 @@
 Revision history for Perl extension Statistics::R.
 
-0.xx
+0.29  2012-11-07
     - Fixed cross-platform filename problem in run_from_file (thanks Clifford
       Sobchuk, RT #77761)
 
