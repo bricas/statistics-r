@@ -1,39 +1,6 @@
 package Statistics::R;
 
 
-use 5.006;
-use strict;
-use warnings;
-use Regexp::Common;
-use File::Spec::Functions;
-use Statistics::R::Legacy;
-use IPC::Run qw( harness start pump finish );
-use Text::Balanced qw ( extract_delimited extract_multiple );
-
-if ( $^O =~ m/^(?:.*?win32|dos)$/i ) {
-    require Statistics::R::Win32;
-}
-
-our $VERSION = '0.28';
-
-our ($SHARED_BRIDGE, $SHARED_STDIN, $SHARED_STDOUT, $SHARED_STDERR);
-
-
-use constant PROG       => 'R';                           # executable name... R
-
-use constant EOS        => '\\1';                         # indicate the end of R output with \1
-use constant EOS_RE     => qr/[${\(EOS)}]\n$/;            # regexp to match end of R stream
-
-#use constant EOS        => 'Statistics::R::EOS';          # indicate the end of R output
-#use constant EOS_RE     => qr/${\(EOS)}\n$/;              # regexp to match end of R stream
-
-use constant NUMBER_RE  => qr/^$RE{num}{real}$/;          # regexp matching numbers
-use constant BLANK_RE   => qr/^\s*$/;                     # regexp matching whitespaces
-use constant ILINE_RE   => qr/^\s*\[\d+\] /;              # regexp matching indexed line
-use constant USR_ERR_RE => qr/<simpleError.*?:\s*(.*)>/s; # regexp for user error
-use constant INT_ERR_RE => qr/^Error:\s*(.*)/s;           # regexp for internal error
-
-
 =head1 NAME
 
 Statistics::R - Perl interface with the R statistical program
@@ -160,7 +127,8 @@ the R statements will work around the issue.
 =item run_from_file()
 
 Similar to run() but reads the R commands from the specified file. Internally,
-this method uses the R source() command to read the file.
+this method converts the filename to a format compatible with R and then passes
+it to the R source() command to read the file and execute the commands.
 
 =item set()
 
@@ -285,6 +253,39 @@ revision control. To get the latest revision, run:
    git clone git://github.com/bricas/statistics-r.git
 
 =cut
+
+
+use 5.006;
+use strict;
+use warnings;
+use Regexp::Common;
+use Statistics::R::Legacy;
+use IPC::Run qw( harness start pump finish );
+use File::Spec::Functions qw(catfile splitpath splitdir);
+use Text::Balanced qw ( extract_delimited extract_multiple );
+
+if ( $^O =~ m/^(?:.*?win32|dos)$/i ) {
+    require Statistics::R::Win32;
+}
+
+our $VERSION = '0.28';
+
+our ($SHARED_BRIDGE, $SHARED_STDIN, $SHARED_STDOUT, $SHARED_STDERR);
+
+
+use constant PROG       => 'R';                           # executable name... R
+
+use constant EOS        => '\\1';                         # indicate the end of R output with \1
+use constant EOS_RE     => qr/[${\(EOS)}]\n$/;            # regexp to match end of R stream
+
+#use constant EOS        => 'Statistics::R::EOS';          # indicate the end of R output
+#use constant EOS_RE     => qr/${\(EOS)}\n$/;              # regexp to match end of R stream
+
+use constant NUMBER_RE  => qr/^$RE{num}{real}$/;          # regexp matching numbers
+use constant BLANK_RE   => qr/^\s*$/;                     # regexp matching whitespaces
+use constant ILINE_RE   => qr/^\s*\[\d+\] /;              # regexp matching indexed line
+use constant USR_ERR_RE => qr/<simpleError.*?:\s*(.*)>/s; # regexp for user error
+use constant INT_ERR_RE => qr/^Error:\s*(.*)/s;           # regexp for internal error
 
 
 sub new {
@@ -428,8 +429,27 @@ sub run {
 
 
 sub run_from_file {
-   my ($self, $file) = @_;
-   my $results = $self->run( qq`source('$file')` );
+   # Execute commands in given file: first, convert filepath to an R-compatible
+   # format and then pass it to source().
+   my ($self, $filepath) = @_;
+   if (not -f $filepath) {
+      die "Error: '$filepath' does not seem to exist or is not a file.\n";
+   }
+
+   # Split filepath
+   my ($volume, $directories, $filename) = splitpath($filepath);
+   my @elems;
+   push @elems, $volume if $volume; # $volume is '' if unused
+   push @elems, splitdir($directories);
+   push @elems, $filename;
+
+   # Use file.path to create an R-compatible filename (bug #77761), e.g.:
+   #   file <- file.path("E:", "DATA", "example.csv")
+   # Then use source() to read file and execute the commands it contains
+   #   source(file)
+   my $cmd = 'source(file.path('.join(',',map {'"'.$_.'"'}@elems).'))';
+   my $results = $self->run($cmd);
+
    return $results;
 }
 

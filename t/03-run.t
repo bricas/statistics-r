@@ -3,6 +3,8 @@
 use strict;
 use warnings;
 use Test::More;
+use File::Copy;
+use File::Temp;
 use Statistics::R;
 use File::Spec::Functions;
 
@@ -75,7 +77,10 @@ Some innocuous message on stdout
 456
 [1] "ok"';
 $file = catfile('t', 'data', 'script.R');
-is $R->run( qq`source('$file')` ), $expected, 'Commands from file';
-is $R->run_from_file( $file ), $expected; # as above, but with specific function
+is $R->run_from_file( $file ), $expected, 'Command from file (relative path)';
+
+my $absfile = File::Temp->new( UNLINK => 1 )->filename;
+copy($file, $absfile) or die "Error: Could not copy file $file to $absfile: $!\n";
+is $R->run_from_file( $absfile ), $expected, 'Commands from file (absolute path)';
 
 done_testing;

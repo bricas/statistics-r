@@ -1,5 +1,9 @@
 Revision history for Perl extension Statistics::R.
 
+0.xx
+    - Fixed cross-platform filename problem in run_from_file (thanks Clifford
+      Sobchuk, RT #77761)
+
 0.28  2012-11-06
     - Fixed packaging issue by repackaging with Module::Install version 1.06
     - Fixed character causing failure of POD test
@@ -17,7 +21,8 @@ Revision history for Perl extension Statistics::R.
       patched by Brian Cassidy)
 
 0.24  2011-11-09
-    - Require Text::Balanced >= 0.97 to prevent bad surprises (reported by Ryan Golhar)
+    - Require Text::Balanced >= 0.97 to prevent bad surprises (reported by Ryan
+      Golhar)
 
 0.23  2011-10-28
     - Arrays of number-containing strings are now handled properly (RT bug 
@@ -47,7 +52,8 @@ Revision history for Perl extension Statistics::R.
     - Refactoring to remove old code doing platform-specific operations.
     - Lots of code cleanup
     - Removed the now useless r_dir and tmp_dir options of new()
-    - Fix for change of dir bug (RT #6724). Also fixes missing synopsis file (RT #70307)
+    - Fix for change of dir bug (RT #6724). Also fixes missing synopsis file (RT
+      #70307)
     - More subtle cleanup procedure (RT #70392)
 
 0.09  2011-08-23 
