@@ -342,7 +342,7 @@ sub start {
 sub stop {
    my ($self) = @_;
    my $status = 1;
-   if ($self->is_started) {
+   if ( ($self->is_started) && (not $self->{died}) ) {
       $status = $self->bridge->finish or die "Error stopping ".PROG.": $?\n";
    }
    return $status;
@@ -424,6 +424,7 @@ sub run {
          die "Problem running this R command:\n$cmd\n\nGot the error:\n$1\n$err\n";
       } elsif ($err =~ INT_ERR_RE) {
          # Internal error
+         $self->{died} = 1; # useful for proper cleanup when running under eval
          my $err_msg = $1;
          if ( $err_msg =~ /unrecognized escape in character string/ ) {
             $err_msg .= "\nMost likely, your R command contained lines exceeding ".
