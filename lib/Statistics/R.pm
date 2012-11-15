@@ -72,7 +72,7 @@ Statistics::R can communicate with the same unique R instance. Example:
    $R1->stop; # or $R2->stop
 
 Note that in shared mode, you are responsible to have one of your Statistics::R
-instances call the stop() method when you are finished with R. But be careful
+instances call the I<stop()> method when you are finished with R. But be careful
 not to call the I<stop()> method if you still have processes that need to
 interact with R!
 
@@ -81,9 +81,9 @@ interact with R!
 
 =item run()
 
-First, start() R if it is not yet running. Then, execute R commands passed as a
-string and return the output as a string. If your command fails to run in R, an
-error message will be displayed.
+First, I<start()> R if it is not yet running. Then, execute R commands passed as
+a string and return the output as a string. If your command fails to run in R,
+an error message will be displayed.
 
 Example:
 
@@ -109,9 +109,9 @@ of commands or put multiple commands in an here-doc:
    EOF
    my $out2 = $R->run($cmds);
 
-To run commands from a file, see the run_from_file() method.
+To run commands from a file, see the I<run_from_file()> method.
 
-The output you get from run() is the combination of what R would display on the
+The output you get from I<run()> is the combination of what R would display on the
 standard output and the standard error, but the order may differ. When loading
 modules, some may write numerous messages on standard error. You can disable
 this behavior using the following R command:
@@ -130,9 +130,9 @@ the R statements will work around the issue.
 
 =item run_from_file()
 
-Similar to run() but reads the R commands from the specified file. Internally,
+Similar to I<run()> but reads the R commands from the specified file. Internally,
 this method converts the filename to a format compatible with R and then passes
-it to the R source() command to read the file and execute the commands.
+it to the R I<source()> command to read the file and execute the commands.
 
 =item set()
 
@@ -161,7 +161,7 @@ or
 =item start()
 
 Explicitly start R. Most times, you do not need to do that because the first
-execution of run() or set() will automatically call start().
+execution of I<run()> or I<set()> will automatically call I<start()>.
 
 =item stop()
 
