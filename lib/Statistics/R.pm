@@ -69,8 +69,12 @@ Statistics::R can communicate with the same unique R instance. Example:
    my $x = $R2->get( 'x' );
    print "x = $x\n";
 
-Do not call the I<stop()> method is you still have processes that need to interact
-with R.
+   $R1->stop; # or $R2->stop
+
+Note that in shared mode, you are responsible to have one of your Statistics::R
+instances call the stop() method when you are finished with R. But be careful
+not to call the I<stop()> method if you still have processes that need to
+interact with R!
 
 =back
 
@@ -161,7 +165,8 @@ execution of run() or set() will automatically call start().
 
 =item stop()
 
-Stop a running instance of R.
+Stop a running instance of R. Usually, you do not need to do this because stop()
+is automatically the Statistics::R object goes out of scope.
 
 =item restart()
 
@@ -711,6 +716,16 @@ sub _unquote {
    $str =~ s/ ((?:\\\\)*) \\ " / '\\' x (length($1)*0.5) . '"' /egx;
 
    return $str;
+}
+
+
+sub DESTROY {
+   # The bridge to R is not automatically bombed when Statistics::R instances
+   # get out of scope. Do it now (unless running in shared mode)!
+   my ($self) = @_;
+   if (not $self->is_shared) {
+      $self->stop;
+   }
 }
 
 1;
