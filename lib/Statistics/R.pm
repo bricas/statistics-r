@@ -395,7 +395,7 @@ sub run {
          $bridge->pump;
       }
 
-      # Parse outputs, detect errors
+      # Parse output, detect errors
       my $out = $self->stdout;
       $out =~ s/${\(EOS_RE)}//;
       chomp $out;
@@ -606,7 +606,7 @@ sub bridge {
          $self->{stdout} = \$SHARED_STDOUT;
          $self->{stderr} = \$SHARED_STDERR;
          if (not defined $SHARED_BRIDGE) {
-            # The first Statics::R instance builds the bridge
+            # The first Statistics::R instance builds the bridge
             $SHARED_BRIDGE = harness $cmd, $self->{stdin}, $self->{stdout}, $self->{stderr}, %params;
          }
          $self->{bridge} = $SHARED_BRIDGE;
