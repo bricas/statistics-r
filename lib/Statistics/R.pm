@@ -356,15 +356,28 @@ sub restart {
 
 
 sub is_started {
-   # Query whether or not R is currently running
-   return shift->bridge->{STATE} eq IPC::Run::_started ? 1 : 0;
+   # Query whether or not R is currently running - hackish
+   my ($self) = @_;
+   my $bridge = $self->bridge;
+   if (not exists $bridge->{STATE}) {
+      die "Internal error: could not get STATE from IPC::Run\n";
+   }
+   return $bridge->{STATE} eq IPC::Run::_started ? 1 : 0;
 }
 
 
 sub pid {
-   # Get (/ set) the PID of the running R process. It is accessible only after
-   # the bridge has start()ed
-   return shift->bridge->{KIDS}->[0]->{PID};
+   # Get (/ set) the PID of the running R process - hackish. It is accessible
+   # only after the bridge has start()ed
+   my ($self) = @_;
+   my $bridge = $self->bridge;
+   if ( not exists $bridge->{KIDS} ) {
+      die "Internal error: could not get KIDS from IPC::Run\n";
+   }
+   if ( not exists $bridge->{KIDS}->[0]->{PID} ) {
+      die "Internal error: could not get PID from IPC::Run\n";
+   }
+   return $bridge->{KIDS}->[0]->{PID};
 }
 
 
