@@ -1,6 +1,6 @@
 Revision history for Perl extension Statistics::R.
 
-0.x
+0.30  2012-11-15
     - Skip tests that hang on Windows (thanks Clifford Sobchuk and Gisbert W.
       Selke, RT #77761)
     - Automatically destroy the R bridge when Statistics::R goes out of scope
