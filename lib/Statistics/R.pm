@@ -421,10 +421,12 @@ sub run {
       chomp $err;
       if ( $out =~ USR_ERR_RE ) {
          # User-space (multi-line) error message
+         $self->stdout(''); # for proper next execution after failed eval
+         $self->stderr('');
          die "Problem running this R command:\n$cmd\n\nGot the error:\n$1\n$err\n";
       } elsif ($err =~ INT_ERR_RE) {
          # Internal error
-         $self->{died} = 1; # useful for proper cleanup when running under eval
+         $self->{died} = 1; # for proper cleanup after failed eval
          my $err_msg = $1;
          if ( $err_msg =~ /unrecognized escape in character string/ ) {
             $err_msg .= "\nMost likely, your R command contained lines exceeding ".
