@@ -31,9 +31,7 @@ SKIP: {
 
    is $R->run(q`a <- 1;`), '';
 
-   require_ok 't::FlawedStatisticsR';
-   *Statistics::R::wrap_cmd = *t::FlawedStatisticsR::wrap_cmd;
-
+   use_ok 't::FlawedStatisticsR';
    ok $R = t::FlawedStatisticsR->new();
    eval {
       $R->run( qq`print("Hello");\ncolors<-c("red")` );

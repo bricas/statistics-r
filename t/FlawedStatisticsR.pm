@@ -5,7 +5,7 @@ use base qw(Statistics::R);
 my $eos = 'Statistics::R::EOS';
 
 # Override the wrap_cmd() method of Statistics::R with a faulty one
-sub Statistics::R::wrap_cmd {
+sub wrap_cmd {
    my ($self, $cmd) = @_;
    $cmd = qq`zzzzzzzzzzzzzzz; write("$eos",stdout())\n`;
    return $cmd;
