@@ -290,7 +290,11 @@ use constant NUMBER_RE  => qr/^$RE{num}{real}$/;          # regexp matching numb
 use constant BLANK_RE   => qr/^\s*$/;                     # regexp matching whitespaces
 use constant ILINE_RE   => qr/^\s*\[\d+\] /;              # regexp matching indexed line
 use constant USR_ERR_RE => qr/<simpleError.*?:\s*(.*)>/s; # regexp for user error
-use constant INT_ERR_RE => qr/^Error:\s*(.*)/s;           # regexp for internal error
+
+# regexp for internal error
+# made up by @aixtal on 2013-02-02 from .po files (devel version 3.0.0)
+# this need to be update when new translation appear
+use constant INT_ERR_RE => qr/^(?:Error\s*:|Fejl\s*:|Fehler\s*:|Erreur\s*:| エラー：|에러\s*:|Feil\s*:|BŁĄD\s*:|Erro\s*:|Ошибка\s*:|Hata\s*:|错误\s*:|錯誤\s*:)\s*(.*)/s;           
 
 
 sub new {
