@@ -616,6 +616,10 @@ sub initialize {
    # Build the bridge
    $self->bridge( 1 );
 
+   # Generate error regexp
+   $self->_gen_error_re;
+   print "DBG: Regexp for internal errors is '$INT_ERR_RE'\n" if DEBUG;
+
    return 1;
 }
 
@@ -703,6 +707,17 @@ sub wrap_cmd {
 
 
 #---------- HELPER SUBS -------------------------------------------------------#
+
+
+sub _gen_error_re {
+   # Generate a regular expression to catch R internal errors. Make this locale-
+   # safe by running a bogus command and catching the word 'Error' in the
+   # locale used by R.
+   my ($self) = @_;
+   ##my $error_str = $self->run('zzz');
+   ##$INT_ERR_RE = qr/^$error_str\s*(.*)$/s; # locale-safe regexp for internal errors
+   return 1;
+}
 
 
 sub _trim {
