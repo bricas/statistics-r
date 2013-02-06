@@ -1,6 +1,7 @@
 Revision history for Perl extension Statistics::R.
 
-TO BE RELEASE
+TO BE RELEASED
+    - Speedup of communications with R
     - Handle multiple locales when looking for errors (patch by Jean Véronis and
       Brian Cassidy)
 
