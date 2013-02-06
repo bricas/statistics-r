@@ -23,7 +23,7 @@ $expected = '';
 is $R->run( qq`postscript("$file" , horizontal=FALSE , width=500 , height=500 , pointsize=1)`), $expected, 'Basic';
 
 $expected = '';
-is $R->run( q`plot(c(1, 5, 10), type = "l")` ), $expected;
+is $R->run( q`plot(c(1, 5, 10), type = "l");` ), $expected;
 
 $expected = 
 'null device 

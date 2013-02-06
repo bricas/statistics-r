@@ -15,7 +15,7 @@ ok $R = Statistics::R->new();
 
 ok $R->set('x', $input);
 
-for my $i (1 .. 10000) {
+for my $i (1 .. 10_000) {
    is($R->get('x'), undef);
 }
 

@@ -282,15 +282,13 @@ use constant PROG       => 'R';                           # executable name... R
 
 use constant EOS        => '\\1';                         # indicate the end of R output with \1
 use constant EOS_RE     => qr/[${\(EOS)}]\n$/;            # regexp to match end of R stream
-#use constant EOS       => 'Statistics::R::EOS';          # indicate the end of R output
-#use constant EOS_RE    => qr/${\(EOS)}\n$/;              # regexp to match end of R stream
 
 use constant NUMBER_RE  => qr/^$RE{num}{real}$/;          # regexp matching numbers
 use constant BLANK_RE   => qr/^\s*$/;                     # regexp matching whitespaces
 use constant ILINE_RE   => qr/^\s*\[\d+\] /;              # regexp matching indexed line
-use constant USR_ERR_RE => qr/<simpleError.*?:\s*(.*)>/s; # regexp for user error
 
-my $INT_ERR_RE; # catch something that looks like "Error: object 'zzz' not found";
+my $ERROR_RE;                                             # regexp matching R errors
+
 
 sub new {
    # Create a new R communication object
@@ -334,9 +332,9 @@ sub start {
       print "DBG: Started R, ".$self->bin." (pid ".$self->pid.")\n" if DEBUG;
 
       # Generate regexp to catch R errors
-      if (not defined $INT_ERR_RE) {
+      if (not defined $ERROR_RE) {
          $self->_gen_error_re;
-         print "DBG: Regexp for internal errors is '$INT_ERR_RE'\n" if DEBUG;
+         print "DBG: Regexp for internal errors is '$ERROR_RE'\n" if DEBUG;
       }
 
    }
@@ -412,6 +410,7 @@ sub run {
    for my $cmd (@cmds) {
 
       # Wrap command for execution in R
+      print "DBG: Command is '$cmd'\n" if DEBUG;
       $self->stdin( $self->wrap_cmd($cmd) );
       print "DBG: Stdin is '".$self->stdin."'\n" if DEBUG;
 
@@ -431,30 +430,26 @@ sub run {
       print "DBG: Stdout is '$out'\n" if DEBUG;
       print "DBG: Stderr is '$err'\n" if DEBUG;
 
-      if ( $out =~ USR_ERR_RE ) {
-         # User-space (multi-line) error message
-         print "DBG: User error\n" if DEBUG;
-         $self->stdout(''); # for proper next execution after failed eval
-         $self->stderr('');
-         die "Problem running this R command:\n$cmd\n\nGot the error:\n$1\n$err\n";
-      }
-
       my $err_msg;
-      if ( (defined $INT_ERR_RE) && ($err =~ $INT_ERR_RE)) {
-         $err_msg = $1; # Catch errors on stderr. Leave warnings alone.
-      } elsif ( (not defined $INT_ERR_RE) && (not $err eq '') ) {
-         $err_msg = $err; # Catch anything on stderr.
+      if ( (defined $ERROR_RE) && ($err =~ $ERROR_RE)) {
+         # Catch errors on stderr. Leave warnings alone.
+         $err_msg = "Error:\n".$1;
+      } elsif ( (not defined $ERROR_RE) && (not $err eq '') ) {
+         # Catch anything on stderr.
+         $err_msg = "Internal error:\n".$err;
       }
 
       if (defined $err_msg) {
          # Internal error
-         print "DBG: Internal error\n" if DEBUG;
+         print "DBG: Error\n" if DEBUG;
          $self->{died} = 1; # for proper cleanup after failed eval
          if ( $err_msg =~ /unrecognized escape in character string/ ) {
-            $err_msg .= "\nMost likely, your R command contained lines exceeding ".
-               " 4076 bytes...";
+            $err_msg .= "\nMost likely, the given R command contained lines ".
+               "exceeding 4076 bytes...";
          }
-         die "Internal problem while running this R command:\n$cmd\n\nGot the error:\n$err_msg\n";
+         $self->stdout('');
+         $self->stderr('');
+         die "Problem while running this R command:\n$cmd\n\n$err_msg\n";
       }
    
       # Save results and reinitialize
@@ -703,14 +698,16 @@ sub wrap_cmd {
    # end of stream string will appear on stdout and indicate that R has finished
    # processing the data. Note that $cmd can be multiple R commands.
    my ($self, $cmd) = @_;
-
    # Evaluate command (and catch syntax and runtime errors)
-   if (defined $INT_ERR_RE) {
-      $cmd = _quote($cmd);
-      $cmd = qq`tryCatch( eval(parse(text=$cmd)), error = function(e){print(e)} )`;
-   }
-   $cmd .= qq`; write("`.EOS.qq`",stdout())\n`;
 
+   #if (defined $ERROR_RE) {
+   #   $cmd = _quote($cmd);
+   #   $cmd = qq`tryCatch( eval(parse(text=$cmd)), error = function(e){print(e)} )`;
+   #}
+
+   chomp $cmd;
+   $cmd =~ s/;$//;
+   $cmd .= qq`; write("`.EOS.qq`",stdout())\n`;
    return $cmd;
 }
 
@@ -721,10 +718,15 @@ sub wrap_cmd {
 sub _gen_error_re {
    # Generate a locale-safe regular expression to catch R internal errors
    my ($self) = @_;
-   # Retrieve how error messages are written in this locale of R
-   my $cmd = q`write(ngettext( 1, "Error: ", "", domain = "R" ), stdout())`;
-   my $error_str = $self->run($cmd);
-   $INT_ERR_RE = qr/^$error_str\s*(.*)$/s;
+   # Retrieve error messages translated in this locale of R
+   my $cmd1 = q`write(ngettext( 1, "Error: ", "", domain = "R" ), stdout())`;
+   my $cmd2 = q`write(ngettext( 1, "Error in ", "", domain = "R" ), stdout())`;
+   # Generate regexp that will capture error messages of these types:
+   #    Error: object 'zzz' not found"
+   #    Error in print(ASDF) : object 'ASDF' not found
+   my $error_str1 = $self->run($cmd1);
+   my $error_str2 = $self->run($cmd2);
+   $ERROR_RE = qr/^(?:$error_str1|$error_str2)\s*(.*)$/s;
    return 1;
 }
 
@@ -743,13 +745,10 @@ sub _quote {
    # Quotes {base} R documentation states that this is preferred over single-
    # quotes. Double-quotes inside the string are escaped.
    my ($str) = @_;
-
    # Escape " by \" , \" by \\\" , ...
    $str =~ s/ (\\*) " / '\\' x (2*length($1)+1) . '"' /egx;
-
    # Surround by "
    $str = qq("$str");
-
    return $str;
 }
 
@@ -757,14 +756,11 @@ sub _quote {
 sub _unquote {
    # Opposite of _quote
    my ($str) = @_;
-
    # Remove surrounding "
    $str =~ s{^"}{};
    $str =~ s{"$}{};
-
    # Interpolate (de-escape) \\\" to \" , \" to " , ...
    $str =~ s/ ((?:\\\\)*) \\ " / '\\' x (length($1)*0.5) . '"' /egx;
-
    return $str;
 }
 
