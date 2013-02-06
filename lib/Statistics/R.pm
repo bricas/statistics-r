@@ -186,7 +186,7 @@ Is R running?
 
 =item pid()
 
-Return the pid of the running R process
+Return the PID of the running R process
 
 =back
 
@@ -277,14 +277,13 @@ our $VERSION = '0.30';
 
 our ($SHARED_BRIDGE, $SHARED_STDIN, $SHARED_STDOUT, $SHARED_STDERR);
 
-
+use constant DEBUG      => 0;                             # debugging messages
 use constant PROG       => 'R';                           # executable name... R
 
 use constant EOS        => '\\1';                         # indicate the end of R output with \1
 use constant EOS_RE     => qr/[${\(EOS)}]\n$/;            # regexp to match end of R stream
-
-#use constant EOS        => 'Statistics::R::EOS';          # indicate the end of R output
-#use constant EOS_RE     => qr/${\(EOS)}\n$/;              # regexp to match end of R stream
+#use constant EOS       => 'Statistics::R::EOS';          # indicate the end of R output
+#use constant EOS_RE    => qr/${\(EOS)}\n$/;              # regexp to match end of R stream
 
 use constant NUMBER_RE  => qr/^$RE{num}{real}$/;          # regexp matching numbers
 use constant BLANK_RE   => qr/^\s*$/;                     # regexp matching whitespaces
@@ -336,6 +335,7 @@ sub start {
       my $bridge = $self->bridge;
       $status = $bridge->start or die "Error starting ".PROG.": $?\n";
       $self->bin( $bridge->{KIDS}->[0]->{PATH} );
+      print "DBG: Started R, ".$self->bin." (pid ".$self->pid.")\n" if DEBUG;
    }
 
    return $status;
@@ -348,6 +348,7 @@ sub stop {
    my $status = 1;
    if ( ($self->is_started) && (not $self->{died}) ) {
       $status = $self->bridge->finish or die "Error stopping ".PROG.": $?\n";
+      print "DBG: Stopped R\n" if DEBUG;
    }
    return $status;
 }
@@ -371,7 +372,7 @@ sub is_started {
 
 
 sub pid {
-   # Get (/ set) the PID of the running R process - hackish. It is accessible
+   # Get (or set) the PID of the running R process - hackish. It is accessible
    # only after the bridge has start()ed
    my ($self) = @_;
    my $bridge = $self->bridge;
@@ -403,13 +404,13 @@ sub run {
    # Need to start R now if it is not already running
    $self->start if not $self->is_started;
 
-
    # Process each command
    my $results = '';
    for my $cmd (@cmds) {
 
       # Wrap command for execution in R
       $self->stdin( $self->wrap_cmd($cmd) );
+      print "DBG: Stdin is '".$self->stdin."'\n" if DEBUG;
 
       # Pass input to R and get its output
       my $bridge = $self->bridge;
@@ -423,13 +424,19 @@ sub run {
       chomp $out;
       my $err = $self->stderr;
       chomp $err;
+
+      print "DBG: Stdout is '$out'\n" if DEBUG;
+      print "DBG: Stderr is '$err'\n" if DEBUG;
+
       if ( $out =~ USR_ERR_RE ) {
          # User-space (multi-line) error message
+         print "DBG: User error\n" if DEBUG;
          $self->stdout(''); # for proper next execution after failed eval
          $self->stderr('');
          die "Problem running this R command:\n$cmd\n\nGot the error:\n$1\n$err\n";
       } elsif ($err =~ INT_ERR_RE) {
          # Internal error
+         print "DBG: Internal error\n" if DEBUG;
          $self->{died} = 1; # for proper cleanup after failed eval
          my $err_msg = $1;
          if ( $err_msg =~ /unrecognized escape in character string/ ) {
