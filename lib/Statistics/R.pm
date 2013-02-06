@@ -293,8 +293,7 @@ use constant USR_ERR_RE => qr/<simpleError.*?:\s*(.*)>/s; # regexp for user erro
 # regexp for internal error
 # made up by @aixtal on 2013-02-02 from .po files (devel version 3.0.0)
 # this need to be update when new translation appear
-use constant INT_ERR_RE => qr/^(?:Error\s*:|Fejl\s*:|Fehler\s*:|Erreur\s*:| エラー：|에러\s*:|Feil\s*:|BŁĄD\s*:|Erro\s*:|Ошибка\s*:|Hata\s*:|错误\s*:|錯誤\s*:)\s*(.*)/s;           
-
+my $INT_ERR_RE = qr/^(?:Error\s*:|Fejl\s*:|Fehler\s*:|Erreur\s*:| エラー：|에러\s*:|Feil\s*:|BŁĄD\s*:|Erro\s*:|Ошибка\s*:|Hata\s*:|错误\s*:|錯誤\s*:)\s*(.*)/s;
 
 sub new {
    # Create a new R communication object
@@ -434,7 +433,7 @@ sub run {
          $self->stdout(''); # for proper next execution after failed eval
          $self->stderr('');
          die "Problem running this R command:\n$cmd\n\nGot the error:\n$1\n$err\n";
-      } elsif ($err =~ INT_ERR_RE) {
+      } elsif ($err =~ $INT_ERR_RE) {
          # Internal error
          print "DBG: Internal error\n" if DEBUG;
          $self->{died} = 1; # for proper cleanup after failed eval
