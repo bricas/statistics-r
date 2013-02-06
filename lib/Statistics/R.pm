@@ -290,10 +290,7 @@ use constant BLANK_RE   => qr/^\s*$/;                     # regexp matching whit
 use constant ILINE_RE   => qr/^\s*\[\d+\] /;              # regexp matching indexed line
 use constant USR_ERR_RE => qr/<simpleError.*?:\s*(.*)>/s; # regexp for user error
 
-# regexp for internal error
-# made up by @aixtal on 2013-02-02 from .po files (devel version 3.0.0)
-# this need to be update when new translation appear
-my $INT_ERR_RE = qr/^(?:Error\s*:|Fejl\s*:|Fehler\s*:|Erreur\s*:| エラー：|에러\s*:|Feil\s*:|BŁĄD\s*:|Erro\s*:|Ошибка\s*:|Hata\s*:|错误\s*:|錯誤\s*:)\s*(.*)/s;
+my $INT_ERR_RE; # catch something that looks like "Error: object 'zzz' not found";
 
 sub new {
    # Create a new R communication object
@@ -306,7 +303,7 @@ sub new {
 
 
 sub is_shared {
-   # Get (/ set) the whether or not Statistics::R is setup to run in shared mode
+   # Get (or set) the whether or not Statistics::R is setup to run in shared mode
    my ($self, $val) = @_;
    if (defined $val) {
       $self->{is_shared} = $val;
@@ -335,6 +332,13 @@ sub start {
       $status = $bridge->start or die "Error starting ".PROG.": $?\n";
       $self->bin( $bridge->{KIDS}->[0]->{PATH} );
       print "DBG: Started R, ".$self->bin." (pid ".$self->pid.")\n" if DEBUG;
+
+      # Generate regexp to catch R errors
+      if (not defined $INT_ERR_RE) {
+         $self->_gen_error_re;
+         print "DBG: Regexp for internal errors is '$INT_ERR_RE'\n" if DEBUG;
+      }
+
    }
 
    return $status;
@@ -386,7 +390,7 @@ sub pid {
 
 
 sub bin {
-   # Get / set the full path to the R binary program to use. Unless you have set
+   # Get or set the full path to the R binary program to use. Unless you have set
    # the path yourself, it is accessible only after the bridge has start()ed
    my ($self, $val) = @_;
    if (defined $val) {
@@ -433,17 +437,24 @@ sub run {
          $self->stdout(''); # for proper next execution after failed eval
          $self->stderr('');
          die "Problem running this R command:\n$cmd\n\nGot the error:\n$1\n$err\n";
-      } elsif ($err =~ $INT_ERR_RE) {
+      }
+
+      my $err_msg;
+      if ( (defined $INT_ERR_RE) && ($err =~ $INT_ERR_RE)) {
+         $err_msg = $1; # Catch errors on stderr. Leave warnings alone.
+      } elsif ( (not defined $INT_ERR_RE) && (not $err eq '') ) {
+         $err_msg = $err; # Catch anything on stderr.
+      }
+
+      if (defined $err_msg) {
          # Internal error
          print "DBG: Internal error\n" if DEBUG;
          $self->{died} = 1; # for proper cleanup after failed eval
-         my $err_msg = $1;
          if ( $err_msg =~ /unrecognized escape in character string/ ) {
             $err_msg .= "\nMost likely, your R command contained lines exceeding ".
                " 4076 bytes...";
          }
          die "Internal problem while running this R command:\n$cmd\n\nGot the error:\n$err_msg\n";
-
       }
    
       # Save results and reinitialize
@@ -616,10 +627,6 @@ sub initialize {
    # Build the bridge
    $self->bridge( 1 );
 
-   # Generate error regexp
-   $self->_gen_error_re;
-   print "DBG: Regexp for internal errors is '$INT_ERR_RE'\n" if DEBUG;
-
    return 1;
 }
 
@@ -698,9 +705,11 @@ sub wrap_cmd {
    my ($self, $cmd) = @_;
 
    # Evaluate command (and catch syntax and runtime errors)
-   $cmd = _quote($cmd);
-   $cmd = qq`tryCatch( eval(parse(text=$cmd)), error = function(e){print(e)} ); `.
-          qq`write("`.EOS.qq`",stdout())\n`;
+   if (defined $INT_ERR_RE) {
+      $cmd = _quote($cmd);
+      $cmd = qq`tryCatch( eval(parse(text=$cmd)), error = function(e){print(e)} )`;
+   }
+   $cmd .= qq`; write("`.EOS.qq`",stdout())\n`;
 
    return $cmd;
 }
@@ -710,12 +719,12 @@ sub wrap_cmd {
 
 
 sub _gen_error_re {
-   # Generate a regular expression to catch R internal errors. Make this locale-
-   # safe by running a bogus command and catching the word 'Error' in the
-   # locale used by R.
+   # Generate a locale-safe regular expression to catch R internal errors
    my ($self) = @_;
-   ##my $error_str = $self->run('zzz');
-   ##$INT_ERR_RE = qr/^$error_str\s*(.*)$/s; # locale-safe regexp for internal errors
+   # Retrieve how error messages are written in this locale of R
+   my $cmd = q`write(ngettext( 1, "Error: ", "", domain = "R" ), stdout())`;
+   my $error_str = $self->run($cmd);
+   $INT_ERR_RE = qr/^$error_str\s*(.*)$/s;
    return 1;
 }
 

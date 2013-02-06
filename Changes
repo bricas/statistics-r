@@ -1,7 +1,8 @@
 Revision history for Perl extension Statistics::R.
 
 TO BE RELEASE
-    - Handle multiple locales when looking for errors
+    - Handle multiple locales when looking for errors (patch by Jean Véronis and
+      Brian Cassidy)
 
 0.30  2012-11-15
     - Skip tests that hang on Windows (thanks Clifford Sobchuk and Gisbert W.
