@@ -84,7 +84,7 @@ Does nothing anymore.
 
 Return 0.
 
-=item
+=item error()
 
 Return the empty string.
 
