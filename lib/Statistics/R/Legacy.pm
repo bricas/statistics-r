@@ -36,6 +36,8 @@ Statistics::R::Legacy - Legacy methods for Statistics::R
 
 =head1 DESCRIPTION
 
+B<Do not use this module directly. Use L<Statistics::R> instead.>
+
 This module contains legacy methods for I<Statistics::R>. They are provided
 solely so that code that uses older versions of I<Statistics::R> does not crash
 with recent version. Do not use these methods in new code!
@@ -109,6 +111,8 @@ Florent Angly E<lt>florent.angly@gmail.comE<gt> (2011 rewrite)
 Graciliano M. P. E<lt>gm@virtuasites.com.brE<gt> (original code)
 
 =head1 MAINTAINER
+
+Florent Angly E<lt>florent.angly@gmail.comE<gt>
 
 Brian Cassidy E<lt>bricas@cpan.orgE<gt>
 

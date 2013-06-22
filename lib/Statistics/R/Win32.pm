@@ -26,6 +26,8 @@ Statistics::R::Win32 - Helper functions for Statistics::R on MS Windows platform
 
 =head1 DESCRIPTION
 
+B<Do not use this module directly. Use L<Statistics::R> instead.>
+
 Helper functions to deal with environment variables and escape file paths on
 MS Windows platforms.
 
@@ -94,6 +96,8 @@ Florent Angly E<lt>florent.angly@gmail.comE<gt> (2011 rewrite)
 Graciliano M. P. E<lt>gm@virtuasites.com.brE<gt> (original code)
 
 =head1 MAINTAINER
+
+Florent Angly E<lt>florent.angly@gmail.comE<gt>
 
 Brian Cassidy E<lt>bricas@cpan.orgE<gt>
 
