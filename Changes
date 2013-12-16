@@ -1,5 +1,8 @@
 Revision history for Perl extension Statistics::R.
 
+0.32  TBD
+    - Fixed POD error (RT #91438)
+
 0.31  2013-02-07
     - Simplification and speedup of communications with R
     - Handle multiple locales when looking for errors (patch by Jean Véronis and
