@@ -166,7 +166,7 @@ execution of I<run()> or I<set()> will automatically call I<start()>.
 =item stop()
 
 Stop a running instance of R. Usually, you do not need to do this because stop()
-is automatically the Statistics::R object goes out of scope.
+is automatically called when the Statistics::R object goes out of scope.
 
 =item restart()
 
