@@ -2,6 +2,7 @@ Revision history for Perl extension Statistics::R.
 
 0.xx  xxxx-xx-xx
     - Better way to set large arrays (patch by Ken Yamaguchi, RT #97359)
+    - Properly handle the quit() command (reported by tecolo, Github #5)
 
 0.32  2013-12-18 
     - Fixed POD error (reported by Srividya Vaidyanathan, RT #91438)

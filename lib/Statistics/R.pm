@@ -364,14 +364,14 @@ sub restart {
 
 
 sub is_started {
-   # Query whether or not R is currently running - hackish.
+   # Query whether or not R has been started and is still running - hackish.
    # See https://rt.cpan.org/Ticket/Display.html?id=70595
    my ($self) = @_;
    my $bridge = $self->bridge;
    if (not exists $bridge->{STATE}) {
       die "Internal error: could not get STATE from IPC::Run\n";
    }
-   return $bridge->{STATE} eq IPC::Run::_started ? 1 : 0;
+   return ($bridge->{STATE} eq IPC::Run::_started && $bridge->pumpable) ? 1 : 0;
 }
 
 
@@ -455,7 +455,7 @@ sub run {
          $self->stderr('');
          die "Problem while running this R command:\n$cmd\n\n$err_msg\n";
       }
-   
+
       # Save results and reinitialize
       $results .= "\n" if $results;
       $results .= $err.$out;
