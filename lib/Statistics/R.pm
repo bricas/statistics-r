@@ -364,7 +364,8 @@ sub restart {
 
 
 sub is_started {
-   # Query whether or not R is currently running - hackish
+   # Query whether or not R is currently running - hackish.
+   # See https://rt.cpan.org/Ticket/Display.html?id=70595
    my ($self) = @_;
    my $bridge = $self->bridge;
    if (not exists $bridge->{STATE}) {
@@ -375,8 +376,9 @@ sub is_started {
 
 
 sub pid {
-   # Get (or set) the PID of the running R process - hackish. It is accessible
-   # only after the bridge has start()ed
+   # Get (or set) the PID of the running R process - hackish.
+   # See https://rt.cpan.org/Ticket/Display.html?id=70595It
+   # The PID is accessible only after the bridge has start()ed.
    my ($self) = @_;
    my $bridge = $self->bridge;
    if ( not exists $bridge->{KIDS} ) {
