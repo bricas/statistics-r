@@ -15,8 +15,8 @@ I<Statistics::R> talk to the same R process.
 The current I<Statistics::R> implementation uses pipes (for stdin, stdout and
 and stderr) to communicate with R. This implementation should be more efficient
 and reliable than that in previous version, which relied on reading and writing
-files. As before, this module works on GNU/Linux, MS Windows and probably many
-more systems.
+intermediary files. As before, this module works on GNU/Linux, MS Windows and
+probably many more systems.
 
 =head1 SYNOPSIS
 
