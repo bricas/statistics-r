@@ -520,9 +520,11 @@ sub set {
       }
    }
 
-   # Build a variable assignment string command. Sprinkle it with "\n" to avoid
-   # running into R max line limits. Then run it!
-   $self->run( $varname.'<-c('.join(",\n",@$arr).')' );
+   # Build a variable assignment command and run it!
+   $self->run( $varname.'<-c('.join(',',@$arr).')' ); # works in R 2.15
+   # In older R, use "\n" to avoid max line length (slower)
+   #$self->run( $varname.'<-c('.join(",\n",@$arr).')' );
+
 
    return 1;
 }
