@@ -414,8 +414,7 @@ sub bin {
 sub version {
    # Get the version of R, e.g. '3.1.1'
    my ($self) = @_;
-   # Compatible with R 2 and 3: R.Version() but not R.version()
-   $self->run(q`ver <- paste(sep=".",R.Version[6],R.Version[7])`);
+   $self->run(q`ver <- paste(sep=".",R.Version()$major,R.Version()$minor)`);
    return $self->get('ver');
 }
 
