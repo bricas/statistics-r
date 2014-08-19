@@ -292,19 +292,19 @@ our $VERSION = '0.32';
 
 our ($SHARED_BRIDGE, $SHARED_STDIN, $SHARED_STDOUT, $SHARED_STDERR);
 
-use constant DEBUG      => 0;                             # debugging messages
-use constant PROG       => 'R';                           # executable name... R
+use constant DEBUG      => 0;                     # debugging messages
+use constant PROG       => 'R';                   # executable name... R
 
-use constant EOS        => '\\1';                         # indicate the end of R output with \1
-use constant EOS_RE     => qr/[${\(EOS)}]\n$/;            # regexp to match end of R stream
+use constant EOS        => '\\1';                 # indicate the end of R output with \1
+use constant EOS_RE     => qr/[${\(EOS)}]\n$/;    # regexp to match end of R stream
 
-use constant NUMBER_RE  => qr/^$RE{num}{real}$/;          # regexp matching numbers
-use constant BLANK_RE   => qr/^\s*$/;                     # regexp matching whitespaces
-use constant ILINE_RE   => qr/^\s*\[\d+\] /;              # regexp matching indexed line
+use constant NUMBER_RE  => qr/^$RE{num}{real}$/;  # regexp matching numbers
+use constant BLANK_RE   => qr/^\s*$/;             # regexp matching whitespaces
+use constant ILINE_RE   => qr/^\s*\[\d+\] /;      # regexp matching indexed line
 
 my $ERROR_STR_1 = 'Error: ';
 my $ERROR_STR_2 = 'Error in ';
-my $ERROR_RE;                                             # regexp matching R errors
+my $ERROR_RE;                                     # regexp matching R errors
 
 
 sub new {
@@ -736,16 +736,16 @@ sub _localize_error_str {
    # Find the translation for the R error strings. Internationalization is
    # present in R >=2.1, with Natural Language Support enabled.
    my ($self) = @_;
-   my $cmd1 = qq`write(ngettext(1, "$ERROR_STR_1", "", domain="R"), stdout())`;
-   my $cmd2 = qq`write(ngettext(1, "$ERROR_STR_2", "", domain="R"), stdout())`;
-   my ($str1, $str2);
-   eval {
-      $str1 = $self->run($cmd1);
-      $str2 = $self->run($cmd2);
-   };
-   if (not $@) {
-      ($ERROR_STR_1, $ERROR_STR_2) = ($str1, $str2);
-   } # else no internationalization, keep default (english) strings
+   my @strings;
+   for my $error_str ($ERROR_STR_1, $ERROR_STR_2) {
+      my $cmd = qq`write(ngettext(1, "$error_str", "", domain="R"), stdout())`;
+      $self->set('cmd', $cmd);
+      # Try to translate string, return '' if not possible
+      my $str = $self->run(q`tryCatch( eval(parse(text=cmd)) , error=function(e){write("",stdout())} )`);
+      $str ||= $error_str;
+      push @strings, $str;
+   }
+   ($ERROR_STR_1, $ERROR_STR_2) = @strings;
    return 1;
 }
 
