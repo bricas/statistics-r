@@ -414,8 +414,7 @@ sub bin {
 sub version {
    # Get the version of R, e.g. '3.1.1'
    my ($self) = @_;
-   $self->run(q`ver <- paste(sep=".",R.Version()$major,R.Version()$minor)`);
-   return $self->get('ver');
+   return $self->run(q`write(paste(sep=".",R.Version()$major,R.Version()$minor), stdout())`);
 }
 
 
