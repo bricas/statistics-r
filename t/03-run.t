@@ -26,7 +26,7 @@ ok $bin =~ /\S+/, 'Executable path';
 ok $version = $R->version();
 ok $version =~ /^\d+\.\d+\.\d+$/, 'Version';
 
-diag "R version $version installed at $bin\n";
+diag "R version $version found at $bin\n";
 
 
 $expected = '';

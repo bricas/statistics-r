@@ -298,6 +298,8 @@ use constant NUMBER_RE  => qr/^$RE{num}{real}$/;          # regexp matching numb
 use constant BLANK_RE   => qr/^\s*$/;                     # regexp matching whitespaces
 use constant ILINE_RE   => qr/^\s*\[\d+\] /;              # regexp matching indexed line
 
+my $ERROR_STR_1 = 'Error: ';
+my $ERROR_STR_2 = 'Error in ';
 my $ERROR_RE;                                             # regexp matching R errors
 
 
@@ -344,8 +346,9 @@ sub start {
 
       # Generate regexp to catch R errors
       if (not defined $ERROR_RE) {
-         $self->_gen_error_re;
-         print "DBG: Regexp for internal errors is '$ERROR_RE'\n" if DEBUG;
+         $self->_generate_error_re;
+         $self->_localize_error_str;
+         $self->_generate_error_re;
       }
 
    }
@@ -450,19 +453,11 @@ sub run {
       print "DBG: Stdout is '$out'\n" if DEBUG;
       print "DBG: Stderr is '$err'\n" if DEBUG;
 
-      my $err_msg;
-      if ( (defined $ERROR_RE) && ($err =~ $ERROR_RE)) {
+      if ($err =~ $ERROR_RE) {
          # Catch errors on stderr. Leave warnings alone.
-         $err_msg = "Error:\n".$1;
-      } elsif ( (not defined $ERROR_RE) && (not $err eq '') ) {
-         # Catch anything on stderr.
-         $err_msg = "Internal error:\n".$err;
-      }
-
-      if (defined $err_msg) {
-         # Internal error
          print "DBG: Error\n" if DEBUG;
          $self->{died} = 1; # for proper cleanup after failed eval
+         my $err_msg = "Error:\n".$1;
          if ( $err_msg =~ /unrecognized escape in character string/ ) {
             $err_msg .= "\nMost likely, the given R command contained lines ".
                "exceeding 4076 bytes...";
@@ -715,13 +710,6 @@ sub wrap_cmd {
    # end of stream string will appear on stdout and indicate that R has finished
    # processing the data. Note that $cmd can be multiple R commands.
    my ($self, $cmd) = @_;
-   # Evaluate command (and catch syntax and runtime errors)
-
-   #if (defined $ERROR_RE) {
-   #   $cmd = _quote($cmd);
-   #   $cmd = qq`tryCatch( eval(parse(text=$cmd)), error = function(e){print(e)} )`;
-   #}
-
    chomp $cmd;
    $cmd =~ s/;$//;
    $cmd .= qq`; write("`.EOS.qq`",stdout())\n`;
@@ -732,19 +720,43 @@ sub wrap_cmd {
 #---------- HELPER SUBS -------------------------------------------------------#
 
 
-sub _gen_error_re {
-   # Generate a locale-safe regular expression to catch R internal errors
-   my ($self) = @_;
-   # Retrieve error messages translated in this locale of R
-   my $cmd1 = q`write(ngettext( 1, "Error: ", "", domain = "R" ), stdout())`;
-   my $cmd2 = q`write(ngettext( 1, "Error in ", "", domain = "R" ), stdout())`;
-   # Generate regexp that will capture error messages of these types:
+sub _generate_error_re {
+   # Generate a regular expression to catch R internal errors, e.g.:
    #    Error: object 'zzz' not found"
    #    Error in print(ASDF) : object 'ASDF' not found
-   my $error_str1 = $self->run($cmd1);
-   my $error_str2 = $self->run($cmd2);
-   $ERROR_RE = qr/^(?:$error_str1|$error_str2)\s*(.*)$/s;
+   my ($self) = @_;
+   $ERROR_RE = qr/^(?:$ERROR_STR_1|$ERROR_STR_2)\s*(.*)$/s;
+   print "DBG: Regexp for catching errors is '$ERROR_RE'\n" if DEBUG;
    return 1;
+}
+
+
+sub _localize_error_str {
+   # Find the translation for the R error strings. Internationalization is
+   # present in R >=2.1, with Natural Language Support enabled.
+   my ($self) = @_;
+   my $cmd1 = qq`write(ngettext(1, "$ERROR_STR_1", "", domain="R"), stdout())`;
+   my $cmd2 = qq`write(ngettext(1, "$ERROR_STR_2", "", domain="R"), stdout())`;
+   my ($str1, $str2);
+   eval {
+      $str1 = $self->run($cmd1);
+      $str2 = $self->run($cmd2);
+   };
+   if (not $@) {
+      ($ERROR_STR_1, $ERROR_STR_2) = ($str1, $str2);
+   } # else no internationalization, keep default (english) strings
+   return 1;
+}
+
+
+
+sub DESTROY {
+   # The bridge to R is not automatically bombed when Statistics::R instances
+   # get out of scope. Do it now (unless running in shared mode)!
+   my ($self) = @_;
+   if (not $self->is_shared) {
+      $self->stop;
+   }
 }
 
 
@@ -781,14 +793,5 @@ sub _unquote {
    return $str;
 }
 
-
-sub DESTROY {
-   # The bridge to R is not automatically bombed when Statistics::R instances
-   # get out of scope. Do it now (unless running in shared mode)!
-   my ($self) = @_;
-   if (not $self->is_shared) {
-      $self->stop;
-   }
-}
 
 1;
