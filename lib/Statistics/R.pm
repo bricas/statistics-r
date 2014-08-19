@@ -7,16 +7,16 @@ Statistics::R - Perl interface with the R statistical program
 
 =head1 DESCRIPTION
 
-I<Statistics::R> is a module to controls the R interpreter (R project for statistical
-computing: L<http://www.r-project.org/>). It lets you start R, pass commands to
-it and retrieve the output. A shared mode allow to have several instances of
-I<Statistics::R> talk to the same R process.
+I<Statistics::R> is a module to controls the R interpreter (R project for
+statistical computing: L<http://www.r-project.org/>). It lets you start R, pass
+commands to it and retrieve their output. A shared mode allows several instances
+of I<Statistics::R> to talk to the same R process.
 
-The current I<Statistics::R> implementation uses pipes (for stdin, stdout and
-and stderr) to communicate with R. This implementation should be more efficient
-and reliable than that in previous version, which relied on reading and writing
-intermediary files. As before, this module works on GNU/Linux, MS Windows and
-probably many more systems.
+The current I<Statistics::R> implementation uses pipes (stdin, stdout and stderr)
+to communicate with R. This implementation is more efficient and reliable than
+that in versions < 0.20, which relied on reading and writing intermediary files.
+As before, this module works on GNU/Linux, MS Windows and probably many more
+systems.
 
 =head1 SYNOPSIS
 
@@ -27,7 +27,7 @@ probably many more systems.
   
   # Run simple R commands
   my $output_file = "file.ps";
-  $R->run(qq`postscript("$output_file" , horizontal=FALSE , width=500 , height=500 , pointsize=1)`);
+  $R->run(qq`postscript("$output_file", horizontal=FALSE, width=500, height=500)`);
   $R->run(q`plot(c(1, 5, 10), type = "l")`);
   $R->run(q`dev.off()`);
 
@@ -46,14 +46,15 @@ probably many more systems.
 
 =item new()
 
-Build a I<Statistics::R> bridge object between Perl and R. Available options are:
-
+Build a I<Statistics::R> bridge object connecting Perl and R. Available options
+are:
 
 =over 4
 
 =item r_bin
 
-Specify the full path to R if it is not automatically found. See L<INSTALLATION>.
+Specify the full path to the R executable, if it is not automatically found. See
+L</INSTALLATION>.
 
 =item shared
 
@@ -71,8 +72,8 @@ Statistics::R can communicate with the same unique R instance. Example:
 
    $R1->stop; # or $R2->stop
 
-Note that in shared mode, you are responsible to have one of your Statistics::R
-instances call the I<stop()> method when you are finished with R. But be careful
+Note that in shared mode, you are responsible for calling the I<stop()> method
+from one of your Statistics::R instances when you are finished. But be careful
 not to call the I<stop()> method if you still have processes that need to
 interact with R!
 
@@ -81,18 +82,18 @@ interact with R!
 
 =item run()
 
-First, I<start()> R if it is not yet running. Then, execute R commands passed as
-a string and return the output as a string. If your command fails to run in R,
-an error message will be displayed.
+First, I<start()> R if it is not yet running. Then, execute R commands passed
+as a string and return the output as a string. If your commands failed to run
+in R, an error message will be displayed.
 
 Example:
 
    my $out = $R->run( q`print( 1 + 2 )` );
 
-If you intend on runnning many R commands, it may be convenient to pass an array
+If you intend on runnning many R commands, it may be convenient to pass a list
 of commands or put multiple commands in an here-doc:
 
-   # Array of R commands:
+   # List of R commands:
    my $out1 = $R->run(
       q`a <- 2`,
       q`b <- 5`,
@@ -109,30 +110,32 @@ of commands or put multiple commands in an here-doc:
    EOF
    my $out2 = $R->run($cmds);
 
-To run commands from a file, see the I<run_from_file()> method.
+Alternatively, to run commands from a file, use the I<run_from_file()> method.
 
-The output you get from I<run()> is the combination of what R would display on the
-standard output and the standard error, but the order may differ. When loading
-modules, some may write numerous messages on standard error. You can disable
-this behavior using the following R command:
+The return value you get from I<run()> is a combination of what R would display
+on the standard output and the standard error, but the exact order may differ.
+
+When loading modules, some may write numerous messages on standard error. You
+can disable this behavior using the following R command:
 
    suppressPackageStartupMessages(library(library_to_load))
 
-Note that R imposes an upper limit on how many characters can be contained on a
-line: about 4076 bytes maximum. You will be warned if this occurs. Commands
-containing lines exceeding the limit may fail with an error message stating:
+Note that older versions of R impose a limit on how many characters can be
+contained on a line: about 4076 bytes maximum. You will be warned if this
+occurs, with an error message stating:
 
   '\0' is an unrecognized escape in character string starting "...
 
-If possible, break down your R code into several smaller, more manageable
-statements. Alternatively, adding newline characters "\n" at strategic places in
-the R statements will work around the issue.
+In this case, try to break down your R code into several smaller, more
+manageable statements. Alternatively, adding newline characters "\n" at
+strategic places in the R statements will work around the issue.
 
 =item run_from_file()
 
-Similar to I<run()> but reads the R commands from the specified file. Internally,
-this method converts the filename to a format compatible with R and then passes
-it to the R I<source()> command to read the file and execute the commands.
+Similar to I<run()> but reads the R commands from the specified file.
+Internally, this method converts the filename to a format compatible with R and
+then passes it to the R I<source()> command to read the file and execute the
+commands.
 
 =item set()
 
@@ -165,12 +168,14 @@ execution of I<run()> or I<set()> will automatically call I<start()>.
 
 =item stop()
 
-Stop a running instance of R. Usually, you do not need to do this because stop()
-is automatically called when the Statistics::R object goes out of scope.
+Stop a running instance of R. You need to call this method after running a
+shared bridge. For a simple bridge, you do not need to do this because
+I<stop()> is automatically called when the Statistics::R object goes out of
+scope.
 
 =item restart()
 
-stop() and start() R.
+I<stop()> and I<start()> R.
 
 =item bin()
 
@@ -192,15 +197,15 @@ Return the PID of the running R process
 
 =head1 INSTALLATION
 
-Since I<Statistics::R> relies on R to work, you need to install R first. See this
-page for downloads, L<http://www.r-project.org/>. If R is in your PATH environment
-variable, then it should be available from a terminal and be detected
-automatically by I<Statistics::R>. This means that you don't have to do anything
-on Linux systems to get I<Statistics::R> working. On Windows systems, in addition
-to the folders described in PATH, the usual suspects will be checked for the
-presence of the R binary, e.g. C:\Program Files\R. If I<Statistics::R> does not
-find R installation, your last recourse is to specify its full path when calling
-new():
+Since I<Statistics::R> relies on R to work, you need to install R first. See
+this page for downloads, L<http://www.r-project.org/>. If R is in your PATH
+environment variable, then it should be available from a terminal and be
+detected automatically by I<Statistics::R>. This means that you don't have to do
+anything on Linux systems to get I<Statistics::R> working. On Windows systems,
+in addition to the folders described in PATH, the usual suspects will be checked
+for the presence of the R binary, e.g. C:\Program Files\R. If I<Statistics::R>
+does not find where R is installed, your last recourse is to specify its full
+path when calling new():
 
     my $R = Statistics::R->new( r_bin => $fullpath );
 
@@ -226,7 +231,7 @@ You also need to have the following CPAN Perl modules installed:
 
 =item * The R-project web site: L<http://www.r-project.org/>
 
-=item * Statistics:: modules for Perl: L<http://search.cpan.org/search?query=Statistics&mode=module>
+=item * Statistics::* modules for Perl: L<http://search.cpan.org/search?query=Statistics&mode=module>
 
 =back
 
