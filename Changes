@@ -4,6 +4,7 @@ Revision history for Perl extension Statistics::R.
     - Better way to set large arrays (patch by Ken Yamaguchi, RT #97359)
     - Properly handle the quit() command (reported by tecolo, Github #5)
     - Prefer using the 'bin' constructor instead of 'r_bin'
+    - Method version() to get the version of R
 
 0.32  2013-12-18 
     - Fixed POD error (reported by Srividya Vaidyanathan, RT #91438)

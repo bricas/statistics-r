@@ -181,6 +181,10 @@ I<stop()> and I<start()> R.
 
 Get or set the path to the R executable.
 
+=item version()
+
+Get the version number of R.
+
 =item is_shared()
 
 Was R started in shared mode?
@@ -404,6 +408,14 @@ sub bin {
       $self->{bin} = $val;
    }
    return $self->{bin};
+}
+
+
+sub version {
+   # Get the version of R, e.g. '3.1.1'
+   my ($self) = @_;
+   $self->run(q`ver <- paste(sep=".",R.version[6],R.version[7])`);
+   return $self->get('ver');
 }
 
 

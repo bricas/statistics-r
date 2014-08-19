@@ -8,16 +8,26 @@ use File::Temp;
 use Statistics::R;
 use File::Spec::Functions;
 
-my ($R, $expected);
+my ($R, $expected, $bin, $version);
 
 my $file = 'file.ps';
 
 ok $R = Statistics::R->new();
 
-ok $R->bin() =~ /\S+/, 'Binary';
+ok $bin = $R->bin();
+ok $bin =~ /\S+/, 'Executable name';
 
 $expected = '';
 is $R->run( ), $expected;
+
+ok $bin = $R->bin();
+ok $bin =~ /\S+/, 'Executable path';
+
+ok $version = $R->version();
+ok $version =~ /^\d+\.\d+\.\d+$/, 'Version';
+
+diag "R version $version installed at $bin\n";
+
 
 $expected = '';
 is $R->run( qq`postscript("$file" , horizontal=FALSE , width=500 , height=500 , pointsize=1)`), $expected, 'Basic';
