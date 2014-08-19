@@ -51,7 +51,7 @@ are:
 
 =over 4
 
-=item r_bin
+=item bin
 
 Specify the full path to the R executable, if it is not automatically found. See
 L</INSTALLATION>.
@@ -207,7 +207,7 @@ for the presence of the R binary, e.g. C:\Program Files\R. If I<Statistics::R>
 does not find where R is installed, your last recourse is to specify its full
 path when calling new():
 
-    my $R = Statistics::R->new( r_bin => $fullpath );
+    my $R = Statistics::R->new( bin => $fullpath );
 
 You also need to have the following CPAN Perl modules installed:
 
@@ -614,17 +614,12 @@ sub get {
 sub initialize {
    my ($self, %args) = @_;
 
-   # Path of R binary
-   my $bin;
-   if ( $args{ r_bin } || $args{ R_bin } ) {
-      $bin = $args{ r_bin } || $args{ R_bin };
-   } else {
-      $bin = PROG; # IPC::Run will find the full path for the program later
-   }
-   $self->bin( $bin );
+   # Full path of R binary specified by bin (r_bin or R_bin for backward
+   # compatibility), or executable name (IPC::Run will find its full path later)
+   $self->bin( $args{bin} || $args{r_bin} || $args{R_bin} || PROG );
 
    # Using shared mode?
-   if ( exists($args{shared}) && ($args{shared} == 1) ) {
+   if ( exists $args{shared} && $args{shared} == 1 ) {
       $self->is_shared( 1 );
    } else {
       $self->is_shared( 0 );
