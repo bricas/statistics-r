@@ -21,7 +21,6 @@ BEGIN {
       receive
       is_blocked
       is_locked
-      receive
       lock
       unlock
       send 

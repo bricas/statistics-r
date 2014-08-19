@@ -137,6 +137,10 @@ Internally, this method converts the filename to a format compatible with R and
 then passes it to the R I<source()> command to read the file and execute the
 commands.
 
+=item result()
+
+Get the results from the last R command.
+
 =item set()
 
 Set the value of an R variable (scalar or vector). Example:
@@ -308,7 +312,7 @@ sub new {
    my ($class, %args) = @_;
    my $self = {};
    bless $self, ref($class) || $class;
-   $self->initialize( %args );
+   $self->_initialize( %args );
    return $self;
 }
 
@@ -335,11 +339,11 @@ sub start {
       # method start_shared()
       if ( exists($args{shared}) && ($args{shared} == 1) ) {
          $self->is_shared( 1 );
-         $self->bridge( 1 );
+         $self->_bridge( 1 );
       }
 
       # Now, start R
-      my $bridge = $self->bridge;
+      my $bridge = $self->_bridge;
       $status = $bridge->start or die "Error starting ".PROG.": $?\n";
       $self->bin( $bridge->{KIDS}->[0]->{PATH} );
       print "DBG: Started R, ".$self->bin." (pid ".$self->pid.")\n" if DEBUG;
@@ -362,7 +366,7 @@ sub stop {
    my ($self) = @_;
    my $status = 1;
    if ( ($self->is_started) && (not $self->{died}) ) {
-      $status = $self->bridge->finish or die "Error stopping ".PROG.": $?\n";
+      $status = $self->_bridge->finish or die "Error stopping ".PROG.": $?\n";
       print "DBG: Stopped R\n" if DEBUG;
    }
    return $status;
@@ -379,7 +383,7 @@ sub is_started {
    # Query whether or not R has been started and is still running - hackish.
    # See https://rt.cpan.org/Ticket/Display.html?id=70595
    my ($self) = @_;
-   my $bridge = $self->bridge;
+   my $bridge = $self->_bridge;
    if (not exists $bridge->{STATE}) {
       die "Internal error: could not get STATE from IPC::Run\n";
    }
@@ -392,7 +396,7 @@ sub pid {
    # See https://rt.cpan.org/Ticket/Display.html?id=70595It
    # The PID is accessible only after the bridge has start()ed.
    my ($self) = @_;
-   my $bridge = $self->bridge;
+   my $bridge = $self->_bridge;
    if ( not exists $bridge->{KIDS} ) {
       die "Internal error: could not get KIDS from IPC::Run\n";
    }
@@ -434,24 +438,24 @@ sub run {
 
       # Wrap command for execution in R
       print "DBG: Command is '$cmd'\n" if DEBUG;
-      $self->stdin( $self->wrap_cmd($cmd) );
-      print "DBG: Stdin is '".$self->stdin."'\n" if DEBUG;
+      $self->_stdin( $self->wrap_cmd($cmd) );
+      print "DBG: stdin is '".$self->_stdin."'\n" if DEBUG;
 
       # Pass input to R and get its output
-      my $bridge = $self->bridge;
-      while (  $self->stdout !~ EOS_RE  &&  $bridge->pumpable  ) {
+      my $bridge = $self->_bridge;
+      while (  $self->_stdout !~ EOS_RE  &&  $bridge->pumpable  ) {
          $bridge->pump;
       }
 
       # Parse output, detect errors
-      my $out = $self->stdout;
+      my $out = $self->_stdout;
       $out =~ s/${\(EOS_RE)}//;
       chomp $out;
-      my $err = $self->stderr;
+      my $err = $self->_stderr;
       chomp $err;
 
-      print "DBG: Stdout is '$out'\n" if DEBUG;
-      print "DBG: Stderr is '$err'\n" if DEBUG;
+      print "DBG: stdout is '$out'\n" if DEBUG;
+      print "DBG: stderr is '$err'\n" if DEBUG;
 
       if ($err =~ $ERROR_RE) {
          # Catch errors on stderr. Leave warnings alone.
@@ -462,16 +466,16 @@ sub run {
             $err_msg .= "\nMost likely, the given R command contained lines ".
                "exceeding 4076 bytes...";
          }
-         $self->stdout('');
-         $self->stderr('');
+         $self->_stdout('');
+         $self->_stderr('');
          die "Problem while running this R command:\n$cmd\n\n$err_msg\n";
       }
 
       # Save results and reinitialize
       $results .= "\n" if $results;
       $results .= $err.$out;
-      $self->stdout('');
-      $self->stderr('');
+      $self->_stdout('');
+      $self->_stderr('');
    }
 
    $self->result($results);
@@ -503,6 +507,16 @@ sub run_from_file {
    my $results = $self->run($cmd);
 
    return $results;
+}
+
+
+sub result {
+   # Get / set result of last R command
+   my ($self, $val) = @_;
+   if (defined $val) {
+      $self->{result} = $val;
+   }
+   return $self->{result};
 }
 
 
@@ -617,7 +631,7 @@ sub get {
 #---------- INTERNAL METHODS --------------------------------------------------#
 
 
-sub initialize {
+sub _initialize {
    my ($self, %args) = @_;
 
    # Full path of R binary specified by bin (r_bin or R_bin for backward
@@ -632,13 +646,13 @@ sub initialize {
    }
 
    # Build the bridge
-   $self->bridge( 1 );
+   $self->_bridge( 1 );
 
    return 1;
 }
 
 
-sub bridge {
+sub _bridge {
    # Get or build the communication bridge and IOs with R
    my ($self, $build) = @_;
    my %params = ( debug => 0 );
@@ -665,7 +679,7 @@ sub bridge {
 }
 
 
-sub stdin {
+sub _stdin {
    # Get / set standard input string for R
    my ($self, $val) = @_;
    if (defined $val) {
@@ -675,7 +689,7 @@ sub stdin {
 }
 
 
-sub stdout {
+sub _stdout {
    # Get / set standard output string for R
    my ($self, $val) = @_;
    if (defined $val) {
@@ -685,23 +699,13 @@ sub stdout {
 }
 
 
-sub stderr {
+sub _stderr {
    # Get / set standard error string for R
    my ($self, $val) = @_;
    if (defined $val) {
       ${$self->{stderr}} = $val;
    }
    return ${$self->{stderr}};
-}
-
-
-sub result {
-   # Get / set result of last R command
-   my ($self, $val) = @_;
-   if (defined $val) {
-      $self->{result} = $val;
-   }
-   return $self->{result};
 }
 
 
@@ -715,9 +719,6 @@ sub wrap_cmd {
    $cmd .= qq`; write("`.EOS.qq`",stdout())\n`;
    return $cmd;
 }
-
-
-#---------- HELPER SUBS -------------------------------------------------------#
 
 
 sub _generate_error_re {
@@ -749,7 +750,6 @@ sub _localize_error_str {
 }
 
 
-
 sub DESTROY {
    # The bridge to R is not automatically bombed when Statistics::R instances
    # get out of scope. Do it now (unless running in shared mode)!
@@ -758,6 +758,9 @@ sub DESTROY {
       $self->stop;
    }
 }
+
+
+#---------- HELPER SUBS -------------------------------------------------------#
 
 
 sub _trim {
