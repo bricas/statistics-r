@@ -1,6 +1,6 @@
 Revision history for Perl extension Statistics::R.
 
-0.xx  xxxx-xx-xx
+0.33  2014-08-28
     - Better way to set large arrays (patch by Ken Yamaguchi, RT #97359)
     - Properly handle the quit() command (reported by tecolo, Github #5)
     - Prefer using the 'bin' constructor instead of 'r_bin'
