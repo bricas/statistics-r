@@ -19,6 +19,8 @@ build_requires 'Test::More'      => '0.47';
 requires       'IPC::Run'        =>  0;
 requires       'Regexp::Common'  =>  0;
 requires       'Text::Balanced'  => '1.97';
+requires       'Text::Wrap'      =>  0;
+requires       'version'         => '0.77';
 
 requires_external_bin 'R';
 

@@ -16,7 +16,7 @@ The current I<Statistics::R> implementation uses pipes (stdin, stdout and stderr
 to communicate with R. This implementation is more efficient and reliable than
 that in versions < 0.20, which relied on reading and writing intermediary files.
 As before, this module works on GNU/Linux, MS Windows and probably many more
-systems.
+systems. I<Statistics::R> has been tested with R version 2 and 3.
 
 =head1 SYNOPSIS
 
@@ -227,6 +227,10 @@ You also need to have the following CPAN Perl modules installed:
 
 =item Text::Balanced (>= 1.97)
 
+=item Text::Wrap
+
+=item version (>= 0.77)
+
 =back
 
 =head1 SEE ALSO
@@ -278,6 +282,7 @@ revision control. To get the latest revision, run:
 use 5.006;
 use strict;
 use warnings;
+use version;
 use Regexp::Common;
 use Statistics::R::Legacy;
 use IPC::Run qw( harness start pump finish );
@@ -294,6 +299,7 @@ our ($SHARED_BRIDGE, $SHARED_STDIN, $SHARED_STDOUT, $SHARED_STDERR);
 
 use constant DEBUG      => 0;                     # debugging messages
 use constant PROG       => 'R';                   # executable name... R
+use constant MAXLINELEN => 1023;                  # maximum line length for R < 2.5
 
 use constant EOS        => '\\1';                 # indicate the end of R output with \1
 use constant EOS_RE     => qr/[${\(EOS)}]\n$/;    # regexp to match end of R stream
@@ -305,6 +311,8 @@ use constant ILINE_RE   => qr/^\s*\[\d+\] /;      # regexp matching indexed line
 my $ERROR_STR_1 = 'Error: ';
 my $ERROR_STR_2 = 'Error in ';
 my $ERROR_RE;                                     # regexp matching R errors
+
+my $WRAP_LINES = sub { return shift };            # function to wrap R commands
 
 
 sub new {
@@ -353,6 +361,17 @@ sub start {
          $self->_generate_error_re;
          $self->_localize_error_str;
          $self->_generate_error_re;
+      }
+
+      # Set up a function to wrap lines for R < 2.5
+      if ( version->parse($self->version) < version->parse('2.5.0') ) {
+         print "DBG: Need to wrap to ".MAXLINELEN."\n" if DEBUG;
+         require Text::Wrap;
+         $Text::Wrap::columns   = MAXLINELEN;
+         $Text::Wrap::break     = ',';
+         $Text::Wrap::huge      = 'overflow';
+         $Text::Wrap::separator = ",\n";
+         $WRAP_LINES = sub { return Text::Wrap::wrap('', '', shift) };
       }
 
    }
@@ -462,9 +481,10 @@ sub run {
          print "DBG: Error\n" if DEBUG;
          $self->{died} = 1; # for proper cleanup after failed eval
          my $err_msg = "Error:\n".$1;
-         if ( $err_msg =~ /unrecognized escape in character string/ ) {
+         if ( $err_msg =~ /unrecognized escape in character string/ &&
+              version->parse($self->version) < version->parse('2.5.0') ) {
             $err_msg .= "\nMost likely, the given R command contained lines ".
-               "exceeding 4076 bytes...";
+               "exceeding ".MAXLINELEN." characters.";
          }
          $self->_stdout('');
          $self->_stderr('');
@@ -525,6 +545,9 @@ sub set {
    # assign NULL to an R variable
    my ($self, $varname, $arr) = @_;
     
+   # Start R now if it is not already running
+   $self->start if not $self->is_started;
+
    # Check variable type, convert everything into an arrayref
    my $ref = ref $arr;
    if ($ref eq '') {
@@ -548,10 +571,9 @@ sub set {
    }
 
    # Build a variable assignment command and run it!
-   $self->run( $varname.'<-c('.join(',',@$arr).')' ); # works in R 2.15
-   # In older R, use "\n" to avoid max line length (slower)
-   #$self->run( $varname.'<-c('.join(",\n",@$arr).')' );
-
+   my $cmd = $varname.'<-c('.join(',',@$arr).')';
+   $cmd = &$WRAP_LINES( $cmd );
+   $self->run( $cmd );
 
    return 1;
 }
