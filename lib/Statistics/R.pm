@@ -183,7 +183,8 @@ I<stop()> and I<start()> R.
 
 =item bin()
 
-Get or set the path to the R executable.
+Get or set the path to the R executable. Note that the path will be available
+only after start() has been called.
 
 =item version()
 
