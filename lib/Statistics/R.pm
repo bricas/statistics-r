@@ -385,7 +385,7 @@ sub start {
 sub stop {
    my ($self) = @_;
    my $status = 1;
-   if ( ($self->is_started) && (not $self->{died}) ) {
+   if ( $self->is_started ) {
       $status = $self->_bridge->finish or die "Error stopping ".PROG.": $?\n";
       print "DBG: Stopped R\n" if DEBUG;
    }
@@ -403,11 +403,17 @@ sub is_started {
    # Query whether or not R has been started and is still running - hackish.
    # See https://rt.cpan.org/Ticket/Display.html?id=70595
    my ($self) = @_;
+   my $is_started = 0;
    my $bridge = $self->_bridge;
-   if (not exists $bridge->{STATE}) {
-      die "Internal error: could not get STATE from IPC::Run\n";
+   if (defined $bridge && not $self->{died}) {
+      if (not exists $bridge->{STATE}) {
+         die "Internal error: could not get STATE from IPC::Run\n";
+      }
+      if ($bridge->{STATE} eq IPC::Run::_started && $bridge->pumpable) {
+         $is_started = 1;
+      }
    }
-   return ($bridge->{STATE} eq IPC::Run::_started && $bridge->pumpable) ? 1 : 0;
+   return $is_started;
 }
 
 

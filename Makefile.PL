@@ -16,7 +16,7 @@ resources
 
 build_requires 'Test::More'      => '0.47';
 
-requires       'IPC::Run'        =>  0;
+requires       'IPC::Run'        => '0.1'; # availability of $self->{STATE}
 requires       'Regexp::Common'  =>  0;
 requires       'Text::Balanced'  => '1.97';
 requires       'Text::Wrap'      =>  0;
