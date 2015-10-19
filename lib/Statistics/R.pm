@@ -355,6 +355,7 @@ sub start {
       my $bridge = $self->_bridge;
       $status = $bridge->start or die "Error starting ".PROG.": $?\n";
       $self->bin( $bridge->{KIDS}->[0]->{PATH} );
+      delete $self->{died};
       print "DBG: Started R, ".$self->bin." (pid ".$self->pid.")\n" if DEBUG;
 
       # Generate regexp to catch R errors
