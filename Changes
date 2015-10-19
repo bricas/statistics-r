@@ -1,6 +1,6 @@
 Revision history for Perl extension Statistics::R.
 
-x.xx  xxxx-xx-xx
+0.34  2015-10-19
     - Fixed obscure issue in DESTROY (reported by Pär Larsson, RT #107246)
 
 0.33  2014-08-28
