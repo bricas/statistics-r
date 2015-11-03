@@ -286,7 +286,7 @@ use warnings;
 use version;
 use Regexp::Common;
 use Statistics::R::Legacy;
-use IPC::Run qw( harness start pump finish );
+use IPC::Run qw( harness start pump finish timer );
 use File::Spec::Functions qw(catfile splitpath splitdir);
 use Text::Balanced qw ( extract_delimited extract_multiple );
 
@@ -445,6 +445,16 @@ sub bin {
 }
 
 
+sub timeout {
+	# Get or set the timeout for an R command
+	my ($self, $val) = @_;
+	if (defined $val) {
+		$self->{timeout} = $val;
+	}
+	return $self->{timeout};
+}
+
+
 sub version {
    # Get the version of R, e.g. '3.1.1'
    my ($self) = @_;
@@ -455,13 +465,13 @@ sub version {
 sub run {
    # Pass the input and get the output
    my ($self, @cmds) = @_;
-
+   
    # Need to start R now if it is not already running
    $self->start if not $self->is_started;
 
    # Process each command
    my $results = '';
-   for my $cmd (@cmds) {
+ CMD: for my $cmd (@cmds) {
 
       # Wrap command for execution in R
       print "DBG: Command is '$cmd'\n" if DEBUG;
@@ -470,9 +480,20 @@ sub run {
 
       # Pass input to R and get its output
       my $bridge = $self->_bridge;
-      while (  $self->_stdout !~ EOS_RE  &&  $bridge->pumpable  ) {
-         $bridge->pump;
+
+	  my $t = $self->_timer();
+	  $t->start( $self->timeout );
+	  
+      while (  $self->_stdout !~ EOS_RE  &&  $bridge->pumpable ) {
+		  # Check whether time out has been exceeded
+		  if ( $t->is_expired ) {
+		  	  print "Timeout for R command '$cmd' exceeded. Terminating current bridge \n";
+		  	  $self->_bridge->kill_kill;			  
+		  	  next CMD;
+		  }		 		  
+		  $bridge->pump;
       }
+	  $t->reset;
 
       # Parse output, detect errors
       my $out = $self->_stdout;
@@ -674,6 +695,9 @@ sub _initialize {
    } else {
       $self->is_shared( 0 );
    }
+   
+   # Set timeout if given
+   $self->timeout( $args{timeout} ) if $args{timeout};
 
    # Build the bridge
    $self->_bridge( 1 );
@@ -688,22 +712,26 @@ sub _bridge {
    my %params = ( debug => 0 );
    if ($build) {
       my $cmd = [ $self->bin, '--vanilla', '--slave' ];
+	  	  
+	  # set default timer to high value of 1 year
+	  $self->_timer( timer( "365:6:0:0" ) );
       if (not $self->is_shared) {
          my ($stdin, $stdout, $stderr);
          $self->{stdin}  = \$stdin;
          $self->{stdout} = \$stdout;
          $self->{stderr} = \$stderr;
-         $self->{bridge} = harness $cmd, $self->{stdin}, $self->{stdout}, $self->{stderr}, %params;
+         $self->{bridge} = harness $cmd, $self->{stdin}, $self->{stdout}, $self->{stderr}, $self->_timer, %params;
       } else {
          $self->{stdin}  = \$SHARED_STDIN ;
          $self->{stdout} = \$SHARED_STDOUT;
          $self->{stderr} = \$SHARED_STDERR;
          if (not defined $SHARED_BRIDGE) {
             # The first Statistics::R instance builds the bridge
-            $SHARED_BRIDGE = harness $cmd, $self->{stdin}, $self->{stdout}, $self->{stderr}, %params;
+            $SHARED_BRIDGE = harness $cmd, $self->{stdin}, $self->{stdout}, $self->{stderr}, $self->_timer, %params;
          }
          $self->{bridge} = $SHARED_BRIDGE;
       }
+	  print "DBG: Created new R communication bridge\n" if DEBUG;
    }
    return $self->{bridge};
 }
@@ -736,6 +764,16 @@ sub _stderr {
       ${$self->{stderr}} = $val;
    }
    return ${$self->{stderr}};
+}
+
+
+sub _timer {
+   # Get / set timer object with timeout for single R command
+   my ($self, $val) = @_;
+   if (defined $val) {
+      ${$self->{timer}} = $val;
+   }
+   return ${$self->{timer}};
 }
 
 
