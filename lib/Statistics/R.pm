@@ -32,11 +32,13 @@ systems. I<Statistics::R> has been tested with R version 2 and 3.
   $R->run(q`dev.off()`);
 
   # Pass and retrieve data (scalars or arrays)
-  my $input_value = 1;
+  my $input_value = 2;
+  my @input_array = (10, 20, 30);
   $R->set('x', $input_value);
-  $R->run(q`y <- x^2`);
-  my $output_value = $R->get('y');
-  print "y = $output_value\n";
+  $R->set('y', \@input_array);
+  $R->run(q`z <- sum(x*y)`);
+  my $output_value = $R->get('z');
+  print "z = $output_value\n";
 
   $R->stop();
 
@@ -143,7 +145,7 @@ Get the results from the last R command.
 
 =item set()
 
-Set the value of an R variable (scalar or vector). Example:
+Set the value of an R variable (scalar or arrayref). Example:
 
   # Create an R scalar
   $R->set( 'x', 'pear' );
@@ -151,19 +153,22 @@ Set the value of an R variable (scalar or vector). Example:
 or
 
   # Create an R list
-  $R->set( 'y', [1, 2, 3] );
+  my @list = (1, 2, 3);
+  $R->set( 'y', \@list );
 
 =item get()
  
-Get the value of an R variable (scalar or vector). Example:
+Get the value of an R variable (scalar or arrayref). Example:
 
   # Retrieve an R scalar. $x is a Perl scalar.
   my $x = $R->get( 'x' );
+  print "x = $x\n";
 
 or
 
   # Retrieve an R list. $x is a Perl arrayref.
   my $y = $R->get( 'y' );
+  print "y = ".join(", ", @{$y})."\n";
 
 =item start()
 
