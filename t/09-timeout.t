@@ -9,23 +9,20 @@ my ($R, $expected);
 
 ok $R = Statistics::R->new();
 
-ok $R->timeout(1);
+ok $R->timeout(0.1);
 
-# lengthy command timing out
+# command timing out
 $expected = '';
-is $R->run(q`mean(rt(100000000, df = 4))`), $expected;
+is $R->run(q`Sys.sleep(0.2)`), $expected;
 
-# quicker calculation not timing out
-$expected = '';
-ok ! $R->run(q`mean(rt(100, df = 4))`) eq '';
+# quick calculation not timing out, expecting result
+isnt $R->run(q`1+1`), $expected;
 
 # give timeout in constructor
-ok $R = Statistics::R->new( timeout => 1, shared => 1 );
-
-$expected = '';
-is $R->run(q`mean(rt(100000000, df = 4))`), $expected;
+ok $R = Statistics::R->new( timeout => 0.1, shared => 1 );
+is $R->run(q`Sys.sleep(0.2)`), $expected;
 
 # still times out with newly built bridge
-is $R->run(q`mean(rt(100000000, df = 4))`), $expected;
+is $R->run(q`Sys.sleep(0.2)`), $expected;
 
 done_testing;

@@ -40,6 +40,10 @@ systems. I<Statistics::R> has been tested with R version 2 and 3.
   my $output_value = $R->get('z');
   print "z = $output_value\n";
 
+  # set timeout for R commands
+  $R = Statistics::R->new( timeout => 1 ); # timeout 1s
+  $R->run(q`Sys.sleep(2)`);
+
   $R->stop();
 
 =head1 METHODS
@@ -50,8 +54,6 @@ systems. I<Statistics::R> has been tested with R version 2 and 3.
 
 Build a I<Statistics::R> bridge object connecting Perl and R. Available options
 are:
-
-=over 4
 
 =item bin
 
@@ -78,9 +80,6 @@ Note that in shared mode, you are responsible for calling the I<stop()> method
 from one of your Statistics::R instances when you are finished. But be careful
 not to call the I<stop()> method if you still have processes that need to
 interact with R!
-
-=back
-
 
 =item run()
 
@@ -169,6 +168,18 @@ or
   # Retrieve an R list. $x is a Perl arrayref.
   my $y = $R->get( 'y' );
   print "y = ".join(", ", @{$y})."\n";
+
+=item timeout()
+
+Specify timeout for R commands. Unit is seconds for numeric arguments, date/time
+strings accepted by L<IPC::Run::Timer>, 'D:H:M:S'), 
+are also supported. Example:
+
+  # set timeout of 1 sec for R command
+  $R->timeout(1);
+  $R->run(q`Sys.sleep(2)`);
+
+Note that timeouts can also be set in the constructor.
 
 =item start()
 
@@ -291,7 +302,7 @@ use warnings;
 use version;
 use Regexp::Common;
 use Statistics::R::Legacy;
-use IPC::Run qw( harness start pump finish timer );
+use IPC::Run qw( harness start pump finish );
 use File::Spec::Functions qw(catfile splitpath splitdir);
 use Text::Balanced qw ( extract_delimited extract_multiple );
 
@@ -486,19 +497,23 @@ sub run {
       # Pass input to R and get its output
       my $bridge = $self->_bridge;
 
+	  # get timer object and set timeout
 	  my $t = $self->_timer();
 	  $t->start( $self->timeout );
-	  
-      while (  $self->_stdout !~ EOS_RE  &&  $bridge->pumpable ) {
-		  # Check whether time out has been exceeded
-		  if ( $t->is_expired ) {
-		  	  print "Timeout for R command '$cmd' exceeded. Terminating current bridge \n";
-		  	  $self->_bridge->kill_kill;			  
-		  	  next CMD;
-		  }		 		  
-		  $bridge->pump;
-      }
-	  $t->reset;
+
+	  eval {
+		  while (  $self->_stdout !~ EOS_RE  &&  $bridge->pumpable ) {
+			  $bridge->pump;
+		  }
+	  };
+
+	  # catch possible timeout
+	  if ( $@ ) {
+		  print "Timeout of " . $self->timeout . "s for R command '$cmd' exceeded. Terminating current bridge \n";
+		  print "DBG: $@ " if DEBUG;
+		  $self->_bridge->kill_kill;			  
+		  next CMD;
+	  }	  
 
       # Parse output, detect errors
       my $out = $self->_stdout;
@@ -718,8 +733,9 @@ sub _bridge {
    if ($build) {
       my $cmd = [ $self->bin, '--vanilla', '--slave' ];
 	  	  
-	  # set default timer to high value of 1 year
-	  $self->_timer( timer( "365:6:0:0" ) );
+	  # set timer object 
+	  $self->_timer( IPC::Run::timeout(0) );
+
       if (not $self->is_shared) {
          my ($stdin, $stdout, $stderr);
          $self->{stdin}  = \$stdin;
@@ -773,14 +789,13 @@ sub _stderr {
 
 
 sub _timer {
-   # Get / set timer object with timeout for single R command
+   # Get / set timer object of class IPC::Run::Timer with timeout for single R command
    my ($self, $val) = @_;
    if (defined $val) {
       ${$self->{timer}} = $val;
    }
    return ${$self->{timer}};
 }
-
 
 sub wrap_cmd {
    # Wrap a command to pass to R. Whether the command is successful or not, the
