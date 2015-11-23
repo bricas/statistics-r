@@ -1,5 +1,9 @@
 Revision history for Perl extension Statistics::R.
 
+x.xx  xxxx-xx-xx
+    - Documentation improvements (contributed by Kevin Higgins)
+    - Exclude MYMETA files from tarball (reported by Alexandr Ciornii, RT #108564)
+
 0.34  2015-10-19
     - Fixed obscure issue in DESTROY (reported by Pär Larsson, RT #107246)
 
@@ -133,8 +137,8 @@ Revision history for Perl extension Statistics::R.
     - Fixed RT Bug #17956: Win32: log_dir is not in tmp_dir by default as advertised
 
 0.02  2004-02-23
-    - Just minor changes and POD fix.
+    - Just minor changes and POD fix
 
 0.01  2004-01-29 23:04:46
-    - original version;
+    - original version
 
