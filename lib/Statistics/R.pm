@@ -506,15 +506,17 @@ sub run {
 			  $bridge->pump;
 		  }
 	  };
-
+	  
 	  # catch possible timeout
 	  if ( $@ ) {
-		  print "Timeout of " . $self->timeout . "s for R command '$cmd' exceeded. Terminating current bridge \n";
-		  print "DBG: $@ " if DEBUG;
-		  $self->_bridge->kill_kill;			  
-		  next CMD;
+		  if ( $@ =~ /timeout/ ) {
+			  print "Timeout of " . $self->timeout . "s for R command '$cmd' exceeded. Terminating current bridge\n";
+			  print "DBG: $@ \n" if DEBUG;
+			  $self->_bridge->kill_kill;			  
+			  next CMD;
+		  }
+		  die $@;
 	  }	  
-
       # Parse output, detect errors
       my $out = $self->_stdout;
       $out =~ s/${\(EOS_RE)}//;
