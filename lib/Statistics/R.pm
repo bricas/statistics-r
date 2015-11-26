@@ -40,6 +40,10 @@ systems. I<Statistics::R> has been tested with R version 2 and 3.
   my $output_value = $R->get('z');
   print "z = $output_value\n";
 
+  # set timeout for R commands
+  $R = Statistics::R->new( timeout => 1 ); # timeout 1s
+  $R->run(q`Sys.sleep(2)`);
+
   $R->stop();
 
 =head1 METHODS
@@ -50,8 +54,6 @@ systems. I<Statistics::R> has been tested with R version 2 and 3.
 
 Build a I<Statistics::R> bridge object connecting Perl and R. Available options
 are:
-
-=over 4
 
 =item bin
 
@@ -78,9 +80,6 @@ Note that in shared mode, you are responsible for calling the I<stop()> method
 from one of your Statistics::R instances when you are finished. But be careful
 not to call the I<stop()> method if you still have processes that need to
 interact with R!
-
-=back
-
 
 =item run()
 
@@ -169,6 +168,18 @@ or
   # Retrieve an R list. $x is a Perl arrayref.
   my $y = $R->get( 'y' );
   print "y = ".join(", ", @{$y})."\n";
+
+=item timeout()
+
+Specify timeout for R commands. Unit is seconds for numeric arguments, date/time
+strings accepted by L<IPC::Run::Timer>, 'D:H:M:S'), 
+are also supported. Example:
+
+  # set timeout of 1 sec for R command
+  $R->timeout(1);
+  $R->run(q`Sys.sleep(2)`);
+
+Note that timeouts can also be set in the constructor.
 
 =item start()
 
@@ -450,6 +461,16 @@ sub bin {
 }
 
 
+sub timeout {
+	# Get or set the timeout for an R command
+	my ($self, $val) = @_;
+	if (defined $val) {
+		$self->{timeout} = $val;
+	}
+	return $self->{timeout};
+}
+
+
 sub version {
    # Get the version of R, e.g. '3.1.1'
    my ($self) = @_;
@@ -460,13 +481,13 @@ sub version {
 sub run {
    # Pass the input and get the output
    my ($self, @cmds) = @_;
-
+   
    # Need to start R now if it is not already running
    $self->start if not $self->is_started;
 
    # Process each command
    my $results = '';
-   for my $cmd (@cmds) {
+ CMD: for my $cmd (@cmds) {
 
       # Wrap command for execution in R
       print "DBG: Command is '$cmd'\n" if DEBUG;
@@ -475,10 +496,27 @@ sub run {
 
       # Pass input to R and get its output
       my $bridge = $self->_bridge;
-      while (  $self->_stdout !~ EOS_RE  &&  $bridge->pumpable  ) {
-         $bridge->pump;
-      }
 
+	  # get timer object and set timeout
+	  my $t = $self->_timer();
+	  $t->start( $self->timeout );
+
+	  eval {
+		  while (  $self->_stdout !~ EOS_RE  &&  $bridge->pumpable ) {
+			  $bridge->pump;
+		  }
+	  };
+	  
+	  # catch possible timeout
+	  if ( $@ ) {
+		  if ( $@ =~ /timeout/ ) {
+			  print "Timeout of " . $self->timeout . "s for R command '$cmd' exceeded. Terminating current bridge\n";
+			  print "DBG: $@ \n" if DEBUG;
+			  $self->_bridge->kill_kill;			  
+			  next CMD;
+		  }
+		  die $@;
+	  }	  
       # Parse output, detect errors
       my $out = $self->_stdout;
       $out =~ s/${\(EOS_RE)}//;
@@ -679,6 +717,9 @@ sub _initialize {
    } else {
       $self->is_shared( 0 );
    }
+   
+   # Set timeout if given
+   $self->timeout( $args{timeout} ) if $args{timeout};
 
    # Build the bridge
    $self->_bridge( 1 );
@@ -693,22 +734,27 @@ sub _bridge {
    my %params = ( debug => 0 );
    if ($build) {
       my $cmd = [ $self->bin, '--vanilla', '--slave' ];
+	  	  
+	  # set timer object 
+	  $self->_timer( IPC::Run::timeout(0) );
+
       if (not $self->is_shared) {
          my ($stdin, $stdout, $stderr);
          $self->{stdin}  = \$stdin;
          $self->{stdout} = \$stdout;
          $self->{stderr} = \$stderr;
-         $self->{bridge} = harness $cmd, $self->{stdin}, $self->{stdout}, $self->{stderr}, %params;
+         $self->{bridge} = harness $cmd, $self->{stdin}, $self->{stdout}, $self->{stderr}, $self->_timer, %params;
       } else {
          $self->{stdin}  = \$SHARED_STDIN ;
          $self->{stdout} = \$SHARED_STDOUT;
          $self->{stderr} = \$SHARED_STDERR;
          if (not defined $SHARED_BRIDGE) {
             # The first Statistics::R instance builds the bridge
-            $SHARED_BRIDGE = harness $cmd, $self->{stdin}, $self->{stdout}, $self->{stderr}, %params;
+            $SHARED_BRIDGE = harness $cmd, $self->{stdin}, $self->{stdout}, $self->{stderr}, $self->_timer, %params;
          }
          $self->{bridge} = $SHARED_BRIDGE;
       }
+	  print "DBG: Created new R communication bridge\n" if DEBUG;
    }
    return $self->{bridge};
 }
@@ -743,6 +789,15 @@ sub _stderr {
    return ${$self->{stderr}};
 }
 
+
+sub _timer {
+   # Get / set timer object of class IPC::Run::Timer with timeout for single R command
+   my ($self, $val) = @_;
+   if (defined $val) {
+      ${$self->{timer}} = $val;
+   }
+   return ${$self->{timer}};
+}
 
 sub wrap_cmd {
    # Wrap a command to pass to R. Whether the command is successful or not, the
