@@ -19,7 +19,8 @@ $expected = '';
 is $R->run(q`func()`), $expected;
 
 # quick calculation not timing out, expecting result
-isnt $R->run(q`1+1`), $expected;
+$expected = 1;
+ok $R->run(q`1+1`);
 
 # give timeout in constructor
 ok $R = Statistics::R->new( timeout => 0.1, shared => 1 );

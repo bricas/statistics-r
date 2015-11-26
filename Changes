@@ -1,6 +1,7 @@
 Revision history for Perl extension Statistics::R.
 
 x.xx  xxxx-xx-xx
+    - Timeout functionality (contributed by Hannes Hettling, bug #7)
     - Documentation improvements (contributed by Kevin Higgins)
     - Exclude MYMETA files from tarball (reported by Alexandr Ciornii, RT #108564)
 

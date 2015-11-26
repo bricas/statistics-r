@@ -171,11 +171,11 @@ or
 
 =item timeout()
 
-Specify timeout for R commands. Unit is seconds for numeric arguments, date/time
-strings accepted by L<IPC::Run::Timer>, 'D:H:M:S'), 
-are also supported. Example:
+Give each R command timeout, after which it is interrupted. Unit is seconds for
+numeric arguments, or a date/time strings in the format 'D:H:M:S' (see
+L<IPC::Run::Timer>). Example:
 
-  # set timeout of 1 sec for R command
+  # Set timeout of 1 sec for R command
   $R->timeout(1);
   $R->run(q`Sys.sleep(2)`);
 
@@ -462,12 +462,12 @@ sub bin {
 
 
 sub timeout {
-	# Get or set the timeout for an R command
-	my ($self, $val) = @_;
-	if (defined $val) {
-		$self->{timeout} = $val;
-	}
-	return $self->{timeout};
+    # Get or set the timeout for an R command
+    my ($self, $val) = @_;
+    if (defined $val) {
+        $self->{timeout} = $val;
+    }
+    return $self->{timeout};
 }
 
 
@@ -487,7 +487,10 @@ sub run {
 
    # Process each command
    my $results = '';
- CMD: for my $cmd (@cmds) {
+   CMD: for my $cmd (@cmds) {
+
+      # Set the timeout of the timer object
+      $self->_timer->start( $self->timeout );
 
       # Wrap command for execution in R
       print "DBG: Command is '$cmd'\n" if DEBUG;
@@ -496,27 +499,24 @@ sub run {
 
       # Pass input to R and get its output
       my $bridge = $self->_bridge;
+      eval {
+          while (  $self->_stdout !~ EOS_RE  &&  $bridge->pumpable ) {
+              $bridge->pump;
+          }
+      };
+      
+      # Catch possible timeout
+      if ( $@ ) {
+          if ( $@ =~ /timeout/ ) {
+              print "Timeout of ".PROG." command '$cmd' after ".$self->timeout."\n";
+              print "DBG: $@\n" if DEBUG;
+              $self->_bridge->kill_kill;
+              next CMD;
+          } else {
+              die $@;
+          }
+      }
 
-	  # get timer object and set timeout
-	  my $t = $self->_timer();
-	  $t->start( $self->timeout );
-
-	  eval {
-		  while (  $self->_stdout !~ EOS_RE  &&  $bridge->pumpable ) {
-			  $bridge->pump;
-		  }
-	  };
-	  
-	  # catch possible timeout
-	  if ( $@ ) {
-		  if ( $@ =~ /timeout/ ) {
-			  print "Timeout of " . $self->timeout . "s for R command '$cmd' exceeded. Terminating current bridge\n";
-			  print "DBG: $@ \n" if DEBUG;
-			  $self->_bridge->kill_kill;			  
-			  next CMD;
-		  }
-		  die $@;
-	  }	  
       # Parse output, detect errors
       my $out = $self->_stdout;
       $out =~ s/${\(EOS_RE)}//;
@@ -718,8 +718,13 @@ sub _initialize {
       $self->is_shared( 0 );
    }
    
-   # Set timeout if given
-   $self->timeout( $args{timeout} ) if $args{timeout};
+   # Set timeout in a timer object
+   if ($args{timeout}) {
+      $self->timeout( $args{timeout} ); # user-specified timeout
+   } else {
+      $self->timeout( '999:0:0' ); # impossibly high default timeout
+   }
+   $self->_timer( IPC::Run::timeout($self->timeout) );
 
    # Build the bridge
    $self->_bridge( 1 );
@@ -734,10 +739,6 @@ sub _bridge {
    my %params = ( debug => 0 );
    if ($build) {
       my $cmd = [ $self->bin, '--vanilla', '--slave' ];
-	  	  
-	  # set timer object 
-	  $self->_timer( IPC::Run::timeout(0) );
-
       if (not $self->is_shared) {
          my ($stdin, $stdout, $stderr);
          $self->{stdin}  = \$stdin;
@@ -754,7 +755,7 @@ sub _bridge {
          }
          $self->{bridge} = $SHARED_BRIDGE;
       }
-	  print "DBG: Created new R communication bridge\n" if DEBUG;
+      print "DBG: Created new R communication bridge\n" if DEBUG;
    }
    return $self->{bridge};
 }
@@ -791,7 +792,7 @@ sub _stderr {
 
 
 sub _timer {
-   # Get / set timer object of class IPC::Run::Timer with timeout for single R command
+   # Get / set an IPC::Run::Timer with timeout for single R command
    my ($self, $val) = @_;
    if (defined $val) {
       ${$self->{timer}} = $val;
