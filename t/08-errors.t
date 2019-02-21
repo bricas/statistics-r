@@ -37,8 +37,10 @@ SKIP: {
 
    is $R->run(q`a <- 1;`), '';
 
-   use_ok 't::FlawedStatisticsR';
-   ok $R = t::FlawedStatisticsR->new();
+   use FindBin;
+   use lib $FindBin::Bin;
+   use_ok 'FlawedStatisticsR';
+   ok $R = FlawedStatisticsR->new();
    eval {
       $R->run( qq`print("Hello");\ncolors<-c("red")` );
    };
