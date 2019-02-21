@@ -1,4 +1,4 @@
-package t::FlawedStatisticsR;
+package FlawedStatisticsR;
 
 use Statistics::R;
 use base qw(Statistics::R);
