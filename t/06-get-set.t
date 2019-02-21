@@ -118,6 +118,12 @@ is ref($output), '';
 is $output, q{He said: "Let's go \\\\\\\\\\\\\"home\\\\\\\\\\\\\" now!\n"};
 
 
+is eval {
+    $R->set('x', 'foo', 'bar')
+}, undef;
+like $@, qr/\btoo many arguments to set\b/i;
+
+
 ok $R->stop();
 
 done_testing;

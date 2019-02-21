@@ -594,6 +594,7 @@ sub result {
 sub set {
    # Assign a variable or array of variables in R. Use undef if you want to
    # assign NULL to an R variable
+   die "Error: too many arguments to set" if @_>3;
    my ($self, $varname, $arr) = @_;
     
    # Start R now if it is not already running
